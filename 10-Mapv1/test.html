@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cook County Census Data Experiment</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map-canvas { height: 100% }
+
+    <style type="text/css">
+      html, body, #map-canvas { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+      .nicebox {
+        position: absolute;
+        text-align: center;
+        font-family: "Roboto", "Arial", sans-serif;
+        font-size: 13px;
+        z-index: 5;
+        box-shadow: 0 4px 6px -4px #333;
+        padding: 5px 10px;
+        background: rgb(255,255,255);
+        background: linear-gradient(to bottom,rgba(255,255,255,1) 0%,rgba(245,245,245,1) 100%);
+        border: rgb(229, 229, 229) 1px solid;
+      }
+      #controls {
+        top: 15px;
+        left: 90px;
+        width: 360px;
+        height: 45px;
+      }
+      #data-box {
+        top: 15px;
+        left: 480px;
+        height: 45px;
+        line-height: 45px;
+        display: none;
+      }
+      #census-variable {
+        width: 360px;
+        height: 20px;
+      }
+      #legend { display: flex; display: -webkit-box; padding-top: 7px }
+      .color-key {
+        background: linear-gradient(to right,
+          hsl(5, 69%, 54%) 0%,
+          hsl(29, 71%, 51%) 17%,
+          hsl(54, 74%, 47%) 33%,
+          hsl(78, 76%, 44%) 50%,
+          hsl(102, 78%, 41%) 67%,
+          hsl(127, 81%, 37%) 83%,
+          hsl(151, 83%, 34%) 100%);
+        flex: 1;
+        -webkit-box-flex: 1;
+        margin: 0 5px;
+        text-align: left;
+        font-size: 1.0em;
+        line-height: 1.0em;
+      }
+      #data-value { font-size: 1.0em; font-weight: bold }
+      #data-label { font-size: 1.0em; font-weight: normal; padding-right: 10px; }
+      #data-label:after { content: ':' }
+      #data-caret { margin-left: -5px; display: none; font-size: 14px; width: 14px}
+    </style>
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-41066114-1', 'rwoodley.org');
+    ga('send', 'pageview');
+    </script>
+    <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASFniz_iGSA15wHWJWittWWDCtUQyLKbM&sensor=false">
+    </script>
+    <script type="text/javascript">
+      var _map;
+      var _censusMin = Number.MAX_VALUE, _censusMax = -Number.MAX_VALUE;
+      function clearCensusData() {
+        _censusMin = Number.MAX_VALUE;
+        _censusMax = -Number.MAX_VALUE;
+        _map.data.forEach(function(row) {
+          row.setProperty('census_variable', undefined);
+        });
+        document.getElementById('data-box').style.display = 'none';
+        document.getElementById('data-caret').style.display = 'none';
+      }
+      function initialize() {
+        initCAMap(); initTractMap();
+        var mapOptions = {
+          center: new google.maps.LatLng(41.8819, -87.6278),
+          zoom: 12
+        };
+        _map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions);
+
+        _map.data.setStyle(styleFeature);
+        _map.data.addListener('mouseover', mouseInToRegion);
+        _map.data.addListener('mouseout', mouseOutOfRegion);
+        _map.data.addListener('click', mouseClick);
+        // wire up the button
+        var selectBox = document.getElementById('census-variable');
+        google.maps.event.addDomListener(selectBox, 'change', function() {
+          clearCensusData();
+          loadCensusData(selectBox.options[selectBox.selectedIndex].value);
+        });
+        
+        loadMapShapes();
+      }
+      google.maps.event.addDomListener(window, 'load', initialize);
+      function loadMapShapes() {
+        _map.data.loadGeoJson("short.JSON", { idPropertyName: 'TRACTCE'} );
+
+        // wait for the request to complete by listening for the first feature to be added
+        google.maps.event.addListenerOnce(_map.data, 'addfeature', function() {
+          google.maps.event.trigger(document.getElementById('census-variable'),
+              'change');
+        });
+      }
+      function selectedDataItemIsPercent() {
+        var selectBox = document.getElementById('census-variable');
+        var varName = selectBox.options[selectBox.selectedIndex].value;
+        var bool = (varName.substr(varName.length-2,2) == 'PE');
+        //console.log(varName + "Is percent = " + bool);
+        return bool;
+      }
+      function mouseInToRegion(e) {
+        e.feature.setProperty('state', 'hover');
+        
+        var inPercent = selectedDataItemIsPercent();
+        var percent = inPercent ?
+          e.feature.getProperty('census_variable') :
+          percent = (e.feature.getProperty('census_variable') - _censusMin) / (_censusMax - _censusMin) * 100;
+
+        var caId = _tractMap[e.feature.getProperty('TRACTCE')];
+        var communityArea = _caMap[caId];
+        if (communityArea == undefined) communityArea = "Cook County";
+
+        var dataValue = Math.floor(e.feature.getProperty('census_variable'));
+        if (inPercent) dataValue += "%";
+        document.getElementById('data-label').textContent = communityArea + ", " + e.feature.getProperty('NAMELSAD');
+        document.getElementById('data-value').textContent = dataValue;
+        document.getElementById('data-box').style.display = 'block';
+        document.getElementById('data-caret').style.display = 'block';
+        document.getElementById('data-caret').style.paddingLeft = percent + '%';
+      }
+       
+      function mouseOutOfRegion(e) {
+        // reset the hover state, returning the border to normal
+        e.feature.setProperty('state', 'normal');
+      }
+      function mouseClick(e) {
+        var str = e.feature.getProperty('GEOID'); 
+        var url = "http://usa.com/IL" + str.substr (2, str.length-2) + ".html";
+        window.open(url);
+      }
+      function loadCensusData(variable) {
+        // load the requested variable from the census API
+        var xhr = new XMLHttpRequest();
+        var url = "http://api.census.gov/data/2012/acs5/profile?get=" + variable +
+          "&key=ea28d9e1f3ba55610a2bd31992dbc2e999b432bb&for=tract:*&in=state:17+county:031";
+
+        xhr.open('GET', url);
+
+        xhr.onload = function() {
+          var censusData = JSON.parse(xhr.responseText);
+          censusData.shift(); // the first row contains column names
+          censusData.forEach(function(row) {
+            var censusVariable = parseFloat(row[0]);
+            var tractId = row[3];
+             
+            if (censusVariable < _censusMin) _censusMin = censusVariable;
+            if (censusVariable > _censusMax) _censusMax = censusVariable;
+             if (tractId.length < 6) tractId = "0" + tractId;
+            _map.data.getFeatureById(tractId).setProperty('census_variable', censusVariable);
+          });
+          if (selectedDataItemIsPercent()) {
+            _censusMin = 0; _censusMax = 100;
+          }
+          // update and display the legend
+          document.getElementById('census-min').textContent = _censusMin.toLocaleString();
+          document.getElementById('census-max').textContent = _censusMax.toLocaleString();
+        };
+        xhr.send();
+      }
+      // Apply a gradient style based on the 'census_variable' column.
+      // This is the callback passed to data.setStyle() and is called for each row in
+      // the data set.  Check out the docs for Data.StylingFunction.
+      // [START snippet-stylefeature]
+      function styleFeature(feature) {
+        var low = [5, 69, 54];  // color of smallest datum
+        var high = [151, 83, 34];   // color of largest datum
+
+        // delta represents where the value sits between the min and max
+        var delta = (feature.getProperty('census_variable') - _censusMin) /
+            (_censusMax - _censusMin);
+
+        var color = [];
+        for (var i = 0; i < 3; i++) {
+          // calculate an integer color based on the delta
+          color[i] = (high[i] - low[i]) * delta + low[i];
+        }
+
+        // determine whether to show this shape or not
+        var showRow = true;
+        if (feature.getProperty('census_variable') == null ||
+            isNaN(feature.getProperty('census_variable'))) {
+          showRow = false;
+        }
+
+        var outlineWeight = 0.5, zIndex = 1;
+        if (feature.getProperty('state') === 'hover') {
+          outlineWeight = zIndex = 2;
+        }
+
+        return {
+          strokeWeight: outlineWeight,
+          strokeColor: '#fff',
+          zIndex: zIndex,
+          fillColor: 'hsl(' + color[0] + ',' + color[1] + '%,' + color[2] + '%)',
+          fillOpacity: 0.75,
+          visible: showRow
+        };
+      }
+      var _tractMap;
+      function initTractMap() {
+        _tractMap = new Array();
+        _tractMap['010100'] = '01';
+        _tractMap['010201'] = '01';
+        _tractMap['010202'] = '01';
+        _tractMap['010300'] = '01';
+        _tractMap['010400'] = '01';
+        _tractMap['010501'] = '01';
+        _tractMap['010502'] = '01';
+        _tractMap['010503'] = '01';
+        _tractMap['010600'] = '01';
+        _tractMap['010701'] = '01';
+        _tractMap['010702'] = '01';
+        _tractMap['830600'] = '01';
+        _tractMap['020100'] = '02';
+        _tractMap['020200'] = '02';
+        _tractMap['020301'] = '02';
+        _tractMap['020302'] = '02';
+        _tractMap['020400'] = '02';
+        _tractMap['020500'] = '02';
+        _tractMap['020601'] = '02';
+        _tractMap['020602'] = '02';
+        _tractMap['020701'] = '02';
+        _tractMap['020702'] = '02';
+        _tractMap['020801'] = '02';
+        _tractMap['020802'] = '02';
+        _tractMap['020901'] = '02';
+        _tractMap['020902'] = '02';
+        _tractMap['031000'] = '03';
+        _tractMap['031100'] = '03';
+        _tractMap['031200'] = '03';
+        _tractMap['031300'] = '03';
+        _tractMap['031400'] = '03';
+        _tractMap['031501'] = '03';
+        _tractMap['031502'] = '03';
+        _tractMap['031700'] = '03';
+        _tractMap['031800'] = '03';
+        _tractMap['031900'] = '03';
+        _tractMap['032100'] = '03';
+        _tractMap['830700'] = '03';
+        _tractMap['040100'] = '04';
+        _tractMap['040201'] = '04';
+        _tractMap['040202'] = '04';
+        _tractMap['040300'] = '04';
+        _tractMap['040401'] = '04';
+        _tractMap['040402'] = '04';
+        _tractMap['040600'] = '04';
+        _tractMap['040700'] = '04';
+        _tractMap['040800'] = '04';
+        _tractMap['040900'] = '04';
+        _tractMap['830800'] = '04';
+        _tractMap['050100'] = '05';
+        _tractMap['050200'] = '05';
+        _tractMap['050300'] = '05';
+        _tractMap['050500'] = '05';
+        _tractMap['050600'] = '05';
+        _tractMap['050700'] = '05';
+        _tractMap['050800'] = '05';
+        _tractMap['050900'] = '05';
+        _tractMap['051000'] = '05';
+        _tractMap['051100'] = '05';
+        _tractMap['051200'] = '05';
+        _tractMap['051300'] = '05';
+        _tractMap['051400'] = '05';
+        _tractMap['843700'] = '05';
+        _tractMap['060100'] = '06';
+        _tractMap['060200'] = '06';
+        _tractMap['060300'] = '06';
+        _tractMap['060400'] = '06';
+        _tractMap['060500'] = '06';
+        _tractMap['060800'] = '06';
+        _tractMap['060900'] = '06';
+        _tractMap['061000'] = '06';
+        _tractMap['061100'] = '06';
+        _tractMap['061200'] = '06';
+        _tractMap['061500'] = '06';
+        _tractMap['061800'] = '06';
+        _tractMap['061901'] = '06';
+        _tractMap['061902'] = '06';
+        _tractMap['062000'] = '06';
+        _tractMap['062100'] = '06';
+        _tractMap['062200'] = '06';
+        _tractMap['062300'] = '06';
+        _tractMap['062400'] = '06';
+        _tractMap['062500'] = '06';
+        _tractMap['062600'] = '06';
+        _tractMap['062700'] = '06';
+        _tractMap['062800'] = '06';
+        _tractMap['062900'] = '06';
+        _tractMap['063000'] = '06';
+        _tractMap['063100'] = '06';
+        _tractMap['063200'] = '06';
+        _tractMap['063301'] = '06';
+        _tractMap['063302'] = '06';
+        _tractMap['063303'] = '06';
+        _tractMap['063400'] = '06';
+        _tractMap['831900'] = '06';
+        _tractMap['832000'] = '06';
+        _tractMap['832100'] = '06';
+        _tractMap['070101'] = '07';
+        _tractMap['070102'] = '07';
+        _tractMap['070103'] = '07';
+        _tractMap['070200'] = '07';
+        _tractMap['070300'] = '07';
+        _tractMap['070400'] = '07';
+        _tractMap['070500'] = '07';
+        _tractMap['070600'] = '07';
+        _tractMap['070700'] = '07';
+        _tractMap['071000'] = '07';
+        _tractMap['071100'] = '07';
+        _tractMap['071200'] = '07';
+        _tractMap['071300'] = '07';
+        _tractMap['071400'] = '07';
+        _tractMap['071500'] = '07';
+        _tractMap['071600'] = '07';
+        _tractMap['071700'] = '07';
+        _tractMap['071800'] = '07';
+        _tractMap['832500'] = '07';
+        _tractMap['832600'] = '07';
+        _tractMap['080100'] = '08';
+        _tractMap['080201'] = '08';
+        _tractMap['080202'] = '08';
+        _tractMap['080300'] = '08';
+        _tractMap['080400'] = '08';
+        _tractMap['081000'] = '08';
+        _tractMap['081100'] = '08';
+        _tractMap['081201'] = '08';
+        _tractMap['081202'] = '08';
+        _tractMap['081300'] = '08';
+        _tractMap['081401'] = '08';
+        _tractMap['081402'] = '08';
+        _tractMap['081403'] = '08';
+        _tractMap['081500'] = '08';
+        _tractMap['081600'] = '08';
+        _tractMap['081700'] = '08';
+        _tractMap['081800'] = '08';
+        _tractMap['081900'] = '08';
+        _tractMap['838300'] = '08';
+        _tractMap['842200'] = '08';
+        _tractMap['090100'] = '09';
+        _tractMap['090200'] = '09';
+        _tractMap['090300'] = '09';
+        _tractMap['805600'] = '09';
+        _tractMap['100100'] = '10';
+        _tractMap['100200'] = '10';
+        _tractMap['100300'] = '10';
+        _tractMap['100400'] = '10';
+        _tractMap['100500'] = '10';
+        _tractMap['100600'] = '10';
+        _tractMap['100700'] = '10';
+        _tractMap['810400'] = '10';
+        _tractMap['110100'] = '11';
+        _tractMap['110200'] = '11';
+        _tractMap['110300'] = '11';
+        _tractMap['110400'] = '11';
+        _tractMap['110501'] = '11';
+        _tractMap['110502'] = '11';
+        _tractMap['120100'] = '12';
+        _tractMap['120200'] = '12';
+        _tractMap['120300'] = '12';
+        _tractMap['120400'] = '12';
+        _tractMap['807900'] = '12';
+        _tractMap['808100'] = '12';
+        _tractMap['130100'] = '13';
+        _tractMap['130200'] = '13';
+        _tractMap['130300'] = '13';
+        _tractMap['831800'] = '13';
+        _tractMap['140100'] = '14';
+        _tractMap['140200'] = '14';
+        _tractMap['140301'] = '14';
+        _tractMap['140302'] = '14';
+        _tractMap['140400'] = '14';
+        _tractMap['140500'] = '14';
+        _tractMap['140601'] = '14';
+        _tractMap['140602'] = '14';
+        _tractMap['140701'] = '14';
+        _tractMap['140702'] = '14';
+        _tractMap['140800'] = '14';
+        _tractMap['150200'] = '15';
+        _tractMap['150300'] = '15';
+        _tractMap['150401'] = '15';
+        _tractMap['150402'] = '15';
+        _tractMap['150501'] = '15';
+        _tractMap['150502'] = '15';
+        _tractMap['150600'] = '15';
+        _tractMap['150700'] = '15';
+        _tractMap['150800'] = '15';
+        _tractMap['151001'] = '15';
+        _tractMap['151002'] = '15';
+        _tractMap['151100'] = '15';
+        _tractMap['151200'] = '15';
+        _tractMap['831700'] = '15';
+        _tractMap['160100'] = '16';
+        _tractMap['160200'] = '16';
+        _tractMap['160300'] = '16';
+        _tractMap['160400'] = '16';
+        _tractMap['160501'] = '16';
+        _tractMap['160502'] = '16';
+        _tractMap['160601'] = '16';
+        _tractMap['160602'] = '16';
+        _tractMap['160700'] = '16';
+        _tractMap['160800'] = '16';
+        _tractMap['160900'] = '16';
+        _tractMap['161000'] = '16';
+        _tractMap['161100'] = '16';
+        _tractMap['161200'] = '16';
+        _tractMap['161300'] = '16';
+        _tractMap['170100'] = '17';
+        _tractMap['170200'] = '17';
+        _tractMap['170300'] = '17';
+        _tractMap['170400'] = '17';
+        _tractMap['170500'] = '17';
+        _tractMap['170600'] = '17';
+        _tractMap['170700'] = '17';
+        _tractMap['170800'] = '17';
+        _tractMap['170900'] = '17';
+        _tractMap['171000'] = '17';
+        _tractMap['171100'] = '17';
+        _tractMap['180100'] = '18';
+        _tractMap['831600'] = '18';
+        _tractMap['190100'] = '19';
+        _tractMap['190200'] = '19';
+        _tractMap['190300'] = '19';
+        _tractMap['190401'] = '19';
+        _tractMap['190402'] = '19';
+        _tractMap['190601'] = '19';
+        _tractMap['190602'] = '19';
+        _tractMap['190701'] = '19';
+        _tractMap['190702'] = '19';
+        _tractMap['190800'] = '19';
+        _tractMap['190900'] = '19';
+        _tractMap['191000'] = '19';
+        _tractMap['191100'] = '19';
+        _tractMap['191200'] = '19';
+        _tractMap['191301'] = '19';
+        _tractMap['191302'] = '19';
+        _tractMap['831500'] = '19';
+        _tractMap['200100'] = '20';
+        _tractMap['200200'] = '20';
+        _tractMap['200300'] = '20';
+        _tractMap['200401'] = '20';
+        _tractMap['200402'] = '20';
+        _tractMap['831200'] = '20';
+        _tractMap['210100'] = '21';
+        _tractMap['210400'] = '21';
+        _tractMap['210501'] = '21';
+        _tractMap['210502'] = '21';
+        _tractMap['210601'] = '21';
+        _tractMap['210602'] = '21';
+        _tractMap['210700'] = '21';
+        _tractMap['210800'] = '21';
+        _tractMap['210900'] = '21';
+        _tractMap['831100'] = '21';
+        _tractMap['220300'] = '22';
+        _tractMap['220400'] = '22';
+        _tractMap['220500'] = '22';
+        _tractMap['220601'] = '22';
+        _tractMap['220602'] = '22';
+        _tractMap['220701'] = '22';
+        _tractMap['220702'] = '22';
+        _tractMap['220901'] = '22';
+        _tractMap['220902'] = '22';
+        _tractMap['221000'] = '22';
+        _tractMap['221100'] = '22';
+        _tractMap['221200'] = '22';
+        _tractMap['221300'] = '22';
+        _tractMap['221400'] = '22';
+        _tractMap['221500'] = '22';
+        _tractMap['221600'] = '22';
+        _tractMap['222200'] = '22';
+        _tractMap['222500'] = '22';
+        _tractMap['222600'] = '22';
+        _tractMap['222700'] = '22';
+        _tractMap['222800'] = '22';
+        _tractMap['222900'] = '22';
+        _tractMap['830900'] = '22';
+        _tractMap['831000'] = '22';
+        _tractMap['832200'] = '22';
+        _tractMap['832300'] = '22';
+        _tractMap['832400'] = '22';
+        _tractMap['230100'] = '23';
+        _tractMap['230200'] = '23';
+        _tractMap['230300'] = '23';
+        _tractMap['230400'] = '23';
+        _tractMap['230500'] = '23';
+        _tractMap['230600'] = '23';
+        _tractMap['230700'] = '23';
+        _tractMap['230800'] = '23';
+        _tractMap['230900'] = '23';
+        _tractMap['231100'] = '23';
+        _tractMap['231200'] = '23';
+        _tractMap['231500'] = '23';
+        _tractMap['836600'] = '23';
+        _tractMap['836700'] = '23';
+        _tractMap['842100'] = '23';
+        _tractMap['240200'] = '24';
+        _tractMap['240300'] = '24';
+        _tractMap['240500'] = '24';
+        _tractMap['240600'] = '24';
+        _tractMap['240700'] = '24';
+        _tractMap['240800'] = '24';
+        _tractMap['240900'] = '24';
+        _tractMap['241000'] = '24';
+        _tractMap['241100'] = '24';
+        _tractMap['241200'] = '24';
+        _tractMap['241300'] = '24';
+        _tractMap['241400'] = '24';
+        _tractMap['241500'] = '24';
+        _tractMap['241600'] = '24';
+        _tractMap['242000'] = '24';
+        _tractMap['242100'] = '24';
+        _tractMap['242200'] = '24';
+        _tractMap['242300'] = '24';
+        _tractMap['242400'] = '24';
+        _tractMap['242500'] = '24';
+        _tractMap['242600'] = '24';
+        _tractMap['242700'] = '24';
+        _tractMap['242800'] = '24';
+        _tractMap['242900'] = '24';
+        _tractMap['243000'] = '24';
+        _tractMap['243100'] = '24';
+        _tractMap['243200'] = '24';
+        _tractMap['243300'] = '24';
+        _tractMap['243400'] = '24';
+        _tractMap['243500'] = '24';
+        _tractMap['842300'] = '24';
+        _tractMap['250200'] = '25';
+        _tractMap['250300'] = '25';
+        _tractMap['250400'] = '25';
+        _tractMap['250500'] = '25';
+        _tractMap['250600'] = '25';
+        _tractMap['250700'] = '25';
+        _tractMap['250800'] = '25';
+        _tractMap['251000'] = '25';
+        _tractMap['251100'] = '25';
+        _tractMap['251200'] = '25';
+        _tractMap['251300'] = '25';
+        _tractMap['251400'] = '25';
+        _tractMap['251500'] = '25';
+        _tractMap['251600'] = '25';
+        _tractMap['251700'] = '25';
+        _tractMap['251800'] = '25';
+        _tractMap['251900'] = '25';
+        _tractMap['252000'] = '25';
+        _tractMap['252101'] = '25';
+        _tractMap['252102'] = '25';
+        _tractMap['252201'] = '25';
+        _tractMap['252202'] = '25';
+        _tractMap['831300'] = '25';
+        _tractMap['831400'] = '25';
+        _tractMap['260100'] = '26';
+        _tractMap['260200'] = '26';
+        _tractMap['260300'] = '26';
+        _tractMap['260400'] = '26';
+        _tractMap['260500'] = '26';
+        _tractMap['260600'] = '26';
+        _tractMap['260700'] = '26';
+        _tractMap['260800'] = '26';
+        _tractMap['260900'] = '26';
+        _tractMap['261000'] = '26';
+        _tractMap['270500'] = '27';
+        _tractMap['271200'] = '27';
+        _tractMap['271300'] = '27';
+        _tractMap['271400'] = '27';
+        _tractMap['271500'] = '27';
+        _tractMap['271800'] = '27';
+        _tractMap['836800'] = '27';
+        _tractMap['836900'] = '27';
+        _tractMap['837000'] = '27';
+        _tractMap['837100'] = '27';
+        _tractMap['837300'] = '27';
+        _tractMap['837400'] = '27';
+        _tractMap['280100'] = '28';
+        _tractMap['280400'] = '28';
+        _tractMap['280800'] = '28';
+        _tractMap['280900'] = '28';
+        _tractMap['281900'] = '28';
+        _tractMap['282700'] = '28';
+        _tractMap['282800'] = '28';
+        _tractMap['283100'] = '28';
+        _tractMap['283200'] = '28';
+        _tractMap['283800'] = '28';
+        _tractMap['832900'] = '28';
+        _tractMap['833000'] = '28';
+        _tractMap['833100'] = '28';
+        _tractMap['833300'] = '28';
+        _tractMap['837800'] = '28';
+        _tractMap['838000'] = '28';
+        _tractMap['838100'] = '28';
+        _tractMap['838200'] = '28';
+        _tractMap['841900'] = '28';
+        _tractMap['842900'] = '28';
+        _tractMap['290900'] = '29';
+        _tractMap['291200'] = '29';
+        _tractMap['291600'] = '29';
+        _tractMap['292200'] = '29';
+        _tractMap['292400'] = '29';
+        _tractMap['292500'] = '29';
+        _tractMap['838600'] = '29';
+        _tractMap['838700'] = '29';
+        _tractMap['841400'] = '29';
+        _tractMap['841500'] = '29';
+        _tractMap['841600'] = '29';
+        _tractMap['843000'] = '29';
+        _tractMap['843100'] = '29';
+        _tractMap['843300'] = '29';
+        _tractMap['843400'] = '29';
+        _tractMap['300500'] = '30';
+        _tractMap['300600'] = '30';
+        _tractMap['300700'] = '30';
+        _tractMap['300800'] = '30';
+        _tractMap['300900'] = '30';
+        _tractMap['301100'] = '30';
+        _tractMap['301200'] = '30';
+        _tractMap['301600'] = '30';
+        _tractMap['301701'] = '30';
+        _tractMap['301702'] = '30';
+        _tractMap['301801'] = '30';
+        _tractMap['301802'] = '30';
+        _tractMap['301803'] = '30';
+        _tractMap['830500'] = '30';
+        _tractMap['840700'] = '30';
+        _tractMap['840800'] = '30';
+        _tractMap['841700'] = '30';
+        _tractMap['843500'] = '30';
+        _tractMap['310200'] = '31';
+        _tractMap['310300'] = '31';
+        _tractMap['310400'] = '31';
+        _tractMap['310500'] = '31';
+        _tractMap['310600'] = '31';
+        _tractMap['310700'] = '31';
+        _tractMap['310800'] = '31';
+        _tractMap['310900'] = '31';
+        _tractMap['841200'] = '31';
+        _tractMap['841300'] = '31';
+        _tractMap['843200'] = '31';
+        _tractMap['320100'] = '32';
+        _tractMap['320400'] = '32';
+        _tractMap['320600'] = '32';
+        _tractMap['839000'] = '32';
+        _tractMap['839100'] = '32';
+        _tractMap['330100'] = '33';
+        _tractMap['330200'] = '33';
+        _tractMap['841000'] = '33';
+        _tractMap['340300'] = '34';
+        _tractMap['340400'] = '34';
+        _tractMap['340500'] = '34';
+        _tractMap['340600'] = '34';
+        _tractMap['841100'] = '34';
+        _tractMap['350100'] = '35';
+        _tractMap['350400'] = '35';
+        _tractMap['351000'] = '35';
+        _tractMap['351100'] = '35';
+        _tractMap['351400'] = '35';
+        _tractMap['351500'] = '35';
+        _tractMap['839200'] = '35';
+        _tractMap['839500'] = '35';
+        _tractMap['839600'] = '35';
+        _tractMap['842000'] = '35';
+        _tractMap['360200'] = '36';
+        _tractMap['836400'] = '36';
+        _tractMap['836500'] = '36';
+        _tractMap['835500'] = '37';
+        _tractMap['835600'] = '37';
+        _tractMap['380100'] = '38';
+        _tractMap['380200'] = '38';
+        _tractMap['380500'] = '38';
+        _tractMap['380700'] = '38';
+        _tractMap['381200'] = '38';
+        _tractMap['381400'] = '38';
+        _tractMap['381500'] = '38';
+        _tractMap['381700'] = '38';
+        _tractMap['381800'] = '38';
+        _tractMap['381900'] = '38';
+        _tractMap['835700'] = '38';
+        _tractMap['835800'] = '38';
+        _tractMap['835900'] = '38';
+        _tractMap['836000'] = '38';
+        _tractMap['843600'] = '38';
+        _tractMap['390100'] = '39';
+        _tractMap['390200'] = '39';
+        _tractMap['390300'] = '39';
+        _tractMap['390400'] = '39';
+        _tractMap['390500'] = '39';
+        _tractMap['390600'] = '39';
+        _tractMap['390700'] = '39';
+        _tractMap['400300'] = '40';
+        _tractMap['400400'] = '40';
+        _tractMap['400500'] = '40';
+        _tractMap['400800'] = '40';
+        _tractMap['834500'] = '40';
+        _tractMap['836100'] = '40';
+        _tractMap['410100'] = '41';
+        _tractMap['410200'] = '41';
+        _tractMap['410500'] = '41';
+        _tractMap['410600'] = '41';
+        _tractMap['410700'] = '41';
+        _tractMap['410800'] = '41';
+        _tractMap['410900'] = '41';
+        _tractMap['411000'] = '41';
+        _tractMap['411100'] = '41';
+        _tractMap['411200'] = '41';
+        _tractMap['836200'] = '41';
+        _tractMap['836300'] = '41';
+        _tractMap['420100'] = '42';
+        _tractMap['420200'] = '42';
+        _tractMap['420300'] = '42';
+        _tractMap['420400'] = '42';
+        _tractMap['420500'] = '42';
+        _tractMap['420600'] = '42';
+        _tractMap['420700'] = '42';
+        _tractMap['420800'] = '42';
+        _tractMap['421200'] = '42';
+        _tractMap['834400'] = '42';
+        _tractMap['843900'] = '42';
+        _tractMap['430101'] = '43';
+        _tractMap['430102'] = '43';
+        _tractMap['430200'] = '43';
+        _tractMap['430300'] = '43';
+        _tractMap['430400'] = '43';
+        _tractMap['430500'] = '43';
+        _tractMap['430600'] = '43';
+        _tractMap['430700'] = '43';
+        _tractMap['430800'] = '43';
+        _tractMap['430900'] = '43';
+        _tractMap['431200'] = '43';
+        _tractMap['431301'] = '43';
+        _tractMap['431302'] = '43';
+        _tractMap['431400'] = '43';
+        _tractMap['834200'] = '43';
+        _tractMap['440101'] = '44';
+        _tractMap['440102'] = '44';
+        _tractMap['440201'] = '44';
+        _tractMap['440202'] = '44';
+        _tractMap['440300'] = '44';
+        _tractMap['440600'] = '44';
+        _tractMap['440700'] = '44';
+        _tractMap['440800'] = '44';
+        _tractMap['440900'] = '44';
+        _tractMap['842400'] = '44';
+        _tractMap['450300'] = '45';
+        _tractMap['834300'] = '45';
+        _tractMap['460100'] = '46';
+        _tractMap['460200'] = '46';
+        _tractMap['460301'] = '46';
+        _tractMap['460302'] = '46';
+        _tractMap['460400'] = '46';
+        _tractMap['460500'] = '46';
+        _tractMap['460600'] = '46';
+        _tractMap['460700'] = '46';
+        _tractMap['461000'] = '46';
+        _tractMap['833900'] = '46';
+        _tractMap['470100'] = '47';
+        _tractMap['480100'] = '48';
+        _tractMap['480200'] = '48';
+        _tractMap['480300'] = '48';
+        _tractMap['480400'] = '48';
+        _tractMap['480500'] = '48';
+        _tractMap['490300'] = '49';
+        _tractMap['490400'] = '49';
+        _tractMap['490500'] = '49';
+        _tractMap['490600'] = '49';
+        _tractMap['490700'] = '49';
+        _tractMap['490800'] = '49';
+        _tractMap['490901'] = '49';
+        _tractMap['490902'] = '49';
+        _tractMap['491000'] = '49';
+        _tractMap['491100'] = '49';
+        _tractMap['491200'] = '49';
+        _tractMap['491300'] = '49';
+        _tractMap['491400'] = '49';
+        _tractMap['834000'] = '49';
+        _tractMap['500100'] = '50';
+        _tractMap['500200'] = '50';
+        _tractMap['500300'] = '50';
+        _tractMap['510100'] = '51';
+        _tractMap['510200'] = '51';
+        _tractMap['510300'] = '51';
+        _tractMap['838800'] = '51';
+        _tractMap['520100'] = '52';
+        _tractMap['520200'] = '52';
+        _tractMap['520300'] = '52';
+        _tractMap['520400'] = '52';
+        _tractMap['520500'] = '52';
+        _tractMap['520600'] = '52';
+        _tractMap['530100'] = '53';
+        _tractMap['530200'] = '53';
+        _tractMap['530300'] = '53';
+        _tractMap['530400'] = '53';
+        _tractMap['530501'] = '53';
+        _tractMap['530502'] = '53';
+        _tractMap['530503'] = '53';
+        _tractMap['530600'] = '53';
+        _tractMap['821402'] = '53';
+        _tractMap['540101'] = '54';
+        _tractMap['540102'] = '54';
+        _tractMap['550100'] = '55';
+        _tractMap['550200'] = '55';
+        _tractMap['560100'] = '56';
+        _tractMap['560200'] = '56';
+        _tractMap['560300'] = '56';
+        _tractMap['560400'] = '56';
+        _tractMap['560700'] = '56';
+        _tractMap['560800'] = '56';
+        _tractMap['560900'] = '56';
+        _tractMap['561000'] = '56';
+        _tractMap['561100'] = '56';
+        _tractMap['835200'] = '56';
+        _tractMap['980100'] = '56';
+        _tractMap['570100'] = '57';
+        _tractMap['570200'] = '57';
+        _tractMap['570300'] = '57';
+        _tractMap['570400'] = '57';
+        _tractMap['570500'] = '57';
+        _tractMap['580100'] = '58';
+        _tractMap['580200'] = '58';
+        _tractMap['580300'] = '58';
+        _tractMap['580400'] = '58';
+        _tractMap['580501'] = '58';
+        _tractMap['580502'] = '58';
+        _tractMap['580600'] = '58';
+        _tractMap['580700'] = '58';
+        _tractMap['580800'] = '58';
+        _tractMap['842800'] = '58';
+        _tractMap['590500'] = '59';
+        _tractMap['590600'] = '59';
+        _tractMap['590700'] = '59';
+        _tractMap['840300'] = '59';
+        _tractMap['840400'] = '59';
+        _tractMap['600400'] = '60';
+        _tractMap['600600'] = '60';
+        _tractMap['600700'] = '60';
+        _tractMap['600900'] = '60';
+        _tractMap['839700'] = '60';
+        _tractMap['839800'] = '60';
+        _tractMap['839900'] = '60';
+        _tractMap['840000'] = '60';
+        _tractMap['840100'] = '60';
+        _tractMap['840200'] = '60';
+        _tractMap['610300'] = '61';
+        _tractMap['610400'] = '61';
+        _tractMap['610800'] = '61';
+        _tractMap['611000'] = '61';
+        _tractMap['611100'] = '61';
+        _tractMap['611200'] = '61';
+        _tractMap['611300'] = '61';
+        _tractMap['611400'] = '61';
+        _tractMap['611500'] = '61';
+        _tractMap['611600'] = '61';
+        _tractMap['611700'] = '61';
+        _tractMap['611800'] = '61';
+        _tractMap['611900'] = '61';
+        _tractMap['612000'] = '61';
+        _tractMap['612100'] = '61';
+        _tractMap['842600'] = '61';
+        _tractMap['843800'] = '61';
+        _tractMap['620100'] = '62';
+        _tractMap['620200'] = '62';
+        _tractMap['620300'] = '62';
+        _tractMap['620400'] = '62';
+        _tractMap['630100'] = '63';
+        _tractMap['630200'] = '63';
+        _tractMap['630300'] = '63';
+        _tractMap['630400'] = '63';
+        _tractMap['630500'] = '63';
+        _tractMap['630800'] = '63';
+        _tractMap['630900'] = '63';
+        _tractMap['835100'] = '63';
+        _tractMap['640100'] = '64';
+        _tractMap['640300'] = '64';
+        _tractMap['640400'] = '64';
+        _tractMap['640500'] = '64';
+        _tractMap['640600'] = '64';
+        _tractMap['640700'] = '64';
+        _tractMap['640800'] = '64';
+        _tractMap['650100'] = '65';
+        _tractMap['650200'] = '65';
+        _tractMap['650301'] = '65';
+        _tractMap['650302'] = '65';
+        _tractMap['650400'] = '65';
+        _tractMap['650500'] = '65';
+        _tractMap['660301'] = '66';
+        _tractMap['660302'] = '66';
+        _tractMap['660400'] = '66';
+        _tractMap['660500'] = '66';
+        _tractMap['660600'] = '66';
+        _tractMap['660700'] = '66';
+        _tractMap['660800'] = '66';
+        _tractMap['660900'] = '66';
+        _tractMap['661000'] = '66';
+        _tractMap['661100'] = '66';
+        _tractMap['835000'] = '66';
+        _tractMap['670100'] = '67';
+        _tractMap['670200'] = '67';
+        _tractMap['670300'] = '67';
+        _tractMap['670400'] = '67';
+        _tractMap['670500'] = '67';
+        _tractMap['670600'] = '67';
+        _tractMap['670700'] = '67';
+        _tractMap['670800'] = '67';
+        _tractMap['670900'] = '67';
+        _tractMap['671100'] = '67';
+        _tractMap['671200'] = '67';
+        _tractMap['671300'] = '67';
+        _tractMap['671400'] = '67';
+        _tractMap['671500'] = '67';
+        _tractMap['671600'] = '67';
+        _tractMap['671800'] = '67';
+        _tractMap['671900'] = '67';
+        _tractMap['672000'] = '67';
+        _tractMap['834900'] = '67';
+        _tractMap['680500'] = '68';
+        _tractMap['680600'] = '68';
+        _tractMap['680900'] = '68';
+        _tractMap['681000'] = '68';
+        _tractMap['681100'] = '68';
+        _tractMap['681200'] = '68';
+        _tractMap['681300'] = '68';
+        _tractMap['681400'] = '68';
+        _tractMap['834600'] = '68';
+        _tractMap['834700'] = '68';
+        _tractMap['834800'] = '68';
+        _tractMap['690300'] = '69';
+        _tractMap['690400'] = '69';
+        _tractMap['690500'] = '69';
+        _tractMap['690900'] = '69';
+        _tractMap['691000'] = '69';
+        _tractMap['691100'] = '69';
+        _tractMap['691200'] = '69';
+        _tractMap['691300'] = '69';
+        _tractMap['691400'] = '69';
+        _tractMap['691500'] = '69';
+        _tractMap['841800'] = '69';
+        _tractMap['842500'] = '69';
+        _tractMap['700100'] = '70';
+        _tractMap['700200'] = '70';
+        _tractMap['700301'] = '70';
+        _tractMap['700302'] = '70';
+        _tractMap['700401'] = '70';
+        _tractMap['700402'] = '70';
+        _tractMap['700501'] = '70';
+        _tractMap['700502'] = '70';
+        _tractMap['710100'] = '71';
+        _tractMap['710200'] = '71';
+        _tractMap['710300'] = '71';
+        _tractMap['710400'] = '71';
+        _tractMap['710500'] = '71';
+        _tractMap['710600'] = '71';
+        _tractMap['710700'] = '71';
+        _tractMap['710800'] = '71';
+        _tractMap['710900'] = '71';
+        _tractMap['711000'] = '71';
+        _tractMap['711100'] = '71';
+        _tractMap['711200'] = '71';
+        _tractMap['711300'] = '71';
+        _tractMap['711400'] = '71';
+        _tractMap['711500'] = '71';
+        _tractMap['720100'] = '72';
+        _tractMap['720200'] = '72';
+        _tractMap['720300'] = '72';
+        _tractMap['720400'] = '72';
+        _tractMap['720500'] = '72';
+        _tractMap['720600'] = '72';
+        _tractMap['720700'] = '72';
+        _tractMap['730100'] = '73';
+        _tractMap['730201'] = '73';
+        _tractMap['730202'] = '73';
+        _tractMap['730300'] = '73';
+        _tractMap['730400'] = '73';
+        _tractMap['730500'] = '73';
+        _tractMap['730600'] = '73';
+        _tractMap['730700'] = '73';
+        _tractMap['740100'] = '74';
+        _tractMap['740200'] = '74';
+        _tractMap['740300'] = '74';
+        _tractMap['740400'] = '74';
+        _tractMap['750100'] = '75';
+        _tractMap['750200'] = '75';
+        _tractMap['750300'] = '75';
+        _tractMap['750400'] = '75';
+        _tractMap['750500'] = '75';
+        _tractMap['750600'] = '75';
+        _tractMap['823304'] = '75';
+        _tractMap['760801'] = '76';
+        _tractMap['760802'] = '76';
+        _tractMap['760803'] = '76';
+        _tractMap['770500'] = '76';
+        _tractMap['770602'] = '76';
+        _tractMap['770700'] = '76';
+        _tractMap['770800'] = '76';
+        _tractMap['770902'] = '76';
+        _tractMap['980000'] = '76';
+        _tractMap['030101'] = '77';
+        _tractMap['030102'] = '77';
+        _tractMap['030103'] = '77';
+        _tractMap['030104'] = '77';
+        _tractMap['030200'] = '77';
+        _tractMap['030300'] = '77';
+        _tractMap['030400'] = '77';
+        _tractMap['030500'] = '77';
+        _tractMap['030601'] = '77';
+        _tractMap['030603'] = '77';
+        _tractMap['030604'] = '77';
+        _tractMap['030701'] = '77';
+        _tractMap['030702'] = '77';
+        _tractMap['030703'] = '77';
+        _tractMap['030706'] = '77';
+        _tractMap['030800'] = '77';
+        _tractMap['030900'] = '77';
+        _tractMap['840000'] = '76';
+        _tractMap['840801'] = '76';
+      }
+      var _caMap;
+      function initCAMap() {
+        _caMap = new Array();
+        _caMap['01'] = 'Rogers Park';
+        _caMap['02'] = 'West Ridge';
+        _caMap['03'] = 'Uptown';
+        _caMap['04'] = 'Lincoln Square';
+        _caMap['05'] = 'North Center';
+        _caMap['06'] = 'Lake View';
+        _caMap['07'] = 'Lincoln Park';
+        _caMap['08'] = 'Near North Side';
+        _caMap['09'] = 'Edison Park';
+        _caMap['10'] = 'Norwood Park';
+        _caMap['11'] = 'Jefferson Park';
+        _caMap['12'] = 'Forest Glen';
+        _caMap['13'] = 'North Park';
+        _caMap['14'] = 'Albany Park';
+        _caMap['15'] = 'Portage Park';
+        _caMap['16'] = 'Irving Park';
+        _caMap['17'] = 'Dunning';
+        _caMap['18'] = 'Montclare';
+        _caMap['19'] = 'Belmont Cragin';
+        _caMap['20'] = 'Hermosa';
+        _caMap['21'] = 'Avondale';
+        _caMap['22'] = 'Logan Square';
+        _caMap['23'] = 'Humboldt Park';
+        _caMap['24'] = 'West Town';
+        _caMap['25'] = 'Austin';
+        _caMap['26'] = 'West Garfield Park';
+        _caMap['27'] = 'East Garfield Park';
+        _caMap['28'] = 'Near West';
+        _caMap['29'] = 'North Lawndale';
+        _caMap['30'] = 'South Lawndale';
+        _caMap['31'] = 'Lower West Side';
+        _caMap['32'] = 'Loop';
+        _caMap['33'] = 'Near South Side';
+        _caMap['34'] = 'Armour Square';
+        _caMap['35'] = 'Douglas';
+        _caMap['36'] = 'Oakland';
+        _caMap['37'] = 'Fuller Park';
+        _caMap['38'] = 'Grand Boulevard';
+        _caMap['39'] = 'Kenwood';
+        _caMap['40'] = 'Washington Park';
+        _caMap['41'] = 'Hyde Park';
+        _caMap['42'] = 'Woodlawn';
+        _caMap['43'] = 'South Shore';
+        _caMap['44'] = 'Chatham';
+        _caMap['45'] = 'Avalon Park';
+        _caMap['46'] = 'South Chicago';
+        _caMap['47'] = 'Burnside';
+        _caMap['48'] = 'Calumet Heights';
+        _caMap['49'] = 'Roseland';
+        _caMap['50'] = 'Pullman';
+        _caMap['51'] = 'South Deering';
+        _caMap['52'] = 'East Side';
+        _caMap['53'] = 'West Pullman';
+        _caMap['54'] = 'Riverdale';
+        _caMap['55'] = 'Hegewisch';
+        _caMap['56'] = 'Garfield Ridge';
+        _caMap['57'] = 'Archer Heights';
+        _caMap['58'] = 'Brighton Park';
+        _caMap['59'] = 'McKinley Park';
+        _caMap['60'] = 'Bridgeport';
+        _caMap['61'] = 'New City';
+        _caMap['62'] = 'West Elsdon';
+        _caMap['63'] = 'Gage Park';
+        _caMap['64'] = 'Clearing';
+        _caMap['65'] = 'West Lawn';
+        _caMap['66'] = 'Chicago Lawn';
+        _caMap['67'] = 'West Englewood';
+        _caMap['68'] = 'Englewood';
+        _caMap['69'] = 'Greater Grand Crossing';
+        _caMap['70'] = 'Ashburn';
+        _caMap['71'] = 'Auburn Gresham';
+        _caMap['72'] = 'Beverly';
+        _caMap['73'] = 'Washington Heights';
+        _caMap['74'] = 'Mount Greenwood';
+        _caMap['75'] = 'Morgan Park';
+        _caMap['76'] = 'O Hare';
+        _caMap['77'] = 'Edgewater';
+
+      }
+    </script>
+  </head>
+  <body>
+      <div id="controls" class="nicebox">
+      <div>
+        <select id="census-variable">
+          <option value="DP03_0120PE">% of families in poverty w children under 18</option>
+          <option value="DP02_0066PE">Percent of population over 25 that completed high
+          school</option>
+          <option value="DP05_0017E">Median age</option>
+          <option value="DP05_0001E">Total population</option>
+          <option value="DP02_0016E">Average family size</option>
+          <option value="DP03_0088E">Per-capita income</option>
+        </select>
+      </div>
+      <div id="legend">
+        <div id="census-min">min</div>
+        <div class="color-key"><span id="data-caret">&#x25c6;</span></div>
+        <div id="census-max">max</div>
+      </div>
+    </div>
+    <div id="data-box" class="nicebox">
+      <label id="data-label" for="data-value"></label>
+      <span id="data-value"></span>
+    </div>
+    <div id="map-canvas"></div>
+  </body>
+</html>
