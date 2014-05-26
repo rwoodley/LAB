@@ -1,0 +1,39 @@
+- make equations URL addressable
+- make animated gif
+- allow camera to spin different ways
+- simplify language: pre-canned functions. no var or ';' required.
+- help pages
+- on and off floor
+- undo button
+- some kind of help with errors.
+- allow user to choose different dependent variables...
+
+- Error cleanup:
+  no ; [ ]
+  check parens are balanced
+  check that only variables are present (e.g. radius, phi, theta, etc)
+
+
+
+        console.log(x + ',' + y + ',' + z); \
+
+
+
+Darin Allen Woodley born: 26 Jan 2001 in Bloomington, Monroe, Indiana
+
+cone:
+    var z = (x*x + y*y);  
+
+
+    var z = (petalPeak*x*x + petalTrough*y*y);  
+    temprad = radius*Math.cos(theta * nPetals/2 );
+    x = temprad*Math.cos(theta+offsetRadians);
+    y = temprad*Math.sin(theta+offsetRadians);
+
+
+
+
+    if (kind == 9)
+        return algoPetals(theta, radius, zdelta, 8);
+    if (kind == 10)
+        return algoPetals(theta, Math.exp(radius)/Math.exp(1), zdelta, 8);

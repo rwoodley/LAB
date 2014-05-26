@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - shapes</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+<canvas id="debug" style="position:absolute; left:100px"></canvas>
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+          ga('create', 'UA-41066114-1', 'rwoodley.org');
+          ga('send', 'pageview');
+        
+        </script>
+<script src="three.min.js"></script>
+<script src="../js/Mirror.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+var _camera, _scene, _renderer;
+var _meshes = [];
+var _verticalMirror, _verticalMirrorMesh, _groundMirror, _groundMirrorMesh, _leftMirror, _leftMirrorMesh;
+var _windowHalfX = window.innerWidth / 2;
+var _windowHalfY = window.innerHeight / 2;
+var _directionalLight;
+var _controls;
+var _shape;
+var _floor;
+var _tick = 0;
+var _ukey;
+init();
+animate();
+function getParameterByName(name) {
+	name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+	var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+	results = regex.exec(location.search);
+	return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+function init() {
+	// points that define shape
+	var pts = [];
+	var numPoints = 40;
+	var radius = .5;
+    
+	for ( i = 0; i < numPoints; i ++ ) {
+	    var a = 2* Math.PI * i / numPoints;
+	    pts.push( new THREE.Vector2 ( radius + Math.cos( a ) * radius, radius + Math.sin( a ) * radius ) );
+	}
+
+	_shape = new THREE.Shape( pts );
+
+	_renderer = new THREE.WebGLRenderer();
+	//_renderer = new THREE.CanvasRenderer();
+	_renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( _renderer.domElement );
+
+	_camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 4000 );
+	_camera.position.x = 100;
+	_camera.position.z = 500;
+	_camera.position.y = 400;
+	_controls = new THREE.OrbitControls( _camera, _renderer.domElement );
+
+	_scene = new THREE.Scene();
+
+//	doFloorMirror2();
+	_ukey = getParameterByName("ukey");
+	if (_ukey == "") _ukey = -1;
+	makeJSONRequest(_ukey);
+
+	// add subtle ambient lighting
+	var ambientLight = new THREE.AmbientLight(0xffffff);
+	_scene.add(ambientLight);
+	
+	// directional lighting
+	
+	_directionalLight = new THREE.DirectionalLight(0xffffff);
+	_directionalLight.position.set(1600, 1600, 1600).normalize();
+	_scene.add(_directionalLight);
+
+//	var geometry = new THREE.PlaneGeometry( size, size );
+
+	drawCoords();
+
+	window.addEventListener( 'resize', onWindowResize, false );
+}
+function doFloorMirror2(args) {
+		var planeGeo = new THREE.PlaneGeometry( 4000.1, 4000.1 );
+
+		_groundMirror = new THREE.Mirror( _renderer, _camera, {clipBias: 0.003, textureWidth: window.innerWidth, textureHeight: window.innerHeight, color: 0xaa0000 });
+		_groundMirrorMesh = new THREE.Mesh( planeGeo, _groundMirror.material );
+		_groundMirrorMesh.add( _groundMirror );
+		_groundMirrorMesh.position.set(0,0,0);
+		_groundMirrorMesh.rotateX( - Math.PI / 2 );
+		_scene.add( _groundMirrorMesh );
+
+		_verticalMirror = new THREE.Mirror( _renderer, _camera, { clipBias: 0.003, textureWidth: window.innerWidth, textureHeight: window.innerHeight, color:0x0000aa } );
+
+		_verticalMirrorMesh = new THREE.Mesh( planeGeo, _verticalMirror.material );
+		_verticalMirrorMesh.add( _verticalMirror );
+		_verticalMirrorMesh.position.set(0,0,0);
+		_scene.add( _verticalMirrorMesh );
+
+		_leftMirror = new THREE.Mirror( _renderer, _camera, { clipBias: 0.003, textureWidth: window.innerWidth, textureHeight: window.innerHeight, color:0x00aa00 } );
+
+		_leftMirrorMesh = new THREE.Mesh( planeGeo, _leftMirror.material );
+		_leftMirrorMesh.add( _leftMirror );
+		_leftMirrorMesh.position.set(0,0,0);
+		_leftMirrorMesh.rotateY( Math.PI / 2 );
+		_scene.add( _leftMirrorMesh );
+
+}
+
+function doFloor() {
+	// FLOOR
+	var floorTexture = new THREE.ImageUtils.loadTexture( 'grid_circles_metal_dark_texture_36214_256x256.jpg' );
+	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
+	floorTexture.repeat.set( 10, 10 );
+	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side:THREE.DoubleSide } );
+	var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
+	_floor = new THREE.Mesh(floorGeometry, floorMaterial);
+	_floor.rotation.x = Math.PI / 2;
+	_scene.add(_floor);	
+}
+function makeJSONRequest(ukey) {
+    console.log("Ukey = " + ukey);
+    var jsonfile = new XMLHttpRequest();
+    if (ukey === undefined || ukey == -1 || ukey == 0) {
+	console.log("setting ukey = -1");
+	jsonfile.open("GET", "http://facefield.org/CubeJSON.aspx?numFaces=128&timeStamp="+new Date().getTime(), true);    // timestamp prevents IE caching request
+	ukey = -1;
+    }
+    else
+	jsonfile.open("GET", "http://facefield.org/CubeJSON.aspx?numFaces=128&ukey=" + ukey, true);
+
+    jsonfile.onreadystatechange = function () {
+	console.log("Here " + jsonfile.readyState);
+	if (jsonfile.readyState == 4) {
+	    console.log("Status " + jsonfile.status);
+	    if (jsonfile.status == 200) {
+			var faces = JSON.parse(jsonfile.responseText);
+			console.log("Found " + faces.length);
+			var mins = [99999,99999,99999];
+			var maxs = [-99999,-99999,-99999];
+			for (var i = 0; i < faces.length; i++) {
+				for (var j = 0; j < 3; j++){
+					var ev = Math.abs(faces[i].eigenVectors[j]);
+					if (ev > maxs[j]) maxs[j] = ev;
+				}
+			}
+			var axisLength = 400;
+			var offset = 0; //-axisLength/2;
+			for (var i = 0; i < faces.length; i++) {
+            	var daColor = faces[i].selected == 1 ? 0x0000ff : faces[i].ukey == 19400 ? 0x00ff00 : 0x888888;
+				drawCube(5, faces[i].ukey,
+					 axisLength * (faces[i].eigenVectors[0])/(2*maxs[0]),
+					 axisLength * (faces[i].eigenVectors[1])/(2*maxs[1]),	
+					 axisLength* (faces[i].eigenVectors[2])/(2*maxs[2]),
+					 faces[i].path,
+                     daColor
+					 );
+                if (faces[i].selected == 1) {
+                    var daColor = 0xff0000;
+                    drawCube(5, faces[i].ukey,
+                         -1 * axisLength * (faces[i].eigenVectors[0])/(2*maxs[0]),
+                         -1 * axisLength * (faces[i].eigenVectors[1])/(2*maxs[1]),	
+                         -1 * axisLength* (faces[i].eigenVectors[2])/(2*maxs[2]),
+                         faces[i].antipath,
+                         daColor
+                         );
+                }
+			}
+//			alert(offset);
+			//_groundMirrorMesh.position.y = offset;
+			//_verticalMirrorMesh.position.z = offset;
+			//_leftMirrorMesh.position.x = offset;
+	    }
+	}
+    };
+    jsonfile.send(null);
+}
+function drawCube(size,ukey,x,y,z, path, color) {
+	var geometry = new THREE.ShapeGeometry(_shape);
+	var material = new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture(path), color: color });
+	material.side = THREE.DoubleSide;
+	
+	mesh = new THREE.Mesh( geometry, material );
+	mesh.scale.set( 20, 20, 1 )
+	mesh.position.x = x;
+	mesh.position.y = 0;
+	mesh.position.z = 0;
+	_scene.add( mesh );
+	var obj = { _x: x, _y : y, _z: z, _mesh: mesh };
+	_meshes.push(obj);
+	//drawCoordsFrom(x,y,z,20);
+
+}
+function drawCoords() {
+	drawLine(1000,0,0,'purple');
+	drawLine(0,1000,0,'purple');
+	drawLine(0,0,1000,'purple');
+}
+function drawLine(x,y,z,color1) { drawLineFrom(0,0,0,x,y,z,color1); }
+function drawCoordsFrom(x,y,z,len) {
+	drawLineFrom(x,y,z,x+len,y,z,'blue');
+	drawLineFrom(x,y,z,x,y+len,z,'red');
+	drawLineFrom(x,y,z,x,y,z+len,'yellow');
+}
+function drawLineFrom(x1,y1,z1,x2,y2,z2,color1) {
+	var lineGeometry = new THREE.Geometry();
+	var vertArray = lineGeometry.vertices;
+	vertArray.push( new THREE.Vector3(x1, y1, z1), new THREE.Vector3(x2, y2, z2) );
+	lineGeometry.computeLineDistances();
+	var lineMaterial = new THREE.LineBasicMaterial( { color:color1 } );
+	var line = new THREE.Line( lineGeometry, lineMaterial );
+	_scene.add(line);
+
+}
+function onWindowResize() {
+	_camera.aspect = window.innerWidth / window.innerHeight;
+	_camera.updateProjectionMatrix();
+	_renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+function animate() {
+	//_verticalMirror.render();
+	//_groundMirror.render();
+	//_leftMirror.render();
+	requestAnimationFrame( animate );
+	render();	
+}
+var _camRadius = 400;
+var _radians = 0;
+function render() {
+	_tick++;
+	/*
+	_radians += Math.PI/1024;
+	_camera.position.x = _camRadius * Math.cos(_radians);
+	_camera.position.z = _camRadius * Math.sin(_radians);
+	_camera.position.y = 400;
+	*/
+	var origin = new THREE.Vector3(0,0,0);
+	_camera.lookAt(_scene.position);
+	_directionalLight.position.set(_camera.position.x, _camera.position.y, _camera.position.z	).normalize();
+	var camPos = new THREE.Vector3(_camera.position.x, _camera.position.y, _camera.position.z);
+	var anticamPos = new THREE.Vector3(-_camera.position.x*.5, -_camera.position.y*.5, -_camera.position.z*.5);
+	/* 
+	var yTick = 0, zTick = 0;
+	if (_tick > 100)
+		yTick = _tick - 100;
+	if (_tick > 200)
+		zTick = _tick - 200;
+	*/
+	yTick = 100; zTick = 100;
+	for (var i =0; i < _meshes.length; i++) {
+		var obj = _meshes[i];
+		if (yTick <= 100)
+			obj._mesh.position.y = (yTick/100)*obj._y;
+		if (zTick <= 100)
+			obj._mesh.position.z = (zTick/100)*obj._z;
+	    obj._mesh.lookAt(camPos);
+	}
+	//console.log("in render, meshes.length = " + _meshes.length)
+	_renderer.render( _scene, _camera );
+	_controls.update();
+}
+
+	
+
+</script>
+
+	</body>
+</html>

@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{25B61AF2-3F9F-4276-9BA0-B2112B3153D4}"
+	ProjectSection(SolutionItems) = preProject
+		Detector.js = Detector.js
+		FormulaValidation.js = FormulaValidation.js
+		guiStuff.js = guiStuff.js
+		Help.html = Help.html
+		Main.js = Main.js
+		PolarToy.html = PolarToy.html
+		ToDo.txt = ToDo.txt
+		utilities.js = utilities.js
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
