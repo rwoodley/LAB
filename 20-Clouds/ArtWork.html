@@ -36,7 +36,7 @@
 
 		<script src="r69/three.js"></script>
 
-		<script src="r69/FirstPersonControls.js"></script>
+        <script src="r69/OrbitControls.js"></script>
 
 		<script src="r69/ImprovedNoise.js"></script>
 		<script src="r69/Detector.js"></script>
@@ -57,7 +57,7 @@
 
 			var mesh, texture;
 
-			var worldWidth = 256, worldDepth = 256,
+			var worldWidth = 512, worldDepth = 512,
 			worldHalfWidth = worldWidth / 2, worldHalfDepth = worldDepth / 2;
 
 			var clock = new THREE.Clock();
@@ -66,59 +66,59 @@
 			animate();
 
 			function init() {
+                container = document.getElementById( 'container' );
 
-				container = document.getElementById( 'container' );
+                camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
 
-				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+                scene = new THREE.Scene();
+                controls = new THREE.OrbitControls( camera, container.domElement );
+                renderer =  new THREE.WebGLRenderer();
+                stats = new Stats();
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.top = '0px';
+                container.appendChild( stats.domElement );
 
-				scene = new THREE.Scene();
+                var img = new Image();
+                img.onload = function () {
 
-				//controls = new THREE.FirstPersonControls( camera );
-				//controls.movementSpeed = 1000;
-				//controls.lookSpeed = 0.1;
-
-				data = generateHeight( worldWidth, worldDepth );
-
-				//camera.position.y = data[ worldHalfWidth + worldHalfDepth * worldWidth ] * 10 + 1500;
-                camera.position.x = 6000;
-                camera.position.y = 6000;
-                camera.position.z = 6000;
-                drawCoords();
-                
-				var geometry = new THREE.PlaneBufferGeometry( 7500, 7500, worldWidth - 1, worldDepth - 1 );
-				geometry.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) );
-
-				var vertices = geometry.attributes.position.array;
-
-				for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
-
-					vertices[ j + 1 ] = data[ i ] * 10;
-
-				}
-
-				texture = new THREE.Texture( generateTexture( data, worldWidth, worldDepth ), new THREE.UVMapping(), THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping );
-				texture.needsUpdate = true;
-
-				mesh = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { map: texture } ) );
-				scene.add( mesh );
-
-				renderer = new THREE.WebGLRenderer();
-				renderer.setClearColor( 0xbfd1e5 );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-				container.innerHTML = "";
-
-				container.appendChild( renderer.domElement );
-
-				stats = new Stats();
-				stats.domElement.style.position = 'absolute';
-				stats.domElement.style.top = '0px';
-				container.appendChild( stats.domElement );
-
-				//
-
-				window.addEventListener( 'resize', onWindowResize, false );
-
+                    
+                    //data = generateHeight( worldWidth, worldDepth );
+                    data = getHeightData(img);
+    
+                    //camera.position.y = data[ worldHalfWidth + worldHalfDepth * worldWidth ] * 10 + 1500;
+                    camera.position.x = 6000;
+                    camera.position.y = 6000;
+                    camera.position.z = 6000;
+                    drawCoords();
+                    
+                    var geometry = new THREE.PlaneBufferGeometry( 7500, 7500, worldWidth - 1, worldDepth - 1 );
+                    geometry.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) );
+    
+    				var texture = new THREE.Texture( generateTexture( data, worldWidth, worldDepth ), new THREE.UVMapping(), THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping );
+    				texture.needsUpdate = true;
+                    var material = new THREE.MeshLambertMaterial( { map: texture } );
+       
+                    mesh = new THREE.Mesh( geometry, material );
+                                                            
+                    var vertices = geometry.attributes.position.array;
+    
+                    for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
+                        vertices[ j + 1 ] = data[ i ];
+                    }
+    
+                    var ambientLight = new THREE.AmbientLight(0xbbbbbb);
+                    scene.add(ambientLight);
+                    scene.add( mesh );    
+                    
+                    renderer.setClearColor( 0xbfd1e5 );
+                    renderer.setSize( window.innerWidth, window.innerHeight );
+    
+                    document.getElementById( 'container' ).innerHTML = "";
+                    container.appendChild( renderer.domElement );
+    
+                    window.addEventListener( 'resize', onWindowResize, false );
+                }
+                img.src = 'HeightMap.png';
 			}
 
 			function onWindowResize() {
@@ -128,34 +128,56 @@
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
-				//controls.handleResize();
-
 			}
 
 			function generateHeight( width, height ) {
 
-				var size = width * height, data = new Uint8Array( size ),
-				perlin = new ImprovedNoise(), quality = .2, z = Math.random() * 100;
+				var size = width * height, data = new Array( size );
+                for ( var i = 0; i < size; i ++ ) {
 
-				for ( var j = 0; j < 4; j ++ ) {
-
-					for ( var i = 0; i < size; i ++ ) {
-
-						var x = i % width, y = ~~ ( i / width );
-						data[ i ] += Math.abs( perlin.noise( x / quality, y / quality, z ) * quality * 1.75 );
-
-					}
-
-					quality *= 5;
-
-				}
+                    var x = i % width, y = ~~ ( i / width );
+                    var nx = x/width - .5;
+                    var ny = y/height - .5;
+                    var z = (nx*nx + ny * ny);
+                    data[ i ] = z;
+                }
 
 				return data;
 
 			}
+            function getHeightData(img) {
 
-			function generateTexture( data, width, height ) {
-
+                var canvas = document.createElement( 'canvas' );
+                canvas.width = worldWidth;
+                canvas.height = worldDepth;
+                var context = canvas.getContext( '2d' );
+            
+                var size = worldWidth * worldDepth, data = new Float32Array( size );
+            
+                context.drawImage(img,0,0);
+            
+                var mindata = 9999999, maxdata = -9999999;
+                for ( var i = 0; i < size; i ++ ) {
+                    data[i] = 0
+                }
+            
+                var imgd = context.getImageData(0, 0, worldWidth, worldDepth);
+                var pix = imgd.data;
+            
+                var j=0;
+                for (var i = 0, n = pix.length; i < n; i += (4)) {
+                    var all = pix[i]+pix[i+1]+pix[i+2];
+                    data[j] = 30 * all/30;
+                    if (pix[j] < mindata) mindata = data[j];
+                    if (data[j] > maxdata)
+                        maxdata = data[j];
+                    j++;
+                }
+                console.log(mindata + "," + maxdata);
+                return data;
+            }
+			function generateTexture( indata, width, height ) {
+                var data = new Uint8Array( indata.length );
 				var canvas, canvasScaled, context, image, imageData,
 				level, diff, vector3, sun, shade;
 
@@ -165,6 +187,7 @@
 				sun.normalize();
 
 				canvas = document.createElement( 'canvas' );
+                //container.appendChild( canvas );
 				canvas.width = width;
 				canvas.height = height;
 
@@ -174,6 +197,8 @@
 
 				image = context.getImageData( 0, 0, canvas.width, canvas.height );
 				imageData = image.data;
+
+				for ( var i = 0; i < indata.length; i++ ) data[i] = indata[i] * 128.0/1050.0;
 
 				for ( var i = 0, j = 0, l = imageData.length; i < l; i += 4, j ++ ) {
 
@@ -227,7 +252,7 @@
 				requestAnimationFrame( animate );
 
 				render();
-                rotateCameraY(.02);
+                //rotateCameraY(.02);
                 camera.lookAt(new THREE.Vector3(0,0,0));
                 stats.update();
 
@@ -235,7 +260,7 @@
 
 			function render() {
 
-				//controls.update( clock.getDelta() );
+				controls.update( clock.getDelta() );
 				renderer.render( scene, camera );
                 //camera.lookAtPosition = new THREE.Vector3( 0, 0, 0 );
                 //console.log(camera.lookAtPosition.x + "," + camera.lookAtPosition.y + "," + camera.lookAtPosition.z);
@@ -282,6 +307,5 @@
                 //_camera.position.y = 4;
             }
 </script>
-
 	</body>
 </html>
