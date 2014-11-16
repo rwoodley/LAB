@@ -30,6 +30,41 @@
 		</style>
 	</head>
 	<body>
+		<script id="vs" type="x-shader/x-vertex">
+
+			varying vec2 vUv;
+
+			void main() {
+
+				vUv = uv;
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+			}
+
+		</script>
+
+		<script id="fs" type="x-shader/x-fragment">
+
+			uniform sampler2D map;
+
+			uniform vec3 fogColor;
+			uniform float fogNear;
+			uniform float fogFar;
+
+			varying vec2 vUv;
+
+			void main() {
+
+				float depth = gl_FragCoord.z / gl_FragCoord.w;
+				float fogFactor = smoothstep( fogNear, fogFar, depth );
+
+				gl_FragColor = texture2D( map, vUv );
+				gl_FragColor.w *= pow( gl_FragCoord.z, 20.0 );
+				gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
+
+			}
+
+		</script>
 
 		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
 		<div id="info"><a href="http://threejs.org" target="_blank">three.js</a> - webgl terrain demo<br />(left click: forward, right click: backward)</div>
@@ -54,6 +89,7 @@
 			var container, stats;
 
 			var camera, controls, scene, renderer;
+            var clouds = [];
 
 			var mesh, texture;
 
@@ -81,19 +117,18 @@
                 var img = new Image();
                 img.onload = function () {
 
-                    
-                    //data = generateHeight( worldWidth, worldDepth );
                     data = getHeightData(img);
     
                     //camera.position.y = data[ worldHalfWidth + worldHalfDepth * worldWidth ] * 10 + 1500;
-                    camera.position.x = 6000;
-                    camera.position.y = 6000;
-                    camera.position.z = 6000;
-                    drawCoords();
-                    
+                    //camera.position.x = 6000; camera.position.y = 6000; camera.position.z = 6000;
+                    camera.position.x = 3700; camera.position.y = 3900; camera.position.z = 4300;
+                    //drawCoords();
+                    var axes = new THREE.AxisHelper( 5000 );
+                    scene.add(axes);
+        
                     var geometry = new THREE.PlaneBufferGeometry( 7500, 7500, worldWidth - 1, worldDepth - 1 );
                     geometry.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) );
-    
+ 
     				var texture = new THREE.Texture( generateTexture( data, worldWidth, worldDepth ), new THREE.UVMapping(), THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping );
     				texture.needsUpdate = true;
                     var material = new THREE.MeshLambertMaterial( { map: texture } );
@@ -109,7 +144,21 @@
                     var ambientLight = new THREE.AmbientLight(0xbbbbbb);
                     scene.add(ambientLight);
                     scene.add( mesh );    
+                    scene.fog=new THREE.FogExp2( 0xffffff, 0.00007 );
+                    addClouds(scene);
+
+                    var planeGeometry = new THREE.PlaneGeometry(5000,1500);
+                    var planeMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+                    var plane = new THREE.Mesh(planeGeometry,planeMaterial);
                     
+                    //plane.rotation.x=Math.PI;
+                    plane.position.x = -1800;
+                    plane.position.y = 700;
+                    plane.position.z = 1400;
+                    plane.rotation.x=-.5*Math.PI;
+                    plane.rotation.z=.25*Math.PI;
+                    //scene.add(plane);
+
                     renderer.setClearColor( 0xbfd1e5 );
                     renderer.setSize( window.innerWidth, window.innerHeight );
     
@@ -120,7 +169,56 @@
                 }
                 img.src = 'HeightMap.png';
 			}
+            function addClouds(scene) {
+                var geometry = new THREE.Geometry();
+    			var texture = THREE.ImageUtils.loadTexture( 'cloud10.png', null, animate );
+				texture.magFilter = THREE.LinearMipMapLinearFilter;
+				texture.minFilter = THREE.LinearMipMapLinearFilter;
 
+                //var material = new THREE.MeshLambertMaterial( { map: texture } );
+                var fog = new THREE.Fog( 0xffffff, - 100, 3000 );
+                material = new THREE.ShaderMaterial( {
+
+					uniforms: {
+
+						"map": { type: "t", value: texture },
+						"fogColor" : { type: "c", value: fog.color },
+						"fogNear" : { type: "f", value: fog.near },
+						"fogFar" : { type: "f", value: fog.far },
+
+					},
+					vertexShader: document.getElementById( 'vs' ).textContent,
+					fragmentShader: document.getElementById( 'fs' ).textContent,
+					depthWrite: false,
+					depthTest: false,
+					transparent: true
+
+				} );
+
+
+				for ( var i = 0; i < 120; i++ ) {
+    				var plane = new THREE.Mesh( new THREE.PlaneGeometry( 640, 640 ), material );
+                    var ranx = Math.random();
+                    var dispersion = 1.5;
+                    var ranz =  ranx + dispersion * Math.random() - dispersion/2;
+					plane.position.x = -1 * ranx * 6000 + 3000;
+					plane.position.z = -plane.position.x *
+                     (1 + dispersion * Math.random() - dispersion /2);
+					plane.position.y =  (800 + (Math.random() * 400 - 200));
+                    plane.rotation.x = -.5*Math.PI;
+					//plane.rotation.z = Math.random() * Math.PI;
+					//plane.scale.x = plane.scale.y = Math.random() * Math.random() * 1.5 + 0.5;
+
+					//THREE.GeometryUtils.merge( geometry, plane );
+                    var cloudMesh = plane;
+                    clouds.push(cloudMesh);
+                    scene.add(cloudMesh);
+				}
+
+				//mesh = new THREE.Mesh( geometry, material );
+                //mesh.rotation.y = 0.5 * Math.PI;
+                scene.add(mesh);
+            }
 			function onWindowResize() {
 
 				camera.aspect = window.innerWidth / window.innerHeight;
@@ -130,21 +228,6 @@
 
 			}
 
-			function generateHeight( width, height ) {
-
-				var size = width * height, data = new Array( size );
-                for ( var i = 0; i < size; i ++ ) {
-
-                    var x = i % width, y = ~~ ( i / width );
-                    var nx = x/width - .5;
-                    var ny = y/height - .5;
-                    var z = (nx*nx + ny * ny);
-                    data[ i ] = z;
-                }
-
-				return data;
-
-			}
             function getHeightData(img) {
 
                 var canvas = document.createElement( 'canvas' );
@@ -187,7 +270,6 @@
 				sun.normalize();
 
 				canvas = document.createElement( 'canvas' );
-                //container.appendChild( canvas );
 				canvas.width = width;
 				canvas.height = height;
 
@@ -252,8 +334,6 @@
 				requestAnimationFrame( animate );
 
 				render();
-                //rotateCameraY(.02);
-                camera.lookAt(new THREE.Vector3(0,0,0));
                 stats.update();
 
 			}
@@ -262,30 +342,22 @@
 
 				controls.update( clock.getDelta() );
 				renderer.render( scene, camera );
-                //camera.lookAtPosition = new THREE.Vector3( 0, 0, 0 );
-                //console.log(camera.lookAtPosition.x + "," + camera.lookAtPosition.y + "," + camera.lookAtPosition.z);
-
+                //rotateCameraY(.02);
+                camera.lookAt(new THREE.Vector3(0,0,0));
+                console.log(camera.position.x + "," + camera.position.y + "," + camera.position.z);
+                var camPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
+                for (var i = 0; i < clouds.length; i++) {
+                    
+                    var cloud = clouds[i];
+                    cloud.position.x += 10;
+                    cloud.position.z += -10;
+                    if (cloud.position.x > 3000) {
+                        cloud.position.x = -3000;
+                        cloud.position.z = -cloud.position.x;
+                    }
+                    cloud.lookAt(camPos);
+                }
 			}
-            function drawCoords() {
-                drawLine(10000,0,0,'red');
-                drawLine(0,10000,0,'green');
-                drawLine(0,0,10000,'blue');
-            }
-            function drawLine(x,y,z,color1) { drawLineFrom(0,0,0,x,y,z,color1); }
-            function drawCoordsFrom(x,y,z,len) {
-                drawLineFrom(x,y,z,x+len,y,z,'blue');
-                drawLineFrom(x,y,z,x,y+len,z,'red');
-                drawLineFrom(x,y,z,x,y,z+len,'yellow');
-            }
-            function drawLineFrom(x1,y1,z1,x2,y2,z2,color1) {
-                var lineGeometry = new THREE.Geometry();
-                var vertArray = lineGeometry.vertices;
-                vertArray.push( new THREE.Vector3(x1, y1, z1), new THREE.Vector3(x2, y2, z2) );
-                lineGeometry.computeLineDistances();
-                var lineMaterial = new THREE.LineBasicMaterial( { color:color1 } );
-                var line = new THREE.Line( lineGeometry, lineMaterial );
-                scene.add(line);
-            }
             var _radians = 0;
             function rotateCameraY(radians) {
                 var x = camera.position.x;	var y = camera.position.y;	var z = camera.position.z;
