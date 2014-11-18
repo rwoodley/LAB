@@ -124,7 +124,10 @@
                     //camera.position.y = data[ worldHalfWidth + worldHalfDepth * worldWidth ] * 10 + 1500;
                     //camera.position.x = 6000; camera.position.y = 6000; camera.position.z = 6000;
                     //camera.position.x = 3700; camera.position.y = 3900; camera.position.z = 4300;
-                    camera.position.x = 2500; camera.position.y = 5800; camera.position.z = 2900;
+                    //camera.position.x = 2500; camera.position.y = 5800; camera.position.z = 2900;
+                    //camera.position.x = 1244; camera.position.y = 3583; camera.position.z = 3028;
+                    //camera.position.x = 1437; camera.position.y = 3936; camera.position.z = 2447;
+                    camera.position.x = 1828; camera.position.y = 3241; camera.position.z = 3113;
                     //drawCoords();
                     var axes = new THREE.AxisHelper( 5000 );
                     scene.add(axes);
@@ -187,12 +190,13 @@
 				} );
 
 
-				for ( var i = 0; i < 120; i++ ) {
+				for ( var i = 0; i < 250; i++ ) {
+                    var cloudSize = Math.random() * 300 + 490;
     				var plane = new THREE.Mesh( new THREE.PlaneGeometry( 640, 640 ), material );
                     var ranx = Math.random();
-					plane.position.x = ranx * (cloudMaxx - cloudMinx) + cloudMinx;
+					plane.position.x = ranx* (cloudMaxx - cloudMinx) + cloudMinx;
 					plane.position.z = calculateRandomCloudZFromXPos(plane.position.x);
-					//plane.position.x = -calculateRandomCloudZFromXPos(plane.position.x);
+                    plane.position.x = calculateRandomCloudZFromXPos(plane.position.z);
 					plane.position.y =  (800 + (Math.random() * 400 - 200));
                     plane.rotation.x = -.5*Math.PI;
 					//plane.rotation.z = Math.random() * Math.PI;
@@ -206,11 +210,13 @@
 
 				//mesh = new THREE.Mesh( geometry, material );
                 //mesh.rotation.y = 0.5 * Math.PI;
-                sizeCloud(mesh);
+                scaleCloud(mesh);
                 scene.add(mesh);
             }
-            function sizeCloud(cloud) {
-                var xpos = cloud.position.x;
+            function scaleCloud(cloud) {
+                // http://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+                // note, slope of this line is -1.
+                var xpos = (cloud.position.x - cloud.position.z)/2;
                 
                 var xposOnScaleOf0To1 = (xpos - cloudMinx)/(cloudMaxx - cloudMinx);
                 var sizeFactor = 1;
@@ -228,8 +234,8 @@
                 
             }
             function calculateRandomCloudZFromXPos(x) {
-                    var dispersion = 0.4;
-					return -x * (1 + dispersion * Math.random() - dispersion /2);
+                    var dispersion = 0.4 * (cloudMaxx - cloudMinx);
+					return -x + dispersion * Math.random() - dispersion /2;
             }
 			function onWindowResize() {
 
@@ -268,7 +274,7 @@
                         maxdata = data[j];
                     j++;
                 }
-                console.log(mindata + "," + maxdata);
+                //console.log(mindata + "," + maxdata);
                 return data;
             }
 			function generateTexture( indata, width, height ) {
@@ -356,7 +362,7 @@
 				renderer.render( scene, camera );
                 //rotateCameraY(.02);
                 camera.lookAt(new THREE.Vector3(0,0,0));
-                console.log(camera.position.x + "," + camera.position.y + "," + camera.position.z);
+                //console.log(camera.position.x + "," + camera.position.y + "," + camera.position.z);
                 var camPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
                 for (var i = 0; i < clouds.length; i++) {
                     
@@ -365,10 +371,11 @@
                     cloud.position.z += -10;
                     if (cloud.position.x > cloudMaxx) {
                         cloud.position.x = -calculateRandomCloudZFromXPos(cloudMinx);
+                        console.log('x is ' + cloud.position.x);
                         cloud.position.z = calculateRandomCloudZFromXPos(cloudMinx);
                     }
                     cloud.lookAt(camPos);
-                    sizeCloud(cloud);
+                    scaleCloud(cloud);
                 }
 			}
             var _radians = 0;
