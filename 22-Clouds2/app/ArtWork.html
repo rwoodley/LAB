@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - terrain</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #61443e;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+
+				background-color: #bfd1e5;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+			}
+
+			a {
+
+				color: #a06851;
+			}
+
+		</style>
+	</head>
+	<body>
+		<script id="vs" type="x-shader/x-vertex">
+
+			varying vec2 vUv;
+
+			void main() {
+				vUv = uv;
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			}
+
+		</script>
+
+		<script id="fs" type="x-shader/x-fragment">
+
+			uniform sampler2D map;
+
+			uniform vec3 fogColor;
+			uniform float fogNear;
+			uniform float fogFar;
+
+			varying vec2 vUv;
+
+			void main() {
+
+				float depth = gl_FragCoord.z / gl_FragCoord.w;
+				float fogFactor = smoothstep( fogNear, fogFar, depth );
+
+				gl_FragColor = texture2D( map, vUv );
+				//gl_FragColor.w *= pow( gl_FragCoord.z, 20.0 );
+				gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
+
+			}
+
+		</script>
+
+		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+		<div id="info"><a href="http://threejs.org" target="_blank">three.js</a> - webgl terrain demo<br />(left click: forward, right click: backward)</div>
+
+		<script src="r69/three.js"></script>
+
+        <script src="r69/OrbitControls.js"></script>
+
+		<script src="r69/ImprovedNoise.js"></script>
+		<script src="r69/Detector.js"></script>
+		<script src="r69/stats.min.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) {
+
+				Detector.addGetWebGLMessage();
+				document.getElementById( 'container' ).innerHTML = "";
+
+			}
+
+			var container, stats;
+
+			var camera, controls, scene, renderer;
+            var clouds = [];
+            var cloudMinx = -4000;
+            var cloudMaxx = 4000;
+            
+			var mesh, texture;
+
+			var worldWidth = 512, worldDepth = 512,
+			worldHalfWidth = worldWidth / 2, worldHalfDepth = worldDepth / 2;
+
+			var clock = new THREE.Clock();
+
+			init();
+			animate();
+
+			function init() {
+                container = document.getElementById( 'container' );
+
+                camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+                scene = new THREE.Scene();
+                controls = new THREE.OrbitControls( camera, container.domElement );
+                renderer =  new THREE.WebGLRenderer();
+                stats = new Stats();
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.top = '0px';
+                container.appendChild( stats.domElement );
+
+                var img = new Image();
+                img.onload = function () {
+
+                    data = getHeightData(img);
+    
+                    //camera.position.y = data[ worldHalfWidth + worldHalfDepth * worldWidth ] * 10 + 1500;
+                    //camera.position.x = 6000; camera.position.y = 6000; camera.position.z = 6000;
+                    //camera.position.x = 3700; camera.position.y = 3900; camera.position.z = 4300;
+                    //camera.position.x = 2500; camera.position.y = 5800; camera.position.z = 2900;
+                    //camera.position.x = 1244; camera.position.y = 3583; camera.position.z = 3028;
+                    //camera.position.x = 1437; camera.position.y = 3936; camera.position.z = 2447;
+                    camera.position.x = 1828; camera.position.y = 3241; camera.position.z = 3113;
+                    //drawCoords();
+                    var axes = new THREE.AxisHelper( 5000 );
+                    scene.add(axes);
+        
+                    var geometry = new THREE.PlaneBufferGeometry( 7500, 7500, worldWidth - 1, worldDepth - 1 );
+                    geometry.applyMatrix( new THREE.Matrix4().makeRotationX( - Math.PI / 2 ) );
+ 
+    				var texture = new THREE.Texture( generateTexture( data, worldWidth, worldDepth ), new THREE.UVMapping(), THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping );
+    				texture.needsUpdate = true;
+                    var material = new THREE.MeshLambertMaterial( { map: texture } );
+       
+                    mesh = new THREE.Mesh( geometry, material );
+                                                            
+                    var vertices = geometry.attributes.position.array;
+    
+                    for ( var i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
+                        vertices[ j + 1 ] = data[ i ];
+                    }
+    
+                    var ambientLight = new THREE.AmbientLight(0xbbbbbb);
+                    scene.add(ambientLight);
+                    scene.add( mesh );    
+                    scene.fog=new THREE.FogExp2( 0xffffff, 0.0001 );
+                    addClouds(scene);
+
+                    renderer.setClearColor( 0xbfd1ff );
+                    renderer.setSize( window.innerWidth, window.innerHeight );
+    
+                    document.getElementById( 'container' ).innerHTML = "";
+                    container.appendChild( renderer.domElement );
+    
+                    window.addEventListener( 'resize', onWindowResize, false );
+                }
+                img.src = 'HeightMap.png';
+			}
+            function addClouds(scene) {
+                var geometry = new THREE.Geometry();
+    			var texture = THREE.ImageUtils.loadTexture( 'cloud10.png', null, animate );
+				texture.magFilter = THREE.LinearMipMapLinearFilter;
+				texture.minFilter = THREE.LinearMipMapLinearFilter;
+
+                //var material = new THREE.MeshLambertMaterial( { map: texture } );
+                var fog = new THREE.Fog( 0xffffff, - 10000, 100000 );
+                material = new THREE.ShaderMaterial( {
+
+					uniforms: {
+
+						"map": { type: "t", value: texture },
+						"fogColor" : { type: "c", value: fog.color },
+						"fogNear" : { type: "f", value: fog.near },
+						"fogFar" : { type: "f", value: fog.far },
+
+					},
+					vertexShader: document.getElementById( 'vs' ).textContent,
+					fragmentShader: document.getElementById( 'fs' ).textContent,
+					depthWrite: false,
+					depthTest: false,
+					transparent: true
+
+				} );
+                //var material = new THREE.MeshLambertMaterial( { map: texture } );
+
+                // TODO: have clouds in the center be more stretched than clouds on the outside.
+				for ( var i = 0; i < 20; i++ ) {
+                    var cloudSize = Math.random() * 300 + 490;
+    				var plane = new THREE.Mesh( new THREE.PlaneGeometry( 640*4, 640 ), material );
+                    var ranx = Math.random();
+					plane.position.x = ranx* (cloudMaxx - cloudMinx) + cloudMinx;
+					plane.position.z = calculateRandomCloudZFromXPos(plane.position.x);
+                    plane.position.x = calculateRandomCloudZFromXPos(plane.position.z);
+					plane.position.y =  (800 + (Math.random() * 400 - 200));
+                    plane.rotation.x = -.5*Math.PI;
+					plane.rotation.z = -.75*Math.PI;
+					//plane.scale.x = plane.scale.y = Math.random() * Math.random() * 1.5 + 0.5;
+
+					//THREE.GeometryUtils.merge( geometry, plane );
+                    var cloudMesh = plane;
+                    clouds.push(cloudMesh);
+                    scene.add(cloudMesh);
+				}
+
+				//mesh = new THREE.Mesh( geometry, material );
+                //mesh.rotation.y = 0.5 * Math.PI;
+                scaleCloud(mesh);
+                scene.add(mesh);
+            }
+            function scaleCloud(cloud) {
+                // http://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+                // note, slope of this line is -1.
+                var xpos = (cloud.position.x - cloud.position.z)/2;
+                
+                var xposOnScaleOf0To1 = (xpos - cloudMinx)/(cloudMaxx - cloudMinx);
+                var sizeFactor = 1;
+                var endPoint = .1;
+                if (xposOnScaleOf0To1 < endPoint)
+                    sizeFactor = xposOnScaleOf0To1/endPoint;
+                if (xposOnScaleOf0To1 > (1 - endPoint))
+                    sizeFactor = (1 - xposOnScaleOf0To1)/endPoint;
+                if (sizeFactor < 0.01) sizeFactor = 0.01;
+                //var sizeFactor = Math.min(1, Math.max(.05,ranx)*5);
+                cloud.scale.x = sizeFactor;
+                cloud.scale.y = sizeFactor;
+                cloud.scale.z = sizeFactor;
+                
+                
+            }
+            function calculateRandomCloudZFromXPos(x) {
+                    var dispersion = 0.4 * (cloudMaxx - cloudMinx);
+					return -x + dispersion * Math.random() - dispersion /2;
+            }
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+            function getHeightData(img) {
+
+                var canvas = document.createElement( 'canvas' );
+                canvas.width = worldWidth;
+                canvas.height = worldDepth;
+                var context = canvas.getContext( '2d' );
+            
+                var size = worldWidth * worldDepth, data = new Float32Array( size );
+            
+                context.drawImage(img,0,0);
+            
+                var mindata = 9999999, maxdata = -9999999;
+                for ( var i = 0; i < size; i ++ ) {
+                    data[i] = 0
+                }
+            
+                var imgd = context.getImageData(0, 0, worldWidth, worldDepth);
+                var pix = imgd.data;
+            
+                var j=0;
+                for (var i = 0, n = pix.length; i < n; i += (4)) {
+                    var all = pix[i]+pix[i+1]+pix[i+2];
+                    data[j] = 30 * all/30;
+                    if (pix[j] < mindata) mindata = data[j];
+                    if (data[j] > maxdata)
+                        maxdata = data[j];
+                    j++;
+                }
+                //console.log(mindata + "," + maxdata);
+                return data;
+            }
+			function generateTexture( indata, width, height ) {
+                var data = new Uint8Array( indata.length );
+				var canvas, canvasScaled, context, image, imageData,
+				level, diff, vector3, sun, shade;
+
+				vector3 = new THREE.Vector3( 0, 0, 0 );
+
+				sun = new THREE.Vector3( 1, 1, 1 );
+				sun.normalize();
+
+				canvas = document.createElement( 'canvas' );
+				canvas.width = width;
+				canvas.height = height;
+
+				context = canvas.getContext( '2d' );
+				context.fillStyle = '#000';
+				context.fillRect( 0, 0, width, height );
+
+				image = context.getImageData( 0, 0, canvas.width, canvas.height );
+				imageData = image.data;
+
+				for ( var i = 0; i < indata.length; i++ ) data[i] = indata[i] * 128.0/1050.0;
+
+				for ( var i = 0, j = 0, l = imageData.length; i < l; i += 4, j ++ ) {
+
+					vector3.x = data[ j - 2 ] - data[ j + 2 ];
+					vector3.y = 2;
+					vector3.z = data[ j - width * 2 ] - data[ j + width * 2 ];
+					vector3.normalize();
+
+					shade = vector3.dot( sun );
+
+					imageData[ i ] = ( 96 + shade * 128 ) * ( 0.5 + data[ j ] * 0.007 );
+					imageData[ i + 1 ] = ( 32 + shade * 96 ) * ( 0.5 + data[ j ] * 0.007 );
+					imageData[ i + 2 ] = ( shade * 96 ) * ( 0.5 + data[ j ] * 0.007 );
+				}
+
+				context.putImageData( image, 0, 0 );
+
+				// Scaled 4x
+
+				canvasScaled = document.createElement( 'canvas' );
+				canvasScaled.width = width * 4;
+				canvasScaled.height = height * 4;
+
+				context = canvasScaled.getContext( '2d' );
+				context.scale( 4, 4 );
+				context.drawImage( canvas, 0, 0 );
+
+				image = context.getImageData( 0, 0, canvasScaled.width, canvasScaled.height );
+				imageData = image.data;
+
+				for ( var i = 0, l = imageData.length; i < l; i += 4 ) {
+
+					var v = ~~ ( Math.random() * 5 );
+
+					imageData[ i ] += v;
+					imageData[ i + 1 ] += v;
+					imageData[ i + 2 ] += v;
+
+				}
+
+				context.putImageData( image, 0, 0 );
+
+				return canvasScaled;
+
+			}
+
+			//
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+                //stats.update();
+
+			}
+
+			function render() {
+
+				controls.update( clock.getDelta() );
+				renderer.render( scene, camera );
+                //rotateCameraY(.02);
+                camera.lookAt(new THREE.Vector3(0,0,0));
+                //console.log(camera.position.x + "," + camera.position.y + "," + camera.position.z);
+                var camPos = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
+                //moveClouds(camPos);
+			}
+            function moveClouds(camPos) {
+                for (var i = 0; i < clouds.length; i++) {
+                    
+                    var cloud = clouds[i];
+
+                    // distance from diagonal:
+                    var xpos = (cloud.position.x + cloud.position.z)/2;
+                    var movement = Math.random() * 5;
+                    if (Math.abs(xpos) < 500) {
+                        cloud.position.x += movement*2;
+                        cloud.position.z += -movement*2;
+                    }
+                    else {
+                        cloud.position.x += movement;
+                        cloud.position.z += -movement;
+                    }
+                    if (cloud.position.x > cloudMaxx) {
+                        cloud.position.x = -calculateRandomCloudZFromXPos(cloudMinx);
+                        console.log('x is ' + cloud.position.x);
+                        cloud.position.z = calculateRandomCloudZFromXPos(cloudMinx);
+                    }
+                    //cloud.lookAt(camPos);
+                    scaleCloud(cloud);
+                }
+            }
+            var _radians = 0;
+            function rotateCameraY(radians) {
+                var x = camera.position.x;	var y = camera.position.y;	var z = camera.position.z;
+                var signx = x > 0 ? 1 : -1;
+            
+                // get current radians from z and x coords.
+                _radians = x == 0 ? Math.PI/2 : Math.atan(z/x);
+                if (signx == -1) _radians += Math.PI;
+            
+                _radians += radians;
+                if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
+                while (_radians < 0) _radians += Math.PI*2;
+            
+                //console.log( _radians);
+            
+                var radius = Math.sqrt(x*x + z*z);
+                camera.position.x = radius * Math.cos(_radians);
+                camera.position.z = radius * Math.sin(_radians);
+                //_camera.position.y = 4;
+            }
+</script>
+	</body>
+</html>
