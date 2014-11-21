@@ -35,10 +35,8 @@
 			varying vec2 vUv;
 
 			void main() {
-
 				vUv = uv;
 				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-
 			}
 
 		</script>
@@ -367,8 +365,17 @@
                 for (var i = 0; i < clouds.length; i++) {
                     
                     var cloud = clouds[i];
-                    cloud.position.x += 10;
-                    cloud.position.z += -10;
+
+                    // distance from diagonal:
+                    var xpos = (cloud.position.x + cloud.position.z)/2;
+                    if (Math.abs(xpos) < 500) {
+                        cloud.position.x += 50;
+                        cloud.position.z += -50;
+                    }
+                    else {
+                        cloud.position.x += 10;
+                        cloud.position.z += -10;
+                    }
                     if (cloud.position.x > cloudMaxx) {
                         cloud.position.x = -calculateRandomCloudZFromXPos(cloudMinx);
                         console.log('x is ' + cloud.position.x);
