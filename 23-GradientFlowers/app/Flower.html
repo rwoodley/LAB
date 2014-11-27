@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>Work In Progress - WebGL</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+          ga('create', 'UA-41066114-1', 'rwoodley.org');
+          ga('send', 'pageview');
+        
+        </script>
+		<script id="vs" type="x-shader/x-vertex">
+			uniform float minZ;
+			uniform float maxZ;
+			varying vec4 vColor;
+			uniform float morphTargetInfluences[ 4 ];
+			void main() {
+				float range = maxZ - minZ;
+				vec3 morphed = vec3( 0.0 , 0.0 , 0.0 );
+				morphed += ( morphTarget0 - position ) * morphTargetInfluences[ 0 ];
+				morphed += position;
+				vec3 newPosition = morphed;
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
+				float scale = (newPosition.y-minZ)/range;
+				vColor = vec4( scale * scale/4.0,1.0-scale/3.0,scale, 1.0 );
+			}
+
+		</script>
+
+		<script id="fs" type="x-shader/x-fragment">
+			varying vec4 vColor;
+				void main() {
+			gl_FragColor = vColor;
+				}
+
+		</script>
+        <script src="three.min.js"></script>
+        <script src="OrbitControls.js"></script>
+	</head>
+	<body>
+		<script src="pFuncs.js"></script>
+		<script src="Flower.js"></script>
+		<script src="Main.js"></script>
+	</body>
+</html>
