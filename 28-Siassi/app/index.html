@@ -30,18 +30,18 @@
 		</style>
 	</head>
 	<body>
-		<audio controls noloop oncanplaythrough="this.play();" style="display: none;" mediagroup="mygroup">
-		  <source src="075.mp3" type="audio/mpeg">
-		</audio> 
-		<audio controls loop oncanplaythrough="this.play();" style="display: none;" mediagroup="mygroup">
+<!-- 		 <audio controls loop oncanplaythrough="this.play();" style="display: none;" >
 		  <source src="ripples.mp3" type="audio/mpeg">
+		</audio>
+ -->
+  		<audio controls noloop oncanplaythrough="this.play();" style="display: none;" mediagroup="mygroup2">
+		  <source src="075.mp3" type="audio/mpeg">
 		</audio> 
 		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
 		<script src="r69/three.js"></script>
 
         <script src="r69/OrbitControls.js"></script>
 
-		<script src="r69/ImprovedNoise.js"></script>
 		<script src="r69/Detector.js"></script>
 		<script src="r69/Mirror.js"></script>
 		<script src="WaterShader.js"></script>
@@ -49,7 +49,15 @@
 		<script src="math.js"></script>
 
 		<script>
-
+			var audioLoopFunction = function() {
+			        console.log('in ended.')
+			        var myAudio = new Audio('ripples.mp3'); 
+			        myAudio.addEventListener('ended', audioLoopFunction, false);
+			        myAudio.play();
+			        console.log('played.')
+			};
+			audioLoopFunction();
+			
 			if ( ! Detector.webgl ) {
 				Detector.addGetWebGLMessage();
 				document.getElementById( 'container' ).innerHTML = "";
@@ -113,11 +121,16 @@
                     }
                     _scene.add(mesh);
 
-                    var lightsphere = new THREE.SphereGeometry(2,16,8);
 
-                    _pointLight = new THREE.PointLight(0xffffaa,50,3);
-                    //light.add(new THREE.Mesh(lightsphere, new THREE.MeshBasicMaterial({color: 0xffff00})));
+                    _pointLight = new THREE.PointLight(0xffffaa,50, 3);
                     _pointLight.position.set(-105,-8,-90)
+
+                    // var lightsphereGeo = new THREE.SphereGeometry(2,16,8);
+                    // lightSphere.add(new THREE.Mesh(lightsphereGeo, new THREE.MeshBasicMaterial({color: 0xffff00})));
+                    // lightSphere.position.x = _pointLight.position.x;
+                    // lightSphere.position.y = _pointLight.position.y;
+                    // lightSphere.position.z = _pointLight.position.z;
+
                     _scene.add(_pointLight);
         			animate();
 
