@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - terrain</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #ffffff;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+
+				background-color: #bfd1e5;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+			}
+
+			a {
+
+				color: #a06851;
+			}
+
+		</style>
+	</head>
+	<body>
+
+		<div id="container"><br /><br /><br /><br /><br />Initializing...</div>
+        <div style="position: fixed; top: 0;  ">
+            <div id='label' style="float: right; ">Hi there
+            </div>
+        </div>
+        <div style="position: fixed; bottom: 0; width:95%; ">
+            <div style="float: right; ">
+                 <span style="display:block;height:30px;color:white;"><nobr>Use mouse to rotate/pan/zoom.</nobr></span>
+                 <span style="display:block;height:30px;color:white;"><nobr>Explanation <a href="http://rwoodley.org/?p=1031" style="color:#0000ff;" target="_blank">here</a>.</nobr></span>
+                 <span style="display:block;height:30px;color:white;"><nobr><a href="http://rwoodley.org/" style="color:#0000ff;" target="_blank">Robert Woodley</a> 2014</nobr></span>
+            </div>
+        </div>
+
+		<script src="r69/three.js"></script>
+
+        <script src="r69/OrbitControls.js"></script>
+
+		<script src="r69/ImprovedNoise.js"></script>
+		<script src="r69/Detector.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) {
+
+				Detector.addGetWebGLMessage();
+				document.getElementById( 'container' ).innerHTML = "";
+
+			}
+
+			var _container;
+
+			var _camera, _controls, _scene, _renderer;
+
+			var mesh, texture;
+
+			var clock = new THREE.Clock();
+			var _level = 0;
+
+			var _3lines = []	// 10 three.js lines for drawing.
+			//var _coords = [[0,0,0,Math.sqrt(5) - 1], [1,1,1,-1], [1,-1,-1,-1], [-1,1,-1,-1], [-1,-1,1,-1]];
+			var _coords = [[0,0,Math.sqrt(5) - 1,0], [1,1,-1,1], [-1,-1,-1,1], [1,-1,-1,-1], [-1,1,-1,-1]];
+			var _planes = [
+				[ [0,1],[0,2],[1,2] ],	// each plane is defined by 2 lines. each line is defined by 2 points.
+				[ [0,1],[0,3],[1,3] ],	// the numbers here refer to the 5 points of the pentatope.
+				[ [0,1],[0,4],[1,4] ],
+				[ [0,2],[0,3],[2,3] ],
+				[ [0,2],[0,4],[2,4] ],
+				[ [0,3],[0,4],[3,4] ],
+				[ [1,2],[1,3],[2,3] ],
+				[ [1,2],[1,4],[2,4] ],
+				[ [1,3],[1,4],[3,4] ],
+				[ [2,3],[2,4],[3,4] ],
+			];
+			var _volumes = [
+				[6,8,9],
+				[]
+			];
+
+
+			init();
+			animate();
+			function init() {
+				document.onkeydown = function(evt) {
+				    evt = evt || window.event;
+				    console.log(evt.keyCode);
+				    if (evt.keyCode == 32) {
+				        _cincr = _cincr == 0 ? _cstartincr : 0;
+				    }
+				};
+                _container = document.getElementById( 'container' );
+
+                _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+                _scene = new THREE.Scene();
+                _controls = new THREE.OrbitControls( _camera, _container.domElement );
+                _renderer =  new THREE.WebGLRenderer();
+
+                _camera.position.x = 2; _camera.position.y = 2; _camera.position.z = 2;
+				
+				var axes = new THREE.AxisHelper( 10 );
+                //_scene.add(axes);
+                var ambientLight = new THREE.AmbientLight(0xbbbbbb);
+                _scene.add(ambientLight);
+
+				 var material = new THREE.LineBasicMaterial({ color: 0xffff00 });
+
+				for (var i = 0; i < 30; i++) {
+				    var geometry = new THREE.Geometry();
+				    geometry.vertices.push(new THREE.Vector3(0,0,0));	// build dummy lines.
+				    geometry.vertices.push(new THREE.Vector3(1,1,1));
+					var line = new THREE.Line(geometry, material);
+        	        _scene.add(line);
+        	        _3lines.push(line);
+				}
+				updateLines(-.44);
+                _renderer.setClearColor( 0x222222 );
+                _renderer.setSize( window.innerWidth, window.innerHeight );
+
+                document.getElementById( 'container' ).innerHTML = "";
+                _container.appendChild( _renderer.domElement );
+                //test();
+			}
+			function updateLines(c) {
+				//console.log('c = ' + c);
+
+				for (l = 0; l < 30; l++) {  // first hide all lines.
+					var line = _3lines[l];		// this is a 3 dimensional line
+					hideLine(line);
+				}
+				var nextAvailableLineToDrawWith = 0;
+				var testgeo = new THREE.Geometry();
+				for (var planeIndex = 0; planeIndex < 10; planeIndex++) {
+					var plane = _planes[planeIndex];
+					var nPointsDrawnForThisLine = 0;
+					// var linesDrawnForThisPlane = [];
+					var line = null;
+
+					for (var i = 0; i < 3; i++) {	// 
+						p0 = plane[i][0];
+						p1 = plane[i][1];
+	        	        var V = calc_V(p0, p1);
+						var t = calc_T(p0, p1, V, c);
+						if (t <= 0 || t >= 1 || isNaN(t)) {
+							//console.log('For plane ' + planeIndex + ' CANT draw line from ' + p0 + ' to ' + p1);
+							continue;
+						}
+						if (line == null) 
+							line = _3lines[nextAvailableLineToDrawWith++];
+						line.geometry.vertices[nPointsDrawnForThisLine].x = t*V[0] + _coords[p0][0];
+						line.geometry.vertices[nPointsDrawnForThisLine].y = t*V[1] + _coords[p0][1];
+						line.geometry.vertices[nPointsDrawnForThisLine].z = t*V[2] + _coords[p0][2];
+						line.geometry.verticesNeedUpdate = true;
+
+						var found = false;
+						var thisvertex = line.geometry.vertices[nPointsDrawnForThisLine];
+						for (var j = 0; j < testgeo.vertices.length; j++) {
+							if (thisvertex.x == testgeo.vertices[j].x && thisvertex.y == testgeo.vertices[j].y && thisvertex.z == testgeo.vertices[j].z)
+								found = true;
+						}
+						if (!found)
+							testgeo.vertices.push(line.geometry.vertices[nPointsDrawnForThisLine]);
+
+
+						// linesDrawnForThisPlane.push(line);
+						nPointsDrawnForThisLine++;
+						//console.log('For plane ' + planeIndex + ' drawing line from ' + p0 + ' to ' + p1);
+						if (nPointsDrawnForThisLine == 2) break;	// only need 2 points for each line.
+					}
+					if (nPointsDrawnForThisLine == 1)
+						hideLine(line);
+					else if (nPointsDrawnForThisLine == 2) {
+						// var shapePoints = [];
+						// shapePoints.push(linesDrawnForThisPlane[0].geometry.vertices[0]);
+						// shapePoints.push(linesDrawnForThisPlane[0].geometry.vertices[1]);
+						// shapePoints.push(linesDrawnForThisPlane[1].geometry.vertices[0]);
+						// shapePoints.push(linesDrawnForThisPlane[1].geometry.vertices[1]);
+						// if (planeIndex > -1)
+						// 	buildPlane(shapePoints,_planeColors[planeIndex]);
+					}
+				}
+				for (l = 0; l < 30; l++)
+						_3lines[l].geometry.verticesNeedUpdate = true;		// got to update hidden lines.
+				// var triangles = THREE.Shape.Utils.triangulateShape(testgeo.vertices, []);
+				// for (var i = 0; i < triangles.length; i++) {
+				// 	testgeo.faces.push(new THREE.Face3(triangles[i][0], triangles[i][1], triangles[i][2]));
+				// }
+				var mesh = new THREE.Mesh(testgeo, new THREE.MeshPhongMaterial( { color: 0xffffff, side:THREE.DoubleSide } ));
+				_scene.add(mesh);
+			}
+			function hideLine(line) {
+				// hide line by making it zero length
+				line.geometry.vertices[1].x = line.geometry.vertices[0].x;
+				line.geometry.vertices[1].y = line.geometry.vertices[0].y;
+				line.geometry.vertices[1].z = line.geometry.vertices[0].z;				
+			}
+			function calc_T(p0, p1, V, c) {   // p1 = t*V + p0. Back out t, based on c
+				var denominator = (V[0]+2*V[1]+V[2]-V[3]);
+				if (denominator == 0) return -999;
+				var t = (_coords[p0][3]-_coords[p0][0]-2*_coords[p0][1]-_coords[p0][2]-c)/denominator;
+
+				return t;				
+			}
+			function calc_V(p0, p1) {	// V = p1 minus p0
+        	    var V = [_coords[p1][0]-_coords[p0][0],_coords[p1][1]-_coords[p0][1],_coords[p1][2]-_coords[p0][2],_coords[p1][3]-_coords[p0][3]];
+				return V;				
+			}
+			var _crange = 2;
+			var _cstartincr = _crange / 300;
+			var _c = _crange * -1;
+			var _cincr = _cstartincr;
+				
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				_c+= _cincr;
+				if (_c > _crange) _cincr = -1 * _cstartincr;
+				if (_c < -1 * _crange) _cincr = _cstartincr;
+				var el = document.getElementById('label');
+				el.innerHTML = "K = " + _c.toFixed(3);
+				updateLines(_c);
+				render();
+			}
+
+			function render() {
+
+				_renderer.render( _scene, _camera );
+                _camera.lookAt(new THREE.Vector3(0,0,0));
+                var camPos = new THREE.Vector3(_camera.position.x, _camera.position.y, _camera.position.z);
+                //rotateCameraY(.02);
+			}
+            var _radians = 0;
+            function rotateCameraY(radians) {
+                var x = _camera.position.x;	var y = _camera.position.y;	var z = _camera.position.z;
+                var signx = x > 0 ? 1 : -1;
+            
+                // get current radians from z and x coords.
+                _radians = x == 0 ? Math.PI/2 : Math.atan(z/x);
+                if (signx == -1) _radians += Math.PI;
+            
+                _radians += radians;
+                if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
+                while (_radians < 0) _radians += Math.PI*2;
+            
+                //console.log( _radians);
+            
+                var radius = Math.sqrt(x*x + z*z);
+                _camera.position.x = radius * Math.cos(_radians);
+                _camera.position.z = radius * Math.sin(_radians);
+                //__camera.position.y = 4;
+            }
+ </script>
+</body>
+</html>
