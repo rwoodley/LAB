@@ -3,7 +3,7 @@ var _cloudMaxx = 5000;
 var _cloudLength = _cloudMaxx - _cloudMinx;
 function addClouds(scene) {
     var geometry = new THREE.Geometry();
-    var texture = THREE.ImageUtils.loadTexture( 'cloud10.png', null, animate );
+    var texture = THREE.ImageUtils.loadTexture( 'cloud1.jpg', null, animate );
     texture.magFilter = THREE.LinearMipMapLinearFilter;
     texture.minFilter = THREE.LinearMipMapLinearFilter;
 

@@ -82,7 +82,7 @@
 			void main() {
 				vec4 zerovec = vec4(0.,0.,0.,0.);
 			    vec4 tex1 = mapTexture(iChannel0, 2.0, 1.0,0.,1.);
-			    vec4 tex2 = mapTexture(iChannel0, 4.0, 2.0,0.,1.);
+			    vec4 tex2 = mapTexture(iChannel0, 4.0, -2.0,0.,1.);
 			    vec4 tex3 = mapTexture(iChannel3, 4.0, -2.0,.1,.99);
 
                 if (tex1.r > .5) tex1 = zerovec;	// get rid of surrounding square
@@ -95,8 +95,8 @@
 				gl_FragColor = vec4(tex2.r,tex2.g,tex2.b,tex2.a);
 				gl_FragColor = vec4(tex1.b > 0. ? 1. : 0.,
 									tex2.g  > 0. ? 1. : 0.,
-									tex3.b  > 0. ? 1. : 0.,
-									tex3.a+tex1.a+tex2.a);
+									0.,
+									tex1.a+tex2.a);
 			}
 
 		</script>
