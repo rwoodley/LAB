@@ -81,6 +81,10 @@
 			var _level = 0;
 
 			var _3lines = []	// 10 three.js lines for drawing.
+			var _3geos3 = []		// 5 geometries to render the faces. 3 vertices.
+			var _3geos4 = []		// 5 geometries to render the faces. 4 vertices. because: http://stackoverflow.com/a/17842935/2195930
+			var _3meshes3 = [];
+			var _3meshes4 = [];
 			//var _coords = [[0,0,0,Math.sqrt(5) - 1], [1,1,1,-1], [1,-1,-1,-1], [-1,1,-1,-1], [-1,-1,1,-1]];
 			var _coords = [[0,0,Math.sqrt(5) - 1,0], [1,1,-1,1], [-1,-1,-1,1], [1,-1,-1,-1], [-1,1,-1,-1]];
 			var _planes = [
@@ -95,11 +99,14 @@
 				[ [1,3],[1,4],[3,4] ],
 				[ [2,3],[2,4],[3,4] ],
 			];
-			var _volumes = [
-				[6,8,9],
-				[]
+			var _volumes = [	// this array is a list of indexes into the plane array above. could probably be generated, not hardcoded.
+				[0,1,3,6],		// for the tetrahedron with these corners: [0,1,2,3],
+				[0,2,7,4],		// for the tetrahedron with these corners: [0,1,2,4],
+				[1,2,8,5],		// for the tetrahedron with these corners: [0,1,3,4],
+				[3,4,9,5],		// for the tetrahedron with these corners: [0,2,3,4],
+				[6,7,9,8]		// for the tetrahedron with these corners: [1,2,3,4],
 			];
-
+			var _vColors = ['purple','blue','green','yellow','red'];
 
 			init();
 			animate();
@@ -136,7 +143,36 @@
         	        _scene.add(line);
         	        _3lines.push(line);
 				}
-				updateLines(-.44);
+				for (var i = 0; i < 5; i++) {
+				    var geometry = new THREE.Geometry();
+				    geometry.vertices.push(new THREE.Vector3(0,0,0));
+				    geometry.vertices.push(new THREE.Vector3(1,1,0));
+				    geometry.vertices.push(new THREE.Vector3(1,-1,0));
+					geometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
+				    geometry.dynamic = true;
+				    _3geos3.push(geometry);
+				    var material = new THREE.MeshPhongMaterial({ambient: _vColors[i], side:THREE.DoubleSide, transparent: true, opacity: .4  });
+					var shapeMesh = new THREE.Mesh(geometry, material);
+					_scene.add(shapeMesh);
+					_3meshes3.push(shapeMesh);
+
+				    var geometry = new THREE.Geometry();
+				    geometry.vertices.push(new THREE.Vector3(0,0,0));
+				    geometry.vertices.push(new THREE.Vector3(1,1,0));
+				    geometry.vertices.push(new THREE.Vector3(1,-1,0));
+				    geometry.vertices.push(new THREE.Vector3(-1,1,0));
+					geometry.faces.push( new THREE.Face3( 0, 1, 2 ) );
+					geometry.faces.push( new THREE.Face3( 0, 1, 3 ) );
+				    geometry.dynamic = true;
+				    _3geos4.push(geometry);
+				    var material = new THREE.MeshPhongMaterial({ambient: _vColors[i], side:THREE.DoubleSide, transparent: true, opacity: .4  });
+					var shapeMesh = new THREE.Mesh(geometry, material);
+					_scene.add(shapeMesh);
+					_3meshes4.push(shapeMesh);
+				}
+				var tempc = 0;
+				updateWireFrame(tempc);
+				updateSurfaces(tempc);
                 _renderer.setClearColor( 0x222222 );
                 _renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -144,72 +180,186 @@
                 _container.appendChild( _renderer.domElement );
                 //test();
 			}
-			function updateLines(c) {
-				//console.log('c = ' + c);
-
+			function updateWireFrame(c) {
 				for (l = 0; l < 30; l++) {  // first hide all lines.
-					var line = _3lines[l];		// this is a 3 dimensional line
+					var line = _3lines[l];
 					hideLine(line);
 				}
 				var nextAvailableLineToDrawWith = 0;
-				var testgeo = new THREE.Geometry();
-				for (var planeIndex = 0; planeIndex < 10; planeIndex++) {
-					var plane = _planes[planeIndex];
-					var nPointsDrawnForThisLine = 0;
-					// var linesDrawnForThisPlane = [];
-					var line = null;
-
-					for (var i = 0; i < 3; i++) {	// 
-						p0 = plane[i][0];
-						p1 = plane[i][1];
-	        	        var V = calc_V(p0, p1);
-						var t = calc_T(p0, p1, V, c);
-						if (t <= 0 || t >= 1 || isNaN(t)) {
-							//console.log('For plane ' + planeIndex + ' CANT draw line from ' + p0 + ' to ' + p1);
-							continue;
+				for (var planeIndex = 0; planeIndex < 10; planeIndex++) {	// each plane, or face is a triangle
+					var points3d = return3dLineFor4DFace(planeIndex, c);
+					if (points3d.length == 2) {
+						line = _3lines[nextAvailableLineToDrawWith++];			// this is a 3 dimensional three.js line
+						for (var i = 0; i < 2; i++) {
+							line.geometry.vertices[i].x = points3d[i][0];
+							line.geometry.vertices[i].y = points3d[i][1];
+							line.geometry.vertices[i].z = points3d[i][2];
 						}
-						if (line == null) 
-							line = _3lines[nextAvailableLineToDrawWith++];
-						line.geometry.vertices[nPointsDrawnForThisLine].x = t*V[0] + _coords[p0][0];
-						line.geometry.vertices[nPointsDrawnForThisLine].y = t*V[1] + _coords[p0][1];
-						line.geometry.vertices[nPointsDrawnForThisLine].z = t*V[2] + _coords[p0][2];
-						line.geometry.verticesNeedUpdate = true;
-
-						var found = false;
-						var thisvertex = line.geometry.vertices[nPointsDrawnForThisLine];
-						for (var j = 0; j < testgeo.vertices.length; j++) {
-							if (thisvertex.x == testgeo.vertices[j].x && thisvertex.y == testgeo.vertices[j].y && thisvertex.z == testgeo.vertices[j].z)
-								found = true;
-						}
-						if (!found)
-							testgeo.vertices.push(line.geometry.vertices[nPointsDrawnForThisLine]);
-
-
-						// linesDrawnForThisPlane.push(line);
-						nPointsDrawnForThisLine++;
-						//console.log('For plane ' + planeIndex + ' drawing line from ' + p0 + ' to ' + p1);
-						if (nPointsDrawnForThisLine == 2) break;	// only need 2 points for each line.
 					}
-					if (nPointsDrawnForThisLine == 1)
-						hideLine(line);
-					else if (nPointsDrawnForThisLine == 2) {
-						// var shapePoints = [];
-						// shapePoints.push(linesDrawnForThisPlane[0].geometry.vertices[0]);
-						// shapePoints.push(linesDrawnForThisPlane[0].geometry.vertices[1]);
-						// shapePoints.push(linesDrawnForThisPlane[1].geometry.vertices[0]);
-						// shapePoints.push(linesDrawnForThisPlane[1].geometry.vertices[1]);
-						// if (planeIndex > -1)
-						// 	buildPlane(shapePoints,_planeColors[planeIndex]);
-					}
+
 				}
 				for (l = 0; l < 30; l++)
 						_3lines[l].geometry.verticesNeedUpdate = true;		// got to update hidden lines.
-				// var triangles = THREE.Shape.Utils.triangulateShape(testgeo.vertices, []);
-				// for (var i = 0; i < triangles.length; i++) {
-				// 	testgeo.faces.push(new THREE.Face3(triangles[i][0], triangles[i][1], triangles[i][2]));
+			}
+			function updateSurfaces(c) {
+				for (var volumeIndex = 0; volumeIndex < _volumes.length; volumeIndex++) {
+				// for (var volumeIndex = 0; volumeIndex < 1; volumeIndex++) {
+					hideSurface(volumeIndex);
+					var pointsForThisVolume = [];
+					for (var volumePlaneIndex = 0; volumePlaneIndex < _volumes[volumeIndex].length; volumePlaneIndex++) {	// each plane, or face is a triangle
+						var planeIndex = _volumes[volumeIndex][volumePlaneIndex];
+						var points3d = return3dLineFor4DFace(planeIndex, c);
+						if (points3d.length == 2) {
+							pointsForThisVolume.push(points3d[0]);
+							pointsForThisVolume.push(points3d[1]);
+						}
+
+					}
+					if (pointsForThisVolume.length > 2) {
+						drawPlane(pointsForThisVolume, volumeIndex);
+					}
+					_3geos3[volumeIndex].verticesNeedUpdate = true;
+					_3geos3[volumeIndex].elementsNeedUpdate = true;
+					_3geos4[volumeIndex].verticesNeedUpdate = true;
+					_3geos4[volumeIndex].elementsNeedUpdate = true;
+				}
+			}
+			function hideSurface(volumeIndex) {
+				// this is bullshit man! All I want to do is hide the mesh, but i get js errors. so i'll make it really tiny instead.
+				// _3geos3[volumeIndex].vertices = [];
+				// _3geos3[volumeIndex].faces = [];
+				// _3geos3[volumeIndex].vertices.push(new THREE.Vector3(0,0,0) );
+				// _3geos3[volumeIndex].vertices.push(new THREE.Vector3(0,.001,0) );
+				// _3geos3[volumeIndex].vertices.push(new THREE.Vector3(0,0,.001) );
+				// _3geos3[volumeIndex].faces.push(new THREE.Face3( 0, 1, 2 ) );
+				_3meshes3[volumeIndex].visible = false;
+
+				// _3geos4[volumeIndex].vertices = [];
+				// _3geos4[volumeIndex].faces = [];
+				// _3geos4[volumeIndex].vertices.push(new THREE.Vector3(0,0,0) );
+				// _3geos4[volumeIndex].vertices.push(new THREE.Vector3(0,.001,0) );
+				// _3geos4[volumeIndex].vertices.push(new THREE.Vector3(0,0,.001) );
+				// _3geos4[volumeIndex].vertices.push(new THREE.Vector3(0,.001,.001) );
+				// _3geos4[volumeIndex].faces.push(new THREE.Face3( 0, 3, 1 ) );
+				// _3geos4[volumeIndex].faces.push(new THREE.Face3( 0, 3, 2 ) );
+				_3meshes4[volumeIndex].visible = false;
+			}
+			function drawPlane(inpoints3d, geoIndex) {		// draws a 3d plane, given some 3d points.
+				var points3d = [];
+				for (var i = 0; i < inpoints3d.length; i++) {
+					var found = false;
+					for (var j = 0; j < points3d.length; j++) {
+						if (points3d[j][0] == inpoints3d[i][0] && points3d[j][1] == inpoints3d[i][1] && points3d[j][2] == inpoints3d[i][2])
+							found = true;
+					}
+					if (!found) 
+						points3d.push(inpoints3d[i]);
+				}
+
+				var geometry;
+				if (points3d.length == 3) {
+					_3meshes3[geoIndex].visible = true;
+					geometry = _3geos3[geoIndex];
+					geometry.vertices = [];
+					geometry.faces = [];
+					for (var i = 0; i < points3d.length; i++) {
+						geometry.vertices.push( new THREE.Vector3(points3d[i][0],points3d[i][1],points3d[i][2]) ); 
+					}
+					geometry.faces.push(new THREE.Face3(0,1,2));
+				}
+				else {
+					_3meshes4[geoIndex].visible = true;
+					geometry = _3geos4[geoIndex];
+					geometry.vertices = [];
+					geometry.faces = [];
+					for (var i = 0; i < points3d.length; i++) {
+						geometry.vertices.push( new THREE.Vector3(points3d[i][0],points3d[i][1],points3d[i][2]) ); 
+					}
+					buildFacesForSquare(_3geos4[geoIndex]);
+				}
+
+				// var holes = [];
+				// triangles = THREE.Shape.Utils.triangulateShape ( geometry.vertices, holes );
+				// for( var i = 0; i < triangles.length; i++ ){
+				//     geometry.faces.push( new THREE.Face3( triangles[i][0], triangles[i][1], triangles[i][2] ));
 				// }
-				var mesh = new THREE.Mesh(testgeo, new THREE.MeshPhongMaterial( { color: 0xffffff, side:THREE.DoubleSide } ));
-				_scene.add(mesh);
+
+				geometry.verticesNeedUpdate = true;
+				geometry.elementsNeedUpdate = true;
+			}
+			function buildFacesForSquare(geometry) {
+				var vs = geometry.vertices;
+				if (vs.length != 4)
+					throw "max of 4 vertices only!";
+
+				var case1 = Math.abs(vs[0].distanceTo(vs[1])) + Math.abs(vs[2].distanceTo(vs[3]));
+				var case2 = Math.abs(vs[0].distanceTo(vs[2])) + Math.abs(vs[1].distanceTo(vs[3]));
+				var case3 = Math.abs(vs[0].distanceTo(vs[3])) + Math.abs(vs[1].distanceTo(vs[2]));
+				var max = Math.max(case1, case2, case3);
+				if (case1 == max) {
+					geometry.faces.push(new THREE.Face3(0,1,2));
+					geometry.faces.push(new THREE.Face3(0,1,3));					
+				}
+				if (case2 == max) {
+					geometry.faces.push(new THREE.Face3(0,1,2));
+					geometry.faces.push(new THREE.Face3(0,2,3));					
+				}
+				if (case3 == max) {
+					geometry.faces.push(new THREE.Face3(0,2,3));
+					geometry.faces.push(new THREE.Face3(0,1,3 ));					
+				}
+
+
+				// find the longest diagonal. that will be the shared side between the 2 triangles.
+				// this is an ugly implementation but easy to read.
+				// var maxlen = Math.max(
+				// 	vs[0].distanceTo(vs[1]), vs[0].distanceTo(vs[2]), vs[1].distanceTo(vs[2]),
+				// 	vs[3].distanceTo(vs[1]), vs[3].distanceTo(vs[2]), vs[3].distanceTo(vs[0])
+				// 	);
+				// if (maxlen == vs[0].distanceTo(vs[1])) {
+				// 	geometry.faces.push(new THREE.Face3(0,3,2));
+				// 	geometry.faces.push(new THREE.Face3(1,3,2));
+				// }
+				// else if (maxlen == vs[0].distanceTo(vs[2])) {
+				// 	geometry.faces.push(new THREE.Face3(0,2,1));
+				// 	geometry.faces.push(new THREE.Face3(0,2,3));					
+				// }
+				// else if (maxlen == vs[1].distanceTo(vs[2])) {
+				// 	geometry.faces.push(new THREE.Face3(1,2,0));
+				// 	geometry.faces.push(new THREE.Face3(1,2,3));					
+				// }
+				// else if (maxlen == vs[3].distanceTo(vs[1])) {
+				// 	geometry.faces.push(new THREE.Face3(3,1,0));
+				// 	geometry.faces.push(new THREE.Face3(3,1,2));					
+				// }
+				// else if (maxlen == vs[3].distanceTo(vs[2])) {
+				// 	geometry.faces.push(new THREE.Face3(3,2,1));
+				// 	geometry.faces.push(new THREE.Face3(3,2,0));					
+				// }
+				// else {
+				// 	geometry.faces.push(new THREE.Face3(3,0,1));
+				// 	geometry.faces.push(new THREE.Face3(3,0,2));					
+				// }
+
+			}
+			function return3dLineFor4DFace(planeIndex, c) {	// returns [[x1,y1,z1],[x2,y2,z2]]
+				var plane = _planes[planeIndex];
+				var nPointsDrawnForThisLine = 0;
+				var retval = [];
+
+				for (var i = 0; i < 3; i++) { 	// 3 points for each triangle face
+					p0 = plane[i][0];
+					p1 = plane[i][1];
+        	        var V = calc_V(p0, p1);
+					var t = calc_T(p0, p1, V, c);
+					if (t <= 0 || t >= 1 || isNaN(t)) {
+						continue;
+					}
+					retval.push([t*V[0] + _coords[p0][0], t*V[1] + _coords[p0][1], t*V[2] + _coords[p0][2]])
+					nPointsDrawnForThisLine++;
+					if (nPointsDrawnForThisLine == 2) return retval;	// only need 2 points for each line.
+				}
+				return retval;
 			}
 			function hideLine(line) {
 				// hide line by making it zero length
@@ -230,7 +380,7 @@
 			}
 			var _crange = 2;
 			var _cstartincr = _crange / 300;
-			var _c = _crange * -1;
+			var _c = -1.5;
 			var _cincr = _cstartincr;
 				
 			function animate() {
@@ -238,11 +388,12 @@
 				requestAnimationFrame( animate );
 
 				_c+= _cincr;
-				if (_c > _crange) _cincr = -1 * _cstartincr;
+				 if (_c > _crange) _cincr = -1 * _cstartincr;
 				if (_c < -1 * _crange) _cincr = _cstartincr;
 				var el = document.getElementById('label');
 				el.innerHTML = "K = " + _c.toFixed(3);
-				updateLines(_c);
+				updateWireFrame(_c);
+				updateSurfaces(_c);
 				render();
 			}
 
