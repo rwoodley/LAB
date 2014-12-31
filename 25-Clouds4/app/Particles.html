@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - terrain</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #61443e;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+
+				background-color: #bfd1e5;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+			}
+
+			a {
+
+				color: #a06851;
+			}
+
+		</style>
+	</head>
+	<body>
+       <script id="vs" type="x-shader/x-vertex">
+
+                varying vec2 vUv;
+				float rand(vec2 co){
+				    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+				}
+				varying vec3 vecPos;
+				varying vec3 vecNormal;
+                void main() {
+						vUv = uv;
+                    	float r = pow(rand(uv),4.0)*1.0-0.5;
+                        vec3 newpos = vec3(position.x+r, position.y+r, position.z+r);
+
+						// Since the light is on world coordinates,
+						// I'll need the vertex position in world coords too
+						// (or I could transform the light position to view
+						// coordinates, but that would be more expensive)
+						vecPos = (modelMatrix * vec4(newpos, 1.0 )).xyz;
+						// That's NOT exacly how you should transform your
+						// normals but this will work fine, since my model
+						// matrix is pretty basic
+						vecNormal = (modelMatrix * vec4(normal, 0.0)).xyz;
+						gl_Position = projectionMatrix * viewMatrix * vec4(vecPos, 1.0);
+
+
+                        // gl_Position = projectionMatrix * modelViewMatrix * vec4( newpos, 1.0 );
+                        // vUv = uv;
+                        // gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                }
+
+        </script>
+
+        <script id="fs" type="x-shader/x-fragment">
+
+				 
+				varying vec3 vecPos;
+				varying vec3 vecNormal;
+				uniform vec3 spotLightColor[MAX_SPOT_LIGHTS];
+				uniform vec3 spotLightPosition[MAX_SPOT_LIGHTS];
+				uniform float spotLightDistance[MAX_SPOT_LIGHTS];
+				  
+                uniform sampler2D map;
+
+                uniform vec3 fogColor;
+                uniform float fogNear;
+                uniform float fogFar;
+
+                varying vec2 vUv;
+				float rand(vec2 co){
+				    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+				}
+                void main() {
+				    // Pretty basic lambertian lighting...
+				    vec4 addedLights = vec4(0.0,0.0,0.0, 1.0);
+				    for(int l = 0; l < MAX_SPOT_LIGHTS; l++) {
+				        vec3 lightDirection = normalize(vecPos-spotLightPosition[l]);
+				        addedLights.rgb += clamp(dot(-lightDirection, vecNormal), 0.0, 1.0) * spotLightColor[l];
+				    }
+
+                   	// gl_FragColor = texture2D( map, vUv );
+
+
+                        float depth = gl_FragCoord.z / gl_FragCoord.w;
+                        float fogFactor = smoothstep( fogNear, fogFar, depth );
+
+       //                  vec4 sum = vec4(0.0);
+
+       //                  for (float i = 0.0; i <=0.0; i += 1.0) {
+       //                  	float x = vUv.x + 0.3*i;
+	      //                   for (float j = 0.0; j <=0.0; j += 1.0) {
+	      //                   	float r = rand(vec2(vUv.x,vUv.y));
+	      //                   	//float r = 1.;
+	      //                   	float x = vUv.x + 400.*r;
+	      //                   	float y = vUv.y + 400.*r;
+	 					//     	sum += texture2D(map, vec2(x, y)) * addedLights;
+	 					// 	}
+	 					// }
+ 					    // gl_FragColor = sum;
+
+       //                  gl_FragColor = texture2D( map, vUv );
+                    	float r = rand(vec2(vUv.x,vUv.y));
+                    	float x = vUv.x + 400.*r;
+                    	float y = vUv.y + 400.*r;
+                        gl_FragColor = texture2D(map, vec2(vUv.x/4., vUv.y/4.)) * addedLights;
+                        gl_FragColor.w *= pow( gl_FragCoord.z, 20.0 );	// seems to make things more transparent...
+                        gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor );
+
+                }
+
+        </script>
+
+		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+		<script src="math.js"></script>
+		<script src="r69/three.js"></script>
+
+        <script src="r69/OrbitControls.js"></script>
+
+		<script src="r69/ImprovedNoise.js"></script>
+		<script src="r69/Detector.js"></script>
+		<script src="MainParticles.js"></script>
+
+	</body>
+</html>
