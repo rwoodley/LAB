@@ -1,0 +1,193 @@
+<html>
+    <body>
+        <table border='1'>
+            <tr>
+                <th>init()</th>
+                <th>render()</th>
+                <th>result</th>
+            </tr>
+            <tr>
+                <td>
+<pre>
+var geo = new THREE.BoxGeometry(5,5,20,32);
+_mesh = new THREE.Mesh(geo, new THREE.MeshNormalMaterial());
+</pre>                    
+                </td>
+                <td>
+<pre>
+_mesh.rotation.z = -_tick * Math.PI/256;    
+</pre>                    
+                </td>
+                <td><img src='pic1.gif'></img></td>
+            </tr>
+
+            <tr>
+                <td>
+<pre>
+var geo = new THREE.BoxGeometry(5,5,20,32);
+_mesh = new THREE.Mesh(geo, new THREE.MeshNormalMaterial());
+_mesh.rotateY(Math.PI/2);
+</pre>                    
+                </td>
+                <td>
+<pre>
+_mesh.rotation.z = -_tick * Math.PI/256;    
+</pre>                    
+                </td>
+                <td><img src='pic2.gif'></img></td>
+            </tr>
+
+            <tr>
+                <td>
+<pre>
+var geo = new THREE.BoxGeometry(5,5,20,32);
+_mesh = new THREE.Mesh(geo, new THREE.MeshNormalMaterial());
+_mesh.rotation.order = 'ZXY';
+_mesh.rotateY(Math.PI/2);
+</pre>                    
+                </td>
+                <td>
+<pre>
+_mesh.rotation.z = -_tick * Math.PI/256;    
+</pre>                    
+                </td>
+                <td><img src='pic3.gif'></img></td>
+            </tr>
+
+<tr><th colspan=3>Now lets try some translation</th></tr>
+            <tr>
+                <td>
+<pre>
+var geo = new THREE.BoxGeometry(5,5,20,32);
+_mesh = new THREE.Mesh(geo, new THREE.MeshNormalMaterial());
+_mesh.rotation.order = 'ZXY';
+_mesh.rotateY(Math.PI/2);
+_mesh.position.set(0,-6,0);
+_scene.add( _mesh);
+</pre>                    
+                </td>
+                <td>
+<pre>
+_mesh.rotation.z = -_tick * Math.PI/256;    
+</pre>                    
+                </td>
+                <td><img src='pic6.gif'></img></td>
+            </tr>
+
+
+
+
+<tr><th colspan=3>Now lets use rotation matrices.</th></tr>
+
+            <tr>
+                <td>
+<pre>
+var geo = new THREE.BoxGeometry(5,5,20,32);
+_mesh = new THREE.Mesh(geo, new THREE.MeshNormalMaterial());
+// these have no effect:
+//_mesh.rotateY(Math.PI/4);
+//_mesh.rotation.order = 'ZXY';
+</pre>                    
+                </td>
+                <td>
+<pre>
+var axis = new THREE.Vector3( 0, 0, 1 );
+var angle = _tick * Math.PI / 256;
+   // matrix is a THREE.Matrix4()
+_matrix.makeRotationAxis( axis.normalize(), angle ); 
+_mesh.rotation.setFromRotationMatrix( _matrix );
+</pre>                    
+                </td>
+                <td><img src='pic4.gif'></img></td>
+            </tr>
+
+
+            <tr>
+                <td>
+<pre>
+var geo = new THREE.BoxGeometry(5,5,20,32);
+geo.applyMatrix( new THREE.Matrix4().makeRotationY( Math.PI/2 ) );
+_mesh = new THREE.Mesh(geo, new THREE.MeshNormalMaterial());
+_scene.add( _mesh);
+</pre>                    
+                </td>
+                <td>
+<pre>
+var axis = new THREE.Vector3( 0, 0, 1 );
+var angle = _tick * Math.PI / 256;
+   // matrix is a THREE.Matrix4()
+_matrix.makeRotationAxis( axis.normalize(), angle ); 
+_mesh.rotation.setFromRotationMatrix( _matrix );
+</pre>                    
+                </td>
+                <td><img src='pic5.gif'></img></td>
+            </tr>
+
+            <tr><th colspan=3>Apply rotation matrices and translation to the geometry</th></tr>
+            <tr>
+                <td>
+<pre>
+var geo = new THREE.BoxGeometry(5,5,20,32);
+geo.applyMatrix( new THREE.Matrix4().makeRotationY( Math.PI/2 ) );
+geo.applyMatrix( new THREE.Matrix4().makeTranslation(0,-6,0) );
+_mesh = new THREE.Mesh(geo, new THREE.MeshNormalMaterial());
+_scene.add( _mesh);
+
+// put sphere at mesh origin
+var sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1,20,20),
+    new THREE.MeshNormalMaterial());
+sphere.position.set(_mesh.position.x,_mesh.position.y,_mesh.position.z);
+_scene.add(sphere);
+</pre>                    
+                </td>
+                <td>
+<pre>
+var axis = new THREE.Vector3( 0, 0, 1 );
+var angle = -_tick * Math.PI / 256;
+   // matrix is a THREE.Matrix4()
+_matrix.makeRotationAxis( axis.normalize(), angle ); 
+_mesh.rotation.setFromRotationMatrix( _matrix );
+
+
+</pre>                    
+                </td>
+                <td><img src='pic7.gif'></img></td>
+            </tr>
+
+            <tr><th colspan=3>Now lets move and rotate the mesh</th></tr>
+            <tr>
+                <td>
+<pre>
+var geo = new THREE.BoxGeometry(5,5,20,32);
+geo.applyMatrix( new THREE.Matrix4().makeRotationY( Math.PI/2 ) );
+geo.applyMatrix( new THREE.Matrix4().makeTranslation(0,-6,0) );
+_mesh = new THREE.Mesh(geo, new THREE.MeshNormalMaterial());
+_mesh.position.set(0,-12,0);
+_mesh.rotation.x -= Math.PI/8;
+_scene.add( _mesh);
+
+// put sphere at mesh origin
+var sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1,20,20),
+    new THREE.MeshNormalMaterial());
+sphere.position.set(_mesh.position.x,_mesh.position.y,_mesh.position.z);
+_scene.add(sphere);
+
+// put axes at mesh origin with mesh rotation
+_scene.add(drawAxes(10, _mesh.position, _mesh.rotation));
+</pre>                    
+                </td>
+                <td>
+<pre>
+// same as above, but more compact.
+_mesh.rotation.z = -_tick * Math.PI/128;
+</pre>                    
+                </td>
+                <td><img src='pic8.gif'></img></td>
+            </tr>
+
+
+        </table>
+    </body>
+</html>
