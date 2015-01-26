@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+	<body>
+        <div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+        <script src="r69/three.js"></script>
+        <script src="r69/OrbitControls.js"></script>
+        <script src="r69/stats.min.js"></script>
+        <script src="r69/OBJLoader.js"></script>
+        <script src="r69/Detector.js"></script>
+        <script src="lib/physi.js"></script>
+        <script src="lib/chroma.min.js"></script>
+        <script src="physics2.js"></script>
+        <script src="utils.js"></script>
+
+		<script>
+
+    if ( ! Detector.webgl ) {
+        Detector.addGetWebGLMessage();
+        document.getElementById( 'container' ).innerHTML = "";
+    }
+
+    var _container, render_stats, physics_stats;
+    var _camera, _controls, _scene, _renderer, _uniforms, _pointLight;
+    var _wheel;
+
+    Physijs.scripts.worker = 'lib/physijs_worker.js';
+    Physijs.scripts.ammo = 'ammo.js';
+    var _scene = new Physijs.Scene();
+    _scene.setGravity(new THREE.Vector3(0, -10, 0));
+    var scale = chroma.scale(['white', 'blue', 'red', 'yellow']);
+    init();
+
+    var wheelMaterial = Physijs.createMaterial(
+                new THREE.MeshNormalMaterial(),
+                .9, // high friction
+                .6 // low restitution
+        );
+    var _wheel = new Physijs.SphereMesh(new THREE.SphereGeometry(1,10,20),
+                                        wheelMaterial, 0);
+    var _pbox = new physicsBox(-20, 0);
+    _wheel.add(_pbox);
+    //_wheel = _pbox;
+    _scene.add(_wheel);
+    addSpheres(_scene, scale, 20, -20, 15, 15); 
+    
+    var clock = new THREE.Clock();
+    requestAnimationFrame( render );
+    _scene.simulate();
+
+    function init() {
+        _container = document.getElementById( 'container' );
+
+        _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+        _controls = new THREE.OrbitControls( _camera, _container.domElement );
+        _renderer =  new THREE.WebGLRenderer();
+        _renderer.setSize( window.innerWidth, window.innerHeight );
+        document.getElementById( 'container' ).innerHTML = "";
+        _container.appendChild( _renderer.domElement );
+
+        _camera.position.x = 4; _camera.position.y = 16; _camera.position.z = -31;
+        var axes = new THREE.AxisHelper( 5000 );
+        _scene.add(axes);
+				
+        _scene.add(new THREE.AmbientLight(0x999999));
+
+        render_stats = new Stats();
+        render_stats.domElement.style.position = 'absolute';
+        render_stats.domElement.style.top = '1px';
+        render_stats.domElement.style.zIndex = 100;
+        document.getElementById('container').appendChild(render_stats.domElement);
+    
+        physics_stats = new Stats();
+        physics_stats.domElement.style.position = 'absolute';
+        physics_stats.domElement.style.top = '50px';
+        physics_stats.domElement.style.zIndex = 100;
+        document.getElementById('container').appendChild(physics_stats.domElement);
+
+    }
+
+    var _matrix = new THREE.Matrix4();
+    var _tick = 0;
+    function render() {
+        requestAnimationFrame( render );
+        render_stats.update();
+        physics_stats.update();
+        _controls.update( clock.getDelta() );
+        _camera.lookAt(new THREE.Vector3(0,0,0));
+        if (_tick > 200) {
+            _wheel.rotation.z =  (-200 + _tick) * Math.PI/256;
+            //_wheel.rotation.x = Math.PI/8;
+            _wheel.__dirtyRotation = true;
+        }
+        _scene.simulate(undefined, 1);
+        _renderer.render( _scene, _camera );
+        _tick++;
+        //if (_tick%100 == 0) addSpheres(_scene, scale, 20, 0, 5, 50); 
+    }
+</script>
+	</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+	<body>
+        <div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+        <script src="r69/three.js"></script>
+        <script src="r69/OrbitControls.js"></script>
+        <script src="r69/OBJLoader.js"></script>
+        <script src="r69/Detector.js"></script>
+        <script src="lib/physi.js"></script>
+        <script src="lib/chroma.min.js"></script>
+        <script src="physics.js"></script>
+        <script src="utils.js"></script>
+
+		<script>
+
+    if ( ! Detector.webgl ) {
+        Detector.addGetWebGLMessage();
+        document.getElementById( 'container' ).innerHTML = "";
+    }
+
+    var _container;
+    var _camera, _controls, _scene, _renderer, _uniforms, _pointLight;
+    var _wheel;
+
+    Physijs.scripts.worker = 'lib/physijs_worker.js';
+    Physijs.scripts.ammo = 'ammo.js';
+    var _scene = new Physijs.Scene();
+    _scene.setGravity(new THREE.Vector3(0, -10, 0));
+    var scale = chroma.scale(['white', 'blue', 'red', 'yellow']);
+    var _pbox = new physicsBox(_scene);
+    _pbox.rotation.z = Math.PI/16;
+    _scene.add(_pbox);
+    
+    addSpheres(_scene, scale);
+    
+    
+    var clock = new THREE.Clock();
+    init();
+    animate();
+
+
+    function init() {
+        _container = document.getElementById( 'container' );
+
+        _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+        //_scene = new THREE.Scene();
+        _controls = new THREE.OrbitControls( _camera, _container.domElement );
+        _renderer =  new THREE.WebGLRenderer();
+
+        //_camera.position.x = -140; _camera.position.y = 80; _camera.position.z = -50;
+        _camera.position.x = 10; _camera.position.y = 50; _camera.position.z = -80;
+        var axes = new THREE.AxisHelper( 5000 );
+        _scene.add(axes);
+				
+        // Lighting
+        _scene.add(new THREE.AmbientLight(0x999999));
+
+        var back_light = new THREE.PointLight(0xffffff, 1.5);
+        back_light.position.set(100, 100, -200);
+        _scene.add(back_light);
+     
+        var spotLight = new THREE.SpotLight( 0xffffff ); 
+        spotLight.position.set( -250, 250, 250 );  
+        spotLight.castShadow = true;  
+        spotLight.shadowMapWidth = 1024; 
+        spotLight.shadowMapHeight = 1024;  
+        spotLight.shadowCameraNear = 500; 
+        spotLight.shadowCameraFar = 4000; 
+        spotLight.shadowCameraFov = 30; 
+        _scene.add( spotLight );
+
+        _renderer.setSize( window.innerWidth, window.innerHeight );
+
+        document.getElementById( 'container' ).innerHTML = "";
+        _container.appendChild( _renderer.domElement );
+
+        var manager = new THREE.LoadingManager();
+        manager.onProgress = function ( item, loaded, total ) {
+          console.log( item, loaded, total );
+        };
+
+        // model
+        var loader = new THREE.OBJLoader( manager );
+        loader.load( 'assets/KarlheinzEsslA.obj', function ( object ) {
+            var child = object.children[0];
+            var geo = child.geometry;
+            geo.applyMatrix( new THREE.Matrix4().makeRotationY( Math.PI/4*.75 ) );
+            geo.applyMatrix( new THREE.Matrix4().makeTranslation(0,-6,0) );
+            
+            var material = 
+                new THREE.MeshPhongMaterial({ 
+                color: 0x333333,
+                shininess: 40,
+                ambient: 0xffd700,
+                emissive: 0x111111,
+                specular: 0xeeeeee,
+                side: THREE.DoubleSide 
+                });
+            _wheel = new THREE.Mesh(geo, material);
+            _scene.add( _wheel);
+            _scene.add(drawAxes(100, _wheel.position, _wheel.rotation));
+          });
+        loader.load( 'assets/KarlheinzEsslB1.obj', function ( object ) {
+            var child = object.children[0];
+            var geo = child.geometry;
+            geo.applyMatrix( new THREE.Matrix4().makeRotationY( Math.PI/4*.75 ) );
+            geo.applyMatrix( new THREE.Matrix4().makeTranslation(0,-6,0) );
+            
+            var material = 
+                new THREE.MeshPhongMaterial({ 
+                color: 0x333333,
+                shininess: 40,
+                ambient: 0xffd700,
+                emissive: 0x111111,
+                specular: 0xeeeeee,
+                side: THREE.DoubleSide 
+                });
+            var stand = new THREE.Mesh(geo, material);
+            _scene.add( stand);
+            _scene.add(drawAxes(100, stand.position, stand.rotation));
+          });
+        
+    }
+
+    function animate() {
+        requestAnimationFrame( animate );
+        render(true);
+    }
+    var _matrix = new THREE.Matrix4();
+    var _tick = 0;
+    function render(rotateBool) {
+        _controls.update( clock.getDelta() );
+        _renderer.render( _scene, _camera );
+        _camera.lookAt(new THREE.Vector3(0,0,0));
+        if (rotateBool && _wheel != undefined) {
+           _wheel.rotation.z = _tick * Math.PI/256;
+//           _pbox.rotation.z =  Math.min(Math.PI/16, _tick * Math.PI/256);
+            //_pbox.rotation.x = Math.PI/16;
+        }
+        _scene.simulate();
+        _tick++;
+    }
+      var _radians = 0;
+</script>
+	</body>
+</html>
