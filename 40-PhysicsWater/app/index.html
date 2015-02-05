@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+    <style>
+        body {
+            background: #000;
+        }
+    </style>
+	<body>
+        <div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+       <div style="position: fixed; top: 3%; width:95%; ">
+            <div style="float: right; ">
+                 <span id='text1' style="display:inline-block;height:30px;width:100px;color:#00ff00;"></span>
+            </div>
+        </div>
+          <script src="r69/three.js"></script>
+        <script src="r69/OrbitControls.js"></script>
+        <script src="r69/stats.min.js"></script>
+        <script src="r69/OBJLoader.js"></script>
+        <script src="r69/Detector.js"></script>
+        <script src="lib/physi.js"></script>
+        <script src="lib/chroma.min.js"></script>
+        <script src="light.js"></script>
+        <script src="myPhysics.js"></script>
+        <script src="utils.js"></script>
+
+		<script>
+
+    if ( ! Detector.webgl ) {
+        Detector.addGetWebGLMessage();
+        document.getElementById( 'container' ).innerHTML = "";
+    }
+
+    var _container, render_stats, physics_stats, _colorScale;
+    var _camera, _controls, _scene, _renderer;
+    var _boxPivotPoint, textElement;
+    _textElement = document.getElementById('text1');
+    Physijs.scripts.worker = 'lib/physijs_worker.js';
+    Physijs.scripts.ammo = 'ammo.js';
+    var _scene = new Physijs.Scene();
+    _scene.setGravity(new THREE.Vector3(0, -10, 0));
+    _colorScale = chroma.scale(['white', 'blue', 'red', 'yellow']);
+    init();
+
+    // pivot may not be needed but give us options for rotating the box.
+    var pivotMaterial = Physijs.createMaterial(new THREE.MeshLambertMaterial({color: 0xff0000 }),.9,.6);
+    var _boxPivotPoint = new Physijs.SphereMesh(new THREE.SphereGeometry(1,10,20),
+                                        pivotMaterial, 0);
+    var _pbox = new physicsBox(0, 0, 20, 60, 4, 0.5);
+    _boxPivotPoint.add(_pbox);
+    _boxPivotPoint.position.y = -20;
+    _scene.add(_boxPivotPoint);
+    
+    addLight(_scene);
+    
+    var clock = new THREE.Clock();
+    requestAnimationFrame( render );
+    _scene.simulate();
+
+    function init() {
+        _container = document.getElementById( 'container' );
+
+        _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+        _controls = new THREE.OrbitControls( _camera, _container.domElement );
+        //_renderer =  new THREE.WebGLRenderer();
+        _renderer =  new THREE.WebGLRenderer({antialias: true, alpha: true});
+        _renderer.setSize( window.innerWidth, window.innerHeight );
+        document.getElementById( 'container' ).innerHTML = "";
+        _container.appendChild( _renderer.domElement );
+
+        _camera.position.x = 4; _camera.position.y = 26; _camera.position.z = -31;
+        var axes = new THREE.AxisHelper( 5000 );
+        _scene.add(axes);
+				
+        render_stats = new Stats();
+        render_stats.domElement.style.position = 'absolute';
+        render_stats.domElement.style.top = '1px';
+        render_stats.domElement.style.zIndex = 100;
+        document.getElementById('container').appendChild(render_stats.domElement);
+    
+        physics_stats = new Stats();
+        physics_stats.domElement.style.position = 'absolute';
+        physics_stats.domElement.style.top = '50px';
+        physics_stats.domElement.style.zIndex = 100;
+        document.getElementById('container').appendChild(physics_stats.domElement);
+    }
+
+    var _matrix = new THREE.Matrix4();
+    var _tick = 1;
+    function render() {
+        requestAnimationFrame( render );
+        render_stats.update();
+        physics_stats.update();
+        _controls.update( clock.getDelta() );
+        _camera.lookAt(new THREE.Vector3(0,0,0));
+        if (_tick%100 == 0) 
+            shootBall(_scene, _colorScale, -10, 10, .5, 3, 75, 75);
+        if (_tick%125 == 0) 
+            shootBall(_scene, _colorScale, -8, 12, .5, 3, 75, 75);
+        if (_tick%150 == 0) {
+            shootBall(_scene, _colorScale, -6, 14, .5, 3, 75, 75);
+            _tick = 1;
+        }
+        //if (_tick > 200) {
+        //    _boxPivotPoint.rotation.z =  (-200 + _tick) * Math.PI/256;
+        //    //_boxPivotPoint.rotation.x = Math.PI/8;
+        //    _boxPivotPoint.__dirtyRotation = true;
+        //}
+        //rotateCameraY(_camera, Math.PI/512);
+        _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
+        _scene.simulate(undefined, 1);
+        _renderer.render( _scene, _camera );
+        _tick++;
+        //if (_tick%100 == 0) addSpheres(_scene, scale, 20, 0, 5, 50); 
+    }
+</script>
+	</body>
+</html>
