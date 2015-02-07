@@ -2,7 +2,7 @@
 <html lang="en">
     <style>
         body {
-            background: #ccc;
+            background: #000;
         }
     </style>
 	<body>
@@ -43,46 +43,8 @@
     _colorScale = chroma.scale(['white', 'blue', 'red', 'yellow']);
     init();
 
+    _shaderMaterial = doSkyBox(_scene);
     // ----
-        var geometry = new THREE.SphereGeometry( 100, 32, 16 );
-
-        var path = "textures/cube/Park2/";
-        var format = '.jpg';
-        var urls = [
-                path + 'posx' + format, path + 'negx' + format,
-                path + 'posy' + format, path + 'negy' + format,
-                path + 'posz' + format, path + 'negz' + format
-            ];
-
-
-        var textureCube = THREE.ImageUtils.loadTextureCube( urls );
-        textureCube.format = THREE.RGBFormat;
-
-	
-    var shader = THREE.FresnelShader;
-    var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
-    //var textureCube = THREE.ImageUtils.loadTexture('textures/eso_dark.jpg');
-    uniforms[ "tCube" ].value = textureCube;
-    var parameters = { fragmentShader: shader.fragmentShader, vertexShader: shader.vertexShader, uniforms: uniforms };
-	_shaderMaterial = new THREE.ShaderMaterial( parameters );
-
-        // Skybox
-
-        var shader = THREE.ShaderLib[ "cube" ];
-        shader.uniforms[ "tCube" ].value = textureCube;
-
-        var material = new THREE.ShaderMaterial( {
-
-            fragmentShader: shader.fragmentShader,
-            vertexShader: shader.vertexShader,
-            uniforms: shader.uniforms,
-            side: THREE.BackSide
-
-        } ),
-
-        mesh = new THREE.Mesh( new THREE.BoxGeometry( 100000, 100000, 100000 ), material );
-        _sceneCube.add( mesh );
-
 
 
     // ----
@@ -114,7 +76,7 @@
         document.getElementById( 'container' ).innerHTML = "";
         _container.appendChild( _renderer.domElement );
 
-        _camera.position.x = 4; _camera.position.y = 26; _camera.position.z = -31;
+        _camera.position.x = -33; _camera.position.y = 9; _camera.position.z = -35;
         var axes = new THREE.AxisHelper( 5000 );
         _scene.add(axes);
 				
@@ -159,6 +121,56 @@
         //_renderer.render( _sceneCube, _camera );
         _tick++;
         //if (_tick%100 == 0) addSpheres(_scene, scale, 20, 0, 5, 50); 
+    }
+    function doSkyBox(scene) {
+			var cubeMap = new THREE.Texture( [] );
+			cubeMap.format = THREE.RGBFormat;
+			cubeMap.flipY = false;
+
+			var loader = new THREE.ImageLoader();
+			loader.load( 'textures/skybox_angkor.png', function ( image ) {
+				var getSide = function ( x, y ) {
+					var size = 1024;
+					var canvas = document.createElement( 'canvas' );
+					canvas.width = size;
+					canvas.height = size;
+					var context = canvas.getContext( '2d' );
+					context.drawImage( image, - x * size, - y * size );
+					return canvas;
+				};
+
+				cubeMap.image[ 0 ] = getSide( 2, 1 ); // px
+				cubeMap.image[ 1 ] = getSide( 0, 1 ); // nx
+				cubeMap.image[ 2 ] = getSide( 1, 0 ); // py
+				cubeMap.image[ 3 ] = getSide( 1, 2 ); // ny
+				cubeMap.image[ 4 ] = getSide( 1, 1 ); // pz
+				cubeMap.image[ 5 ] = getSide( 3, 1 ); // nz
+				cubeMap.needsUpdate = true;
+
+			} );
+			var cubeShader = THREE.ShaderLib['cube'];
+			cubeShader.uniforms['tCube'].value = cubeMap;
+
+			var skyBoxMaterial = new THREE.ShaderMaterial( {
+				fragmentShader: cubeShader.fragmentShader,
+				vertexShader: cubeShader.vertexShader,
+				uniforms: cubeShader.uniforms,
+				depthWrite: false,
+				side: THREE.BackSide
+			});
+
+			var skyBox = new THREE.Mesh(
+				new THREE.BoxGeometry( 10000, 10000, 10000 ),
+				skyBoxMaterial
+			);
+			
+//			scene.add( skyBox );
+      var shader = THREE.FresnelShader;
+      var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+      uniforms[ "tCube" ].value = cubeMap;
+      var parameters = { fragmentShader: shader.fragmentShader, vertexShader: shader.vertexShader, uniforms: uniforms };
+      var shaderMaterial = new THREE.ShaderMaterial( parameters );
+      return shaderMaterial;
     }
 </script>
 	</body>
