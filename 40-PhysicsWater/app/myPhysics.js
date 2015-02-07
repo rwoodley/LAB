@@ -58,16 +58,17 @@ addSpheres = function (scene, scale, n, x, y, w) {
     }
     ;
 };
-shootBall = function(scene, scale, x, y, width, w, dx, dy) {
+shootBall = function(scene, scale, x, y, width, w, dx, dy, material) {
     var colorSphere = scale(Math.random()).hex();
     box = new Physijs.SphereMesh(
-             new THREE.SphereGeometry(width, 20),
+             new THREE.SphereGeometry(width*5, 20),
              Physijs.createMaterial(
-                     new THREE.MeshPhongMaterial(
-                             {   color: 0x00f,
-                                 opacity: 0.2,
-                                 transparent: true
-                             }),
+                     //new THREE.MeshPhongMaterial(
+                     //        {   color: 0x00f,
+                     //            opacity: 0.2,
+                     //            transparent: true
+                     //        }),
+                     material,
                      .4, // controls.sphereFriction,
                      .4  // controls.sphereRestitution
              ),

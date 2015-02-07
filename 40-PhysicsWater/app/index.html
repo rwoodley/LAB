@@ -2,7 +2,7 @@
 <html lang="en">
     <style>
         body {
-            background: #000;
+            background: #ccc;
         }
     </style>
 	<body>
@@ -12,11 +12,12 @@
                  <span id='text1' style="display:inline-block;height:30px;width:100px;color:#00ff00;"></span>
             </div>
         </div>
-          <script src="r69/three.js"></script>
+        <script src="r69/three.js"></script>
         <script src="r69/OrbitControls.js"></script>
         <script src="r69/stats.min.js"></script>
         <script src="r69/OBJLoader.js"></script>
         <script src="r69/Detector.js"></script>
+        <script src="r69/FresnelShader.js"></script>
         <script src="lib/physi.js"></script>
         <script src="lib/chroma.min.js"></script>
         <script src="light.js"></script>
@@ -32,15 +33,60 @@
 
     var _container, render_stats, physics_stats, _colorScale;
     var _camera, _controls, _scene, _renderer;
-    var _boxPivotPoint, textElement;
+    var _boxPivotPoint, textElement, _shaderMaterial, _sceneCube;
     _textElement = document.getElementById('text1');
     Physijs.scripts.worker = 'lib/physijs_worker.js';
     Physijs.scripts.ammo = 'ammo.js';
+    var _sceneCube = new THREE.Scene();
     var _scene = new Physijs.Scene();
     _scene.setGravity(new THREE.Vector3(0, -10, 0));
     _colorScale = chroma.scale(['white', 'blue', 'red', 'yellow']);
     init();
 
+    // ----
+        var geometry = new THREE.SphereGeometry( 100, 32, 16 );
+
+        var path = "textures/cube/Park2/";
+        var format = '.jpg';
+        var urls = [
+                path + 'posx' + format, path + 'negx' + format,
+                path + 'posy' + format, path + 'negy' + format,
+                path + 'posz' + format, path + 'negz' + format
+            ];
+
+
+        var textureCube = THREE.ImageUtils.loadTextureCube( urls );
+        textureCube.format = THREE.RGBFormat;
+
+	
+    var shader = THREE.FresnelShader;
+    var uniforms = THREE.UniformsUtils.clone( shader.uniforms );
+    //var textureCube = THREE.ImageUtils.loadTexture('textures/eso_dark.jpg');
+    uniforms[ "tCube" ].value = textureCube;
+    var parameters = { fragmentShader: shader.fragmentShader, vertexShader: shader.vertexShader, uniforms: uniforms };
+	_shaderMaterial = new THREE.ShaderMaterial( parameters );
+
+        // Skybox
+
+        var shader = THREE.ShaderLib[ "cube" ];
+        shader.uniforms[ "tCube" ].value = textureCube;
+
+        var material = new THREE.ShaderMaterial( {
+
+            fragmentShader: shader.fragmentShader,
+            vertexShader: shader.vertexShader,
+            uniforms: shader.uniforms,
+            side: THREE.BackSide
+
+        } ),
+
+        mesh = new THREE.Mesh( new THREE.BoxGeometry( 100000, 100000, 100000 ), material );
+        _sceneCube.add( mesh );
+
+
+
+    // ----
+    
     // pivot may not be needed but give us options for rotating the box.
     var pivotMaterial = Physijs.createMaterial(new THREE.MeshLambertMaterial({color: 0xff0000 }),.9,.6);
     var _boxPivotPoint = new Physijs.SphereMesh(new THREE.SphereGeometry(1,10,20),
@@ -94,11 +140,11 @@
         _controls.update( clock.getDelta() );
         _camera.lookAt(new THREE.Vector3(0,0,0));
         if (_tick%100 == 0) 
-            shootBall(_scene, _colorScale, -10, 10, .5, 3, 75, 75);
+            shootBall(_scene, _colorScale, -10, 10, .5, 3, 75, 75, _shaderMaterial);
         if (_tick%125 == 0) 
-            shootBall(_scene, _colorScale, -8, 12, .5, 3, 75, 75);
+            shootBall(_scene, _colorScale, -8, 12, .5, 3, 75, 75, _shaderMaterial);
         if (_tick%150 == 0) {
-            shootBall(_scene, _colorScale, -6, 14, .5, 3, 75, 75);
+            shootBall(_scene, _colorScale, -6, 14, .5, 3, 75, 75, _shaderMaterial);
             _tick = 1;
         }
         //if (_tick > 200) {
@@ -110,6 +156,7 @@
         _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
         _scene.simulate(undefined, 1);
         _renderer.render( _scene, _camera );
+        //_renderer.render( _sceneCube, _camera );
         _tick++;
         //if (_tick%100 == 0) addSpheres(_scene, scale, 20, 0, 5, 50); 
     }
