@@ -1,4 +1,4 @@
-function addLight(scene) {
+function addLight(scene, material) {
     //scene.add(new THREE.AmbientLight(0xff9999));
     var back_light = new THREE.PointLight(0xffffff, 1.5);
     back_light.position.set(100, 100, -20);
@@ -7,23 +7,20 @@ function addLight(scene) {
     back_light2.position.set(-100, 0, 20);
     scene.add(back_light2);
     
-    var material = 
-        new THREE.MeshPhongMaterial({ 
-            color: 0x333333,
-            shininess: 10,
-            ambient: 0x000000,
-            emissive: 0x111111,
-            specular: 0xeeeeee,
-            side: THREE.DoubleSide 
-        });
-
-    var geo = new THREE.CylinderGeometry(3,3,10,32);
+    var geo = new THREE.CylinderGeometry(1,1,5,32);
     var mesh = new THREE.Mesh(geo, material);
     scene.add(mesh);
     mesh.rotation.x = Math.PI/2;
-    mesh.position.z = +10;
+    mesh.position.z = +7;
     mesh.position.y = 10;
-    addLensFlare(_scene, mesh.position.x, mesh.position.y, mesh.position.z-5.2);
+    addLensFlare(_scene, mesh.position.x, mesh.position.y, mesh.position.z-2.7);
+
+    // vertical bar
+    var bar = new THREE.CylinderGeometry(.125,.125,mesh.position.y);
+    var barmesh = new THREE.Mesh(bar, material);
+    barmesh.position.y = mesh.position.y/2; 
+    barmesh.position.z = mesh.position.z;
+    scene.add(barmesh);
 
     return mesh;
 }

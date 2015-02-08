@@ -22,6 +22,7 @@
         <script src="lib/chroma.min.js"></script>
         <script src="light.js"></script>
         <script src="myPhysics.js"></script>
+        <script src="wheel.js"></script>
         <script src="utils.js"></script>
 
 		<script>
@@ -31,40 +32,39 @@
         document.getElementById( 'container' ).innerHTML = "";
     }
 
-    var _container, render_stats, physics_stats, _colorScale;
-    var _camera, _controls, _scene, _renderer;
-    var _boxPivotPoint, textElement, _shaderMaterial, _sceneCube;
-    _textElement = document.getElementById('text1');
-    Physijs.scripts.worker = 'lib/physijs_worker.js';
-    Physijs.scripts.ammo = 'ammo.js';
-    var _sceneCube = new THREE.Scene();
-    var _scene = new Physijs.Scene();
-    _scene.setGravity(new THREE.Vector3(0, -10, 0));
-    _colorScale = chroma.scale(['white', 'blue', 'red', 'yellow']);
+    var _container, render_stats, physics_stats;
+    var _camera, _controls, _scene, _renderer, _wheel;
+    var textElement, _shaderMaterial, _sceneCube;
+
     init();
 
     _shaderMaterial = doSkyBox(_scene);
-    // ----
+    
+    var _pbox = new physicsBox(_scene, 0, 0, 20, 60, 4, 0.5);
+    
+    var material = 
+        new THREE.MeshPhongMaterial({ 
+            color: 0x333333,
+            shininess: 10,
+            ambient: 0x000000,
+            emissive: 0x111111,
+            specular: 0xeeeeee,
+            side: THREE.DoubleSide 
+        });
 
-
-    // ----
-    
-    // pivot may not be needed but give us options for rotating the box.
-    var pivotMaterial = Physijs.createMaterial(new THREE.MeshLambertMaterial({color: 0xff0000 }),.9,.6);
-    var _boxPivotPoint = new Physijs.SphereMesh(new THREE.SphereGeometry(1,10,20),
-                                        pivotMaterial, 0);
-    var _pbox = new physicsBox(0, 0, 20, 60, 4, 0.5);
-    _boxPivotPoint.add(_pbox);
-    _boxPivotPoint.position.y = -20;
-    _scene.add(_boxPivotPoint);
-    
-    addLight(_scene);
-    
+    addLight(_scene, material);
+    _wheel = buildWheel(_scene, material);
     var clock = new THREE.Clock();
     requestAnimationFrame( render );
     _scene.simulate();
 
     function init() {
+        _textElement = document.getElementById('text1');
+        var _sceneCube = new THREE.Scene();
+        Physijs.scripts.worker = 'lib/physijs_worker.js';
+        Physijs.scripts.ammo = 'ammo.js';
+        _scene = new Physijs.Scene();
+
         _container = document.getElementById( 'container' );
 
         _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
@@ -101,19 +101,8 @@
         physics_stats.update();
         _controls.update( clock.getDelta() );
         _camera.lookAt(new THREE.Vector3(0,0,0));
-        if (_tick%100 == 0) 
-            shootBall(_scene, _colorScale, -10, 10, .5, 3, 75, 75, _shaderMaterial);
-        if (_tick%125 == 0) 
-            shootBall(_scene, _colorScale, -8, 12, .5, 3, 75, 75, _shaderMaterial);
-        if (_tick%150 == 0) {
-            shootBall(_scene, _colorScale, -6, 14, .5, 3, 75, 75, _shaderMaterial);
-            _tick = 1;
-        }
-        //if (_tick > 200) {
-        //    _boxPivotPoint.rotation.z =  (-200 + _tick) * Math.PI/256;
-        //    //_boxPivotPoint.rotation.x = Math.PI/8;
-        //    _boxPivotPoint.__dirtyRotation = true;
-        //}
+        //doDroplets(_tick, _scene, _shaderMaterial);
+        _wheel.rotation.z -= Math.PI/128;
         //rotateCameraY(_camera, Math.PI/512);
         _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
         _scene.simulate(undefined, 1);
