@@ -22,7 +22,7 @@ function addLight(scene, material) {
     barmesh.position.z = mesh.position.z;
     scene.add(barmesh);
 
-    return mesh;
+    return back_light;
 }
 function addLensFlare(scene, x, y, z) {
     var textureFlare0 = THREE.ImageUtils.loadTexture( "textures/lensflare/lensflare0.png" );

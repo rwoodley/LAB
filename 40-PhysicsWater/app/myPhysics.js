@@ -53,20 +53,22 @@ shootBall = function(scene, x, y, width, w, dx, dy, material) {
      );
      box.position.set(
              x + Math.random() * w - w/2,
-             y,
+             y + Math.random() * w - w/2,
              Math.random() * w - w/2
      );
      scene.add(box);
      var force_vector = new THREE.Vector3(dx, dy, 0);
      box.applyCentralImpulse(force_vector);
 }
-function doDroplets(tick, scene, material) {
-        if (tick%100 == 0) 
-            shootBall(scene, -10, 10, .5, 3, 75, 75, material);
-        if (tick%125 == 0) 
-            shootBall(scene, -8, 12, .5, 3, 75, 75, material);
-        if (tick%150 == 0) {
-            shootBall(scene, -6, 14, .5, 3, 75, 75, material);
-            tick = 1;
-        }
+function doDroplets(radians, tick, scene, material) {
+  if (tick%50 > 20) return;
+  if (tick%5 != 0) return;
+  var rad = (radians)%Math.PI/8;
+  var radius = 10;
+  var rotation = Math.PI/2+Math.PI/4+Math.PI/8;
+  var x = radius*Math.cos(rad+rotation);
+  var y = radius*Math.sin(rad+rotation);
+  for (var i = 0; i < 3; i++) {
+    shootBall(scene, x, y, .02, 1.5, 75, 125, material);
+  }
 }

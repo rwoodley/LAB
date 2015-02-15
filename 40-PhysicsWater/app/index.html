@@ -18,12 +18,14 @@
         <script src="r69/OBJLoader.js"></script>
         <script src="r69/Detector.js"></script>
         <script src="r69/FresnelShader.js"></script>
+        <script src="r69/Mirror.js"></script>
         <script src="lib/physi.js"></script>
         <script src="lib/chroma.min.js"></script>
         <script src="light.js"></script>
         <script src="myPhysics.js"></script>
         <script src="wheel.js"></script>
         <script src="utils.js"></script>
+        <script src="WaterShader.js"></script>
 
 		<script>
 
@@ -33,7 +35,7 @@
     }
 
     var _container, render_stats, physics_stats;
-    var _camera, _controls, _scene, _renderer, _wheel;
+    var _camera, _controls, _scene, _renderer, _wheel, _water;
     var textElement, _shaderMaterial, _sceneCube;
 
     init();
@@ -52,8 +54,10 @@
             side: THREE.DoubleSide 
         });
 
-    addLight(_scene, material);
+    var light = addLight(_scene, material);
     _wheel = buildWheel(_scene, material);
+    doWater(_scene, light);
+
     var clock = new THREE.Clock();
     requestAnimationFrame( render );
     _scene.simulate();
@@ -78,7 +82,7 @@
 
         _camera.position.x = -33; _camera.position.y = 9; _camera.position.z = -35;
         var axes = new THREE.AxisHelper( 5000 );
-        _scene.add(axes);
+        //_scene.add(axes);
 				
         render_stats = new Stats();
         render_stats.domElement.style.position = 'absolute';
@@ -101,13 +105,17 @@
         physics_stats.update();
         _controls.update( clock.getDelta() );
         _camera.lookAt(new THREE.Vector3(0,0,0));
-        //doDroplets(_tick, _scene, _shaderMaterial);
         _wheel.rotation.z -= Math.PI/128;
+        doDroplets(_wheel.rotation.z, _tick, _scene, _shaderMaterial);
         //rotateCameraY(_camera, Math.PI/512);
         _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
         _scene.simulate(undefined, 1);
         _renderer.render( _scene, _camera );
         //_renderer.render( _sceneCube, _camera );
+
+				_water.material.uniforms.time.value += 1.0 / 60.0;
+				_water.render();
+
         _tick++;
         //if (_tick%100 == 0) addSpheres(_scene, scale, 20, 0, 5, 50); 
     }
@@ -160,6 +168,50 @@
       var parameters = { fragmentShader: shader.fragmentShader, vertexShader: shader.vertexShader, uniforms: uniforms };
       var shaderMaterial = new THREE.ShaderMaterial( parameters );
       return shaderMaterial;
+    }
+    function doWater(scene, ambientLight) {
+      light = ambientLight;
+      
+      waterNormals = new THREE.ImageUtils.loadTexture( 'textures/waternormals.jpg' );
+      waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping; 
+
+      _water = new THREE.Water( _renderer, _camera, _scene, {
+        textureWidth: 512, 
+        textureHeight: 512,
+        waterNormals: waterNormals,
+        alpha: 	1.0,
+        sunDirection: light.position.clone().normalize(),
+        sunColor: 0x000000,
+        waterColor: 0x000000,
+        distortionScale: 50,		// nice param. how agitated the water
+        eye: _camera.position
+      } );
+      
+      mirrorMesh = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry( 160, 5 ),
+        _water.material
+      );
+
+      mirrorMesh.add( _water );
+      mirrorMesh.rotation.x = - Math.PI * 0.5;
+      mirrorMesh.position.y = -8;
+      scene.add( mirrorMesh );
+
+//      var ambientLight = new THREE.AmbientLight(0xffffff);
+//      scene.add(ambientLight);
+
+      var grid = new THREE.GridHelper(1000, 10);
+      grid.setColors( new THREE.Color(0x000033), new THREE.Color(0x000033) );
+      grid.position.y = -8.05;
+      scene.add(grid);
+
+	    floorMesh = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry( 10000, 10000 ),
+        new THREE.MeshLambertMaterial({color: 0x000})
+      );
+      floorMesh.rotation.x = - Math.PI * 0.5;
+      floorMesh.position.y = -8.1
+      scene.add(floorMesh);
     }
 </script>
 	</body>
