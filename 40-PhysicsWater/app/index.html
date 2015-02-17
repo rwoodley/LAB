@@ -36,6 +36,7 @@
 
     var _container, render_stats, physics_stats;
     var _camera, _controls, _scene, _renderer, _wheel, _water;
+    var _waterY = -8;
     var textElement, _shaderMaterial, _sceneCube;
 
     init();
@@ -106,7 +107,7 @@
         _controls.update( clock.getDelta() );
         _camera.lookAt(new THREE.Vector3(0,0,0));
         _wheel.rotation.z -= Math.PI/128;
-        doDroplets(_wheel.rotation.z, _tick, _scene, _shaderMaterial);
+        doDroplets(_waterY, _wheel.rotation.z, _tick, _scene, _shaderMaterial);
         //rotateCameraY(_camera, Math.PI/512);
         _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
         _scene.simulate(undefined, 1);
@@ -194,15 +195,15 @@
 
       mirrorMesh.add( _water );
       mirrorMesh.rotation.x = - Math.PI * 0.5;
-      mirrorMesh.position.y = -8;
+      mirrorMesh.position.y = _waterY;
       scene.add( mirrorMesh );
 
 //      var ambientLight = new THREE.AmbientLight(0xffffff);
 //      scene.add(ambientLight);
 
-      var grid = new THREE.GridHelper(1000, 10);
-      grid.setColors( new THREE.Color(0x000033), new THREE.Color(0x000033) );
-      grid.position.y = -8.05;
+      var grid = new THREE.GridHelper(600, 20);
+      grid.setColors( new THREE.Color(0x003333), new THREE.Color(0x003333) );
+      grid.position.y = _waterY * 1.02;
       scene.add(grid);
 
 	    floorMesh = new THREE.Mesh(
@@ -210,7 +211,7 @@
         new THREE.MeshLambertMaterial({color: 0x000})
       );
       floorMesh.rotation.x = - Math.PI * 0.5;
-      floorMesh.position.y = -8.1
+      floorMesh.position.y = -8.3
       scene.add(floorMesh);
     }
 </script>

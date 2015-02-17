@@ -36,31 +36,45 @@ physicsBox = function(scene, x, y, l, w, h, t) {
     scene.add(_boxPivotPoint);
     return ground;
 }
-shootBall = function(scene, x, y, width, w, dx, dy, material) {
-    box = new Physijs.SphereMesh(
-             new THREE.SphereGeometry(width*5, 20),
-             Physijs.createMaterial(
-                     //new THREE.MeshPhongMaterial(
-                     //        {   color: 0x00f,
-                     //            opacity: 0.2,
-                     //            transparent: true
-                     //        }),
-                     material,
-                     .4, // controls.sphereFriction,
-                     .4  // controls.sphereRestitution
-             ),
-             10
-     );
-     box.position.set(
-             x + Math.random() * w - w/2,
-             y + Math.random() * w - w/2,
-             Math.random() * w - w/2
-     );
-     scene.add(box);
-     var force_vector = new THREE.Vector3(dx, dy, 0);
-     box.applyCentralImpulse(force_vector);
+var _balls = [];
+var 
+shootBall = function(waterY, scene, x, y, width, w, dx, dy, material) {
+    var ball;
+    for (var i = 0; i < _balls.length; i++) {   // see if we can reuse a ball
+        if (_balls[i].position.y < waterY) {
+            ball = _balls[i];
+            console.log("Reuse!");
+            break;
+        }
+    }
+    if (ball == undefined) {
+        console.log("New....");
+        ball = new Physijs.SphereMesh(
+                 new THREE.SphereGeometry(width*5, 20),
+                 Physijs.createMaterial(
+                         //new THREE.MeshPhongMaterial(
+                         //        {   color: 0x00f,
+                         //            opacity: 0.2,
+                         //            transparent: true
+                         //        }),
+                         material,
+                         .4, // controls.sphereFriction,
+                         .4  // controls.sphereRestitution
+                 ),
+                 10
+         );
+        _balls.push(ball);
+    }
+    ball.position.set(
+            x + Math.random() * w - w/2,
+            y + Math.random() * w - w/2,
+            Math.random() * w - w/2
+    );
+    scene.add(ball);
+    var force_vector = new THREE.Vector3(dx, dy, 0);
+    ball.applyCentralImpulse(force_vector);
 }
-function doDroplets(radians, tick, scene, material) {
+function doDroplets(waterY, radians, tick, scene, material) {
   if (tick%50 > 20) return;
   if (tick%5 != 0) return;
   var rad = (radians)%Math.PI/8;
@@ -69,6 +83,6 @@ function doDroplets(radians, tick, scene, material) {
   var x = radius*Math.cos(rad+rotation);
   var y = radius*Math.sin(rad+rotation);
   for (var i = 0; i < 3; i++) {
-    shootBall(scene, x, y, .02, 1.5, 75, 125, material);
+    shootBall(waterY, scene, x, y, .02, 1.5, 75, 125, material);
   }
 }
