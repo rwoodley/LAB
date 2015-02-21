@@ -34,7 +34,7 @@
         document.getElementById( 'container' ).innerHTML = "";
     }
 
-    var _container, render_stats, physics_stats;
+    var _container, render_stats, physics_stats, _grid;
     var _camera, _controls, _scene, _renderer, _wheel, _water;
     var _waterY = -8;
     var textElement, _shaderMaterial, _sceneCube;
@@ -81,7 +81,7 @@
         document.getElementById( 'container' ).innerHTML = "";
         _container.appendChild( _renderer.domElement );
 
-        _camera.position.x = -33; _camera.position.y = 9; _camera.position.z = -35;
+        _camera.position.x = 8; _camera.position.y = 7; _camera.position.z = -48;
         var axes = new THREE.AxisHelper( 5000 );
         //_scene.add(axes);
 				
@@ -100,13 +100,19 @@
 
     var _matrix = new THREE.Matrix4();
     var _tick = 1;
+    var _dropletRotation = 0;
     function render() {
         requestAnimationFrame( render );
         render_stats.update();
         physics_stats.update();
         _controls.update( clock.getDelta() );
         _camera.lookAt(new THREE.Vector3(0,0,0));
-        _wheel.rotation.z -= Math.PI/128;
+
+        var rotationPerRender = Math.PI/128;
+        _wheel.rotation.z -= rotationPerRender;
+        _dropletRotation += rotationPerRender;
+
+        if (_wheel.rotation.z < 0) _wheel.rotation.z += 2 * Math.PI;
         doDroplets(_waterY, _wheel.rotation.z, _tick, _scene, _shaderMaterial);
         //rotateCameraY(_camera, Math.PI/512);
         _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
@@ -116,7 +122,7 @@
 
 				_water.material.uniforms.time.value += 1.0 / 60.0;
 				_water.render();
-
+        _grid.position.x -= .06;
         _tick++;
         //if (_tick%100 == 0) addSpheres(_scene, scale, 20, 0, 5, 50); 
     }
@@ -201,10 +207,10 @@
 //      var ambientLight = new THREE.AmbientLight(0xffffff);
 //      scene.add(ambientLight);
 
-      var grid = new THREE.GridHelper(600, 20);
-      grid.setColors( new THREE.Color(0x003333), new THREE.Color(0x003333) );
-      grid.position.y = _waterY * 1.02;
-      scene.add(grid);
+      _grid = new THREE.GridHelper(600, 20);
+      _grid.setColors( new THREE.Color(0x003333), new THREE.Color(0x003333) );
+      _grid.position.y = _waterY * 1.02;
+      scene.add(_grid);
 
 	    floorMesh = new THREE.Mesh(
         new THREE.PlaneBufferGeometry( 10000, 10000 ),
