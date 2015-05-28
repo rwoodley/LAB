@@ -10,8 +10,6 @@ var MersRing = function(div, angleGuage, positionGuage) {
     this._positionGuage = positionGuage;
     this._navigator = new cameraNavigator(_that._camera);
     
-//    _that._controls = new THREE.OrbitControls( _that._camera, _that._container );
-
     _that._scene = new THREE.Scene();
 
     _that._renderer =  new THREE.WebGLRenderer();
@@ -51,14 +49,10 @@ var MersRing = function(div, angleGuage, positionGuage) {
         dirLight.position.normalize();
         _that._scene.add( dirLight );
 
-
         plane.rotation.x = -1.57;
         plane.position.y = -20;
         _that._scene.add( plane );
-        //postProcessing();
         _that._renderer.render( _that._scene, _that._camera );
-
-
     }
     function buildRingMesh() {
         var pts = [
@@ -74,21 +68,6 @@ var MersRing = function(div, angleGuage, positionGuage) {
         var mesh = new THREE.Mesh(geometry, material);
         return mesh;
     }
-    function postProcessing() {
-        _that._renderer.autoClear = false;
-        
-        var renderModel = new THREE.RenderPass( _that._scene, _that._camera );
-        var effectBloom = new THREE.BloomPass( 0.25 );
-        var effectFilm = new THREE.FilmPass( 0.5, 0.125, 2048, false );
-        
-        effectFilm.renderToScreen = true;
-        
-        _that._composer = new THREE.EffectComposer( _that._renderer );
-        
-        _that._composer.addPass( renderModel );
-        //_that._composer.addPass( effectBloom );
-        _that._composer.addPass( effectFilm );
-    }
     function animate() {
         requestAnimationFrame( animate );    
         render();
@@ -100,23 +79,5 @@ var MersRing = function(div, angleGuage, positionGuage) {
         _that._positionGuage.render();
         
 
-    }
-    var _radians = 0;
-    function rotateCameraY(radians) {
-        var x = _that._camera.position.x;	var y = _that._camera.position.y;	var z = _that._camera.position.z;
-        var signx = x > 0 ? 1 : -1;
-    
-        // get current radians from z and x coords.
-        _radians = x == 0 ? Math.PI/2 : Math.atan(z/x);
-        if (signx == -1) _radians += Math.PI;
-    
-        _radians += radians;
-        if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
-        while (_radians < 0) _radians += Math.PI*2;
-    
-        var radius = Math.sqrt(x*x + z*z);
-        _that._camera.position.x = radius * Math.cos(_radians);
-        _that._camera.position.z = radius * Math.sin(_radians);
-        //__that._camera.position.y = 4;
     }
 }
