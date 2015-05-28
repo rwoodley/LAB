@@ -3,11 +3,14 @@ var MersRing = function(div, angleGuage, positionGuage) {
     this._container = div;
     this._width = div.offsetWidth;
     this._height = div.offsetHeight;
-    this._angleGuage = angleGuage;
-    this._positionGuage = positionGuage;
     _that._camera = new THREE.PerspectiveCamera( 60, _that._width / _that._height, .1, 20000 );    
-
-    _that._controls = new THREE.OrbitControls( _that._camera, _that._container );
+ 
+    this._angleGuage = angleGuage;
+    this._angleGuage.showArrow(_that._camera);
+    this._positionGuage = positionGuage;
+    this._navigator = new cameraNavigator(_that._camera);
+    
+//    _that._controls = new THREE.OrbitControls( _that._camera, _that._container );
 
     _that._scene = new THREE.Scene();
 
@@ -26,7 +29,7 @@ var MersRing = function(div, angleGuage, positionGuage) {
     
     function init() {
     
-        _that._camera.position.x = 3; _that._camera.position.y = 3; _that._camera.position.z = 3;
+        _that._camera.position.x = 30; _that._camera.position.y = 3; _that._camera.position.z = 3;
         var axes = new THREE.AxisHelper( 1 );
         _that._scene.add(axes);
         
@@ -35,7 +38,7 @@ var MersRing = function(div, angleGuage, positionGuage) {
 
         var grid = new THREE.GridHelper(100, 10);
         _that._scene.add(grid);       
-        
+
         _that._camera.lookAt(new THREE.Vector3(0,0,0));
         _that._positionGuage.showCameraHelper(_that._camera);
         var plane = new THREE.Mesh( new THREE.PlaneGeometry( 10000, 10000 ),
@@ -52,7 +55,10 @@ var MersRing = function(div, angleGuage, positionGuage) {
         plane.rotation.x = -1.57;
         plane.position.y = -20;
         _that._scene.add( plane );
+        //postProcessing();
         _that._renderer.render( _that._scene, _that._camera );
+
+
     }
     function buildRingMesh() {
         var pts = [
@@ -68,15 +74,32 @@ var MersRing = function(div, angleGuage, positionGuage) {
         var mesh = new THREE.Mesh(geometry, material);
         return mesh;
     }
+    function postProcessing() {
+        _that._renderer.autoClear = false;
+        
+        var renderModel = new THREE.RenderPass( _that._scene, _that._camera );
+        var effectBloom = new THREE.BloomPass( 0.25 );
+        var effectFilm = new THREE.FilmPass( 0.5, 0.125, 2048, false );
+        
+        effectFilm.renderToScreen = true;
+        
+        _that._composer = new THREE.EffectComposer( _that._renderer );
+        
+        _that._composer.addPass( renderModel );
+        //_that._composer.addPass( effectBloom );
+        _that._composer.addPass( effectFilm );
+    }
     function animate() {
         requestAnimationFrame( animate );    
         render();
     }
-    
     function render() {
+    
         _that._renderer.render( _that._scene, _that._camera );
-        _that._camera.lookAt(new THREE.Vector3(0,0,0));
-        rotateCameraY(.02);
+        _that._angleGuage.render();
+        _that._positionGuage.render();
+        
+
     }
     var _radians = 0;
     function rotateCameraY(radians) {
@@ -91,16 +114,9 @@ var MersRing = function(div, angleGuage, positionGuage) {
         if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
         while (_radians < 0) _radians += Math.PI*2;
     
-        //console.log( _radians);
-    
         var radius = Math.sqrt(x*x + z*z);
         _that._camera.position.x = radius * Math.cos(_radians);
         _that._camera.position.z = radius * Math.sin(_radians);
         //__that._camera.position.y = 4;
-        var sourcePos = new THREE.Vector3(0, 0, 0);
-        var targetPos = _that._camera.position;
-        var direction = new THREE.Vector3().subVectors(sourcePos, targetPos);
-        _that._angleGuage.updateArrow(direction);
-        _that._positionGuage.updatePoint(_that._camera.position);
     }
 }

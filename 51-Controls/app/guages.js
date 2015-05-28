@@ -6,8 +6,6 @@ var CameraGuage = function(div, mode, cameraPos) {
     this._height = div.offsetHeight;
     _that._camera = new THREE.PerspectiveCamera( 60, _that._width / _that._height, .1, 20000 );    
 
-    _that._controls = new THREE.OrbitControls( _that._camera, _that._container );
-
     _that._scene = new THREE.Scene();
 
     _that._renderer =  new THREE.WebGLRenderer();
@@ -21,7 +19,6 @@ var CameraGuage = function(div, mode, cameraPos) {
     }
     
     init();
-    //animate();
     
     function init() {
     
@@ -39,11 +36,15 @@ var CameraGuage = function(div, mode, cameraPos) {
             var sourcePos = new THREE.Vector3(0, 0, 0);
             var targetPos = new THREE.Vector3(1, 1, 0);
             var direction = new THREE.Vector3().subVectors(targetPos, sourcePos);
-            _that._arrow = new THREE.ArrowHelper(direction.clone().normalize(), sourcePos, direction.length(), 0x00ffff);
-            _that._scene.add(_that._arrow);
+            _that._arrowMinusZ = new THREE.ArrowHelper(direction.clone().normalize(), sourcePos, direction.length(), 0x00ffff);
+            _that._scene.add(_that._arrowMinusZ);
+            _that._arrowPlusX = new THREE.ArrowHelper(direction.clone().normalize(), sourcePos, direction.length(), 0xff0000);
+            _that._scene.add(_that._arrowPlusX);
+            _that._arrowPlusY = new THREE.ArrowHelper(direction.clone().normalize(), sourcePos, direction.length(), 0x00ff00);
+            _that._scene.add(_that._arrowPlusY);
+            _that._arrowPlusZ = new THREE.ArrowHelper(direction.clone().normalize(), sourcePos, direction.length(), 0x0000ff);
+            _that._scene.add(_that._arrowPlusZ);
         }
-        //var grid = new THREE.GridHelper(5, .4);
-        //_that._scene.add(grid);       
     
         _that._container.appendChild( _that._renderer.domElement );
 
@@ -52,45 +53,27 @@ var CameraGuage = function(div, mode, cameraPos) {
     
     }
     
-    function animate() {
-        requestAnimationFrame( animate );    
-        render();
-    }
-    
-    function render() {
+    _that._render = function() {
     
         _that._renderer.render( _that._scene, _that._camera );
-        _that._camera.lookAt(new THREE.Vector3(0,0,0));
-        //rotateCameraY(.02);
+
+        if (_that._clientCamera != undefined) {
+            _that._arrowMinusZ.setDirection(getDirectionVector(new THREE.Vector3( 0, 0, -1 )));
+            _that._arrowPlusZ.setDirection(getDirectionVector(new THREE.Vector3( 0, 0, 1 )));
+            _that._arrowPlusY.setDirection(getDirectionVector(new THREE.Vector3( 0, 1, 0 )));
+            _that._arrowPlusX.setDirection(getDirectionVector(new THREE.Vector3( 1, 0, 0 )));
+        }
+
     }
     var _radians = 0;
-    function rotateCameraY(radians) {
-        var x = _that._camera.position.x;	var y = _that._camera.position.y;	var z = _that._camera.position.z;
-        var signx = x > 0 ? 1 : -1;
-    
-        // get current radians from z and x coords.
-        _radians = x == 0 ? Math.PI/2 : Math.atan(z/x);
-        if (signx == -1) _radians += Math.PI;
-    
-        _radians += radians;
-        if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
-        while (_radians < 0) _radians += Math.PI*2;
-    
-        //console.log( _radians);
-    
-        var radius = Math.sqrt(x*x + z*z);
-        _that._camera.position.x = radius * Math.cos(_radians);
-        _that._camera.position.z = radius * Math.sin(_radians);
-        //__that._camera.position.y = 4;
-    }
     return {
-        updateArrow: function(direction) {
-            _that._arrow.setDirection(direction.normalize());
-            render();
+        render: function() {
+            _that._render();
+        },
+        showArrow: function(camera) {
+            _that._clientCamera = camera;
         },
         updatePoint: function(pos) {
-            //_that._sphere.position.set(pos.x, pos.y, pos.z);
-            render();
         },
         showCameraHelper: function(camera) {
             var cameraHelper = new THREE.CameraHelper(camera);
@@ -99,5 +82,11 @@ var CameraGuage = function(div, mode, cameraPos) {
         addMesh: function(mesh) {
             _that._scene.add(mesh);
         }
+    }
+    function getDirectionVector(vector) {
+        // see: http://stackoverflow.com/questions/15696963/three-js-set-and-read-camera-look-vector/15697227#15697227
+        var pWorld = vector.applyMatrix4( _that._clientCamera.matrixWorld );
+        var direction = pWorld.sub( _that._clientCamera.position ).normalize();
+        return direction;
     }
 }
