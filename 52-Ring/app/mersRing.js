@@ -37,6 +37,7 @@ var MersRing = function(div, angleGuage, positionGuage) {
         //_that._camera.position.x = 150; _that._camera.position.y = 90; _that._camera.position.z = 0;
         //_that._camera.rotateX(-1.63); _that._camera.rotateY(1); _that._camera.rotateZ(1.65);
         //_that._camera.rotateY( Math.PI/2);
+        //_that._camera.lookAt(new THREE.Vector3(0,0,0));
         var axes = new THREE.AxisHelper( 1 );
         _that._scene.add(axes);
         
@@ -51,7 +52,7 @@ var MersRing = function(div, angleGuage, positionGuage) {
                                    new THREE.MeshBasicMaterial( { color: 0xffffff, opacity: 0.5, transparent: true } ) );
         plane.receiveShadow = true;
                                    
-        _that._scene.fog = new THREE.Fog( 0x000000, 250, 1400 );
+        _that._scene.fog = new THREE.Fog( 0xffffff, .10, 100 );
     	_that._scene.add( new THREE.AmbientLight( 0xaaaaaa ) );
         _that._scene.add(shadowLighting(plane));
 
@@ -98,10 +99,12 @@ var MersRing = function(div, angleGuage, positionGuage) {
         var height = 20;
         var segments = 9;
         var innerRadius = 30;
-        var outerRadius = 50;
+        var outerLowerRadius = 45;
+        var outerUpperRadius = 50;
 
-        var geometry1 = new THREE.RingGeometry( innerRadius, outerRadius, segments, 8, startTheta, thetaLength);
-        var bottomgeo = new THREE.RingGeometry( innerRadius, outerRadius, segments, 8, startTheta, thetaLength);
+        // top ring
+        var geometry1 = new THREE.RingGeometry( innerRadius, outerUpperRadius, segments, 8, startTheta, thetaLength);
+        var bottomgeo = new THREE.RingGeometry( innerRadius, outerLowerRadius, segments, 8, startTheta, thetaLength);
         bottomgeo.applyMatrix(new THREE.Matrix4().makeTranslation(0,  0, -height));
         geometry1.merge(bottomgeo);
         var cylgeo = new THREE.CylinderGeometry(innerRadius, innerRadius, height, segments, 8, true, startTheta, thetaLength);
@@ -110,21 +113,21 @@ var MersRing = function(div, angleGuage, positionGuage) {
         cylgeo.applyMatrix(new THREE.Matrix4().makeTranslation(0,  0, -height/2));
         geometry1.merge(cylgeo);
 
-        var cylgeo = new THREE.CylinderGeometry(outerRadius, outerRadius, height, segments, 8, true, startTheta, thetaLength);
+        var cylgeo = new THREE.CylinderGeometry(outerUpperRadius, outerLowerRadius, height, segments, 8, true, startTheta, thetaLength);
         cylgeo.applyMatrix(new THREE.Matrix4().makeRotationX(Math.PI/2));
         cylgeo.applyMatrix(new THREE.Matrix4().makeRotationZ(Math.PI/2));
         cylgeo.applyMatrix(new THREE.Matrix4().makeTranslation(0,  0, -height/2));
         geometry1.merge(cylgeo);
 
         // start theta rect
-        var rectGeo1 = rectangleShape(height,outerRadius - innerRadius);
+        var rectGeo1 = rectangleShape(height,outerUpperRadius - innerRadius, outerLowerRadius - innerRadius);
         rectGeo1.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI/2));
         rectGeo1.applyMatrix(new THREE.Matrix4().makeTranslation(innerRadius, 0, 0));
         rectGeo1.applyMatrix(new THREE.Matrix4().makeRotationZ(startTheta));
         geometry1.merge(rectGeo1);
 
         // end rect
-        var rectGeo1 = rectangleShape(height,outerRadius - innerRadius);
+        var rectGeo1 = rectangleShape(height,outerUpperRadius - innerRadius, outerLowerRadius - innerRadius);
         rectGeo1.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI/2));
         rectGeo1.applyMatrix(new THREE.Matrix4().makeTranslation(innerRadius, 0, 0));
         rectGeo1.applyMatrix(new THREE.Matrix4().makeRotationZ(startTheta+thetaLength));
@@ -132,12 +135,12 @@ var MersRing = function(div, angleGuage, positionGuage) {
                 
         return geometry1;
     }
-    function rectangleShape(rectLength, rectWidth) {
+    function rectangleShape(rectLength, topWidth, bottomWidth) {
         var rectShape = new THREE.Shape();
         rectShape.moveTo( 0,0 );
-        rectShape.lineTo( 0, rectWidth );
-        rectShape.lineTo( rectLength, rectWidth );
-        rectShape.lineTo( rectLength, 0 );
+        rectShape.lineTo( 0, rectLength );
+        rectShape.lineTo( bottomWidth, rectLength );
+        rectShape.lineTo( topWidth, 0 );
         rectShape.lineTo( 0, 0 );
         
         var rectGeom = new THREE.ShapeGeometry( rectShape );
