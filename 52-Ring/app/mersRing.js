@@ -14,6 +14,7 @@ var MersRing = function(div, angleGuage, positionGuage) {
     _that._scene = new THREE.Scene();
     var pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
     this._scene.add( pointLight );
+    _that._camera.position.x = 40; _that._camera.position.y = 10; _that._camera.position.z = 0;
     this._navigator = new cameraNavigator(_that._camera, pointLight);
 
     _that._renderer =  new THREE.WebGLRenderer();
@@ -33,7 +34,6 @@ var MersRing = function(div, angleGuage, positionGuage) {
     
     function init() {
     
-        _that._camera.position.x = 40; _that._camera.position.y = 10; _that._camera.position.z = 0;
         //_that._camera.position.x = 150; _that._camera.position.y = 90; _that._camera.position.z = 0;
         //_that._camera.rotateX(-1.63); _that._camera.rotateY(1); _that._camera.rotateZ(1.65);
         //_that._camera.rotateY( Math.PI/2);
@@ -87,7 +87,7 @@ var MersRing = function(div, angleGuage, positionGuage) {
         for (var i = 0; i < 9; i++) {
             var color = chroma.scale('RdYlBu').mode('lab')(i/9).hex();
             var material =  new THREE.MeshPhongMaterial( { color: color, side: THREE.DoubleSide } );
-            var geometry1 = getWedgeGeo(i*Math.PI/4.5, Math.PI/4.5);
+            var geometry1 = getWedgeGeo(i*Math.PI/4.5, Math.PI/4.6);  // the 4.6 ensures a tiny gap between wedges
             var mesh = new THREE.Mesh( geometry1, material ); 
             mesh.rotateX(Math.PI/2);
             mesh.castShadow = true;
@@ -221,8 +221,6 @@ var MersRing = function(div, angleGuage, positionGuage) {
     }
     var _tick = 0;
     function render() {
-        //rotateCameraY(Math.PI/256);
-    
         _that._renderer.render( _that._scene, _that._camera );
         _that._angleGuage.render();
         _that._positionGuage.render();
@@ -231,26 +229,6 @@ var MersRing = function(div, angleGuage, positionGuage) {
                 + Math.floor(_that._camera.position.x) + ","
                 + Math.floor(_that._camera.position.y) + ","
                 + Math.floor(_that._camera.position.z) + ")</nobr>" ;
-		//_that._controls.update( clock.getDelta() );
 
-    }
-    var _radians = 0;
-    function rotateCameraY(radians) {
-        var x = _that._camera.position.x;	var y = _that._camera.position.y;	var z = _that._camera.position.z;
-        var signx = x > 0 ? 1 : -1;
-    
-        // get current radians from z and x coords.
-        _radians = x == 0 ? Math.PI/2 : Math.atan(z/x);
-        if (signx == -1) _radians += Math.PI;
-    
-        _radians += radians;
-        if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
-        while (_radians < 0) _radians += Math.PI*2;
-    
-        var radius = Math.sqrt(x*x + z*z);
-        _that._camera.position.x = radius * Math.cos(_radians);
-        _that._camera.position.z = radius * Math.sin(_radians);
-        //__that._camera.position.y = 4;
-        _that._camera.lookAt(new THREE.Vector3(0,0,0));
     }
 }

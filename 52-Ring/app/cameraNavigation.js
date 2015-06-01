@@ -35,6 +35,34 @@ var cameraNavigator = function(camera, pointLight) {
             var dir = pWorld.sub( _that._camera.position ).normalize();
             _that._camera.position.add(dir.clone().multiplyScalar(amount));
         }
+        if (e.keyCode == 87) {          // W
+          _that._rotateCameraY(-Math.PI/256);  
+        }
+        if (e.keyCode == 83) {          // S
+          _that._rotateCameraY(Math.PI/256);  
+        }
         _that._pointLight.position.set(_that._camera.position.x,_that._camera.position.y,_that._camera.position.z)
     });
+    var _radians = 0;
+    this._rotateCameraY = function(radians) {
+        var x = _that._camera.position.x;	var y = _that._camera.position.y;	var z = _that._camera.position.z;
+        var signx = x > 0 ? 1 : -1;
+    
+        // get current radians from z and x coords.
+        _radians = x == 0 ? Math.PI/2 : Math.atan(z/x);
+        if (signx == -1) _radians += Math.PI;
+    
+        _radians += radians;
+        if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
+        while (_radians < 0) _radians += Math.PI*2;
+    
+        var radius = Math.sqrt(x*x + z*z);
+        _that._camera.position.x = radius * Math.cos(_radians);
+        _that._camera.position.z = radius * Math.sin(_radians);
+        _that._camera.rotateY(-radians);
+    }
+    // Camera initialization
+    _that._camera.rotateY(Math.PI/8);
+    this._rotateCameraY(-0.1);
+    _that._pointLight.position.set(_that._camera.position.x,_that._camera.position.y,_that._camera.position.z)
 }
