@@ -80,8 +80,8 @@ var CameraGuage = function(div, mode, cameraPos) {
             var cameraHelper = new THREE.CameraHelper(camera);
             _that._scene.add(cameraHelper);
         },
-        addMesh: function(mesh) {
-            _that._scene.add(mesh);
+        addMesh: function(callback) {
+            callback(_that._scene);
         }
     }
     function getDirectionVector(vector) {
