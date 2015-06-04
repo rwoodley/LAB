@@ -31,6 +31,7 @@
             }
 
     </style>
+    <link rel="import" href="Shader1.html">
 	</head>
 	<body>
         <table>
@@ -93,6 +94,12 @@
         <script src="r71/postprocessing/DotScreenPass.js"></script>
         <script src="r71/postprocessing/TexturePass.js"></script>
         <script>
+            //alert(document.getElementById('fragmentWaterShader').src);
+            var getImport = document.querySelector('link[rel=import]');
+            //var getContent = getImport.import.querySelector('#fragmentWaterShader');
+            var getContent = getImport.import.querySelectorAll('script');
+            for (var i = 0; i < getContent.length; i++)
+                document.body.appendChild(document.importNode(getContent[i], true));
             var guage1 = new CameraGuage(document.getElementById('container1'), 1, new THREE.Vector3(2, 1.5, 1.5));
             var guage2 = new CameraGuage(document.getElementById('container2'), 2, new THREE.Vector3(70, 70, 70));
             var app = new MainApp(document.getElementById('mainPanel'), guage1, guage2);
