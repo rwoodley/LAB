@@ -29,35 +29,6 @@ var MainApp = function(div, angleGuage, positionGuage) {
         div.innerHTML = "No WebGL";
         return;
     }
-
-// ========
-// { type: 't', value: THREE.ImageUtils.loadTexture( 'textures/trisk.png') }
-_that.uniforms={
-    baseTexture:{ type:"t", value:THREE.ImageUtils.loadTexture( 'textures/water.jpg') },
-    baseSpeed:{  type:"f",  value:.6 },
-    noiseTexture: { type:"t", value:THREE.ImageUtils.loadTexture( 'textures/noise.jpg') },
-    noiseScale:{ type:"f", value:.1 },
-    alpha:{ type:"f", value:.8 },
-    time:{ type:"f", value:1},
-    offsetX:{ type:"f", value:.9 },
-    offsetY:{ type:"f", value:.85},
-    tint:{type:"c", value:(new THREE.Color).setHex(16770000) }
-}
-
-this.waterMaterial=new THREE.ShaderMaterial(
-    {
-       uniforms:_that.uniforms,
-        vertexShader:document.getElementById("vertexWaterShader").textContent,
-        fragmentShader:document.getElementById("fragmentWaterShader").textContent
-    }
-    );
-    this.waterMaterial.depthTest=!0;
-    var f=new THREE.PlaneGeometry(1000,1000);
-    _that._watermesh=new THREE.Mesh(f,this.waterMaterial);
-    _that._scene.add(_that._watermesh)
-    
-// ========
-
     
     init();
     animate();
@@ -141,6 +112,6 @@ this.waterMaterial=new THREE.ShaderMaterial(
                 + Math.floor(_that._camera.position.y) + ","
                 + Math.floor(_that._camera.position.z) + ")</nobr>" ;
 //        _that.uniforms.time.value += 1;
-        _that._watermesh.material.uniforms.time.value += _that._clock.getDelta();
+//        _that._watermesh.material.uniforms.time.value += _that._clock.getDelta();
     }
 }

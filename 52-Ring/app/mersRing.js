@@ -1,10 +1,9 @@
 function buildRingMesh(scene) {
-    var material = new THREE.MeshLambertMaterial( { 
-                                                 map: THREE.ImageUtils.loadTexture( 'textures/mers.png' ) } );
 
     for (var i = 0; i < 9; i++) {
-        var color = chroma.scale('RdYlBu').mode('lab')(i/9).hex();
-        var material =  new THREE.MeshPhongMaterial( { color: color, side: THREE.DoubleSide } );
+        //var color = chroma.scale('RdYlBu').mode('lab')(i/9).hex();
+        //var material =  new THREE.MeshPhongMaterial( { color: color, side: THREE.DoubleSide } );
+        var material = getMaterial(i);
         var geometry1 = getWedgeGeo(i*Math.PI/4.5, Math.PI/4.6);  // the 4.6 ensures a tiny gap between wedges
         var mesh = new THREE.Mesh( geometry1, material ); 
         mesh.rotateX(Math.PI/2);
@@ -63,4 +62,43 @@ function rectangleShape(rectLength, topWidth, bottomWidth) {
     
     var rectGeom = new THREE.ShapeGeometry( rectShape );
     return rectGeom;
+}
+function getMaterial(room) {
+    return getMaterialByName('Shader1');
+}
+function getMaterialByName(name) {
+    if (name == 'normal')
+        return new THREE.MeshNormalMaterial({side: THREE.DoubleSide });
+    if (name == 'Shader1') {
+        var uniforms={
+            baseTexture:{ type:"t", value:THREE.ImageUtils.loadTexture( 'textures/water.jpg') },
+            baseSpeed:{  type:"f",  value:.6 },
+            noiseTexture: { type:"t", value:THREE.ImageUtils.loadTexture( 'textures/noise.jpg') },
+            noiseScale:{ type:"f", value:.1 },
+            alpha:{ type:"f", value:.8 },
+            time:{ type:"f", value:1},
+            offsetX:{ type:"f", value:.9 },
+            offsetY:{ type:"f", value:.85},
+            tint:{type:"c", value:(new THREE.Color).setHex(16770000) }
+        }
+        
+        return new THREE.ShaderMaterial(
+            {
+                uniforms: uniforms,
+                vertexShader:document.getElementById("shader1Vertex").textContent,
+                fragmentShader:document.getElementById("shader1Fragment").textContent,
+                side: THREE.DoubleSide
+            }
+            );
+            this.waterMaterial.depthTest=!0;
+            var f=new THREE.PlaneGeometry(1000,1000);
+            _that._watermesh=new THREE.Mesh(f,this.waterMaterial);
+            _that._scene.add(_that._watermesh);
+    }
+    if (name == 'texture') {
+        return new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( 'textures/mers.png' ) } );
+    }
+    if (name == 'color') {
+        return  new THREE.MeshPhongMaterial( { color: 'blue', side: THREE.DoubleSide } );
+    }
 }
