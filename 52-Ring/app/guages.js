@@ -23,7 +23,7 @@ var CameraGuage = function(div, mode, cameraPos) {
     function init() {
     
         _that._camera.position.set(cameraPos.x, cameraPos.y, cameraPos.z);
-        var axes = new THREE.AxisHelper( 1 );
+        var axes = new THREE.AxisHelper( _that._mode == 1 ? 1 : 80 );
         _that._scene.add(axes);
         _that._scene.add( new THREE.AmbientLight( 0xaaaaaa ) );
 

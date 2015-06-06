@@ -10,11 +10,17 @@ var MainApp = function(div, angleGuage, positionGuage) {
     this._angleGuage.showArrow(_that._camera);
     this._positionGuage = positionGuage;
     _that._clock = new THREE.Clock();
-    _that._controls = new THREE.OrbitControls( _that._camera, _that._container );
+    //_that._controls = new THREE.OrbitControls( _that._camera, _that._container );
 
     _that._scene = new THREE.Scene();
-    var pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
+    var pointLight = new THREE.PointLight( 0xaaaaaa, 1, 100 );
     this._scene.add( pointLight );
+
+    //_that._camera.position.x = -11; _that._camera.position.y = -110; _that._camera.position.z = 282;
+    //_that._camera.rotateX(-1.63); _that._camera.rotateY(1); _that._camera.rotateZ(1.65);
+    //_that._camera.rotateY( Math.PI/2);
+    //_that._camera.lookAt(new THREE.Vector3(0,0,0));
+
     _that._camera.position.x = 40; _that._camera.position.y = 10; _that._camera.position.z = 0;
     this._navigator = new cameraNavigator(_that._camera, pointLight);
 
@@ -35,10 +41,6 @@ var MainApp = function(div, angleGuage, positionGuage) {
     
     function init() {
     
-        _that._camera.position.x = -11; _that._camera.position.y = -110; _that._camera.position.z = 282;
-        _that._camera.rotateX(-1.63); _that._camera.rotateY(1); _that._camera.rotateZ(1.65);
-        _that._camera.rotateY( Math.PI/2);
-        _that._camera.lookAt(new THREE.Vector3(0,0,0));
         var axes = new THREE.AxisHelper( 1 );
         _that._scene.add(axes);
         
@@ -111,6 +113,7 @@ var MainApp = function(div, angleGuage, positionGuage) {
                 + Math.floor(_that._camera.position.x) + ","
                 + Math.floor(_that._camera.position.y) + ","
                 + Math.floor(_that._camera.position.z) + ")</nobr>" ;
+        renderMaterials(_that._clock.getDelta());
 //        _that.uniforms.time.value += 1;
 //        _that._watermesh.material.uniforms.time.value += _that._clock.getDelta();
     }

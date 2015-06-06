@@ -64,41 +64,43 @@ function rectangleShape(rectLength, topWidth, bottomWidth) {
     return rectGeom;
 }
 function getMaterial(room) {
-    return getMaterialByName('Shader1');
+    if (room == 8)
+        return getMaterialByName('Shader2');
+    //if (room == 2)
+    //    return getMaterialByName('normal');
+    //if (room == 3)
+    //    return getMaterialByName('texture');
+    //else
+    //    return getMaterialByName('color');
+    
+    var color = chroma.scale('RdYlBu').mode('lab')(room/9).hex();
+
+    return getMaterialByName('color', color);
 }
-function getMaterialByName(name) {
+_materials = [];
+function getMaterialByName(name, color) {
     if (name == 'normal')
         return new THREE.MeshNormalMaterial({side: THREE.DoubleSide });
     if (name == 'Shader1') {
-        var uniforms={
-            baseTexture:{ type:"t", value:THREE.ImageUtils.loadTexture( 'textures/water.jpg') },
-            baseSpeed:{  type:"f",  value:.6 },
-            noiseTexture: { type:"t", value:THREE.ImageUtils.loadTexture( 'textures/noise.jpg') },
-            noiseScale:{ type:"f", value:.1 },
-            alpha:{ type:"f", value:.8 },
-            time:{ type:"f", value:1},
-            offsetX:{ type:"f", value:.9 },
-            offsetY:{ type:"f", value:.85},
-            tint:{type:"c", value:(new THREE.Color).setHex(16770000) }
-        }
-        
-        return new THREE.ShaderMaterial(
-            {
-                uniforms: uniforms,
-                vertexShader:document.getElementById("shader1Vertex").textContent,
-                fragmentShader:document.getElementById("shader1Fragment").textContent,
-                side: THREE.DoubleSide
-            }
-            );
-            this.waterMaterial.depthTest=!0;
-            var f=new THREE.PlaneGeometry(1000,1000);
-            _that._watermesh=new THREE.Mesh(f,this.waterMaterial);
-            _that._scene.add(_that._watermesh);
+        var material = getShaderMaterialByName(name);
+        _materials.push(material);
+        return material;
+    }
+    if (name == 'Shader2') {
+        var material = getShaderMaterialByName(name);
+        _materials.push(material);
+        return material;
     }
     if (name == 'texture') {
-        return new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( 'textures/mers.png' ) } );
+        return new THREE.MeshLambertMaterial( { map: THREE.ImageUtils.loadTexture( 'textures/mers.png' ), side: THREE.DoubleSide } );
     }
     if (name == 'color') {
-        return  new THREE.MeshPhongMaterial( { color: 'blue', side: THREE.DoubleSide } );
+        console.log(color);
+        return  new THREE.MeshPhongMaterial( { color: color, side: THREE.DoubleSide } );
+    }
+}
+function renderMaterials(clockDelta) {
+    for (var i = 0; i < _materials.length; i++) {
+        _materials[i].uniforms.time.value += clockDelta;
     }
 }
