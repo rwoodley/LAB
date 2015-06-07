@@ -64,8 +64,8 @@ function rectangleShape(rectLength, topWidth, bottomWidth) {
     return rectGeom;
 }
 function getMaterial(room) {
-    if (room == 8)
-        return getMaterialByName('Shader2');
+    //if (room == 8)
+    //    return getMaterialByName('Shader2');
     //if (room == 2)
     //    return getMaterialByName('normal');
     //if (room == 3)

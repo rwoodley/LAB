@@ -40,7 +40,7 @@ function getShaderMaterialByName(name) {
     }
     if (name == 'Shader2') {
         var uniforms={
-            time:{ type:"f", value:1}
+            time:{ type:"f", value:0}
         }
         
         return new THREE.ShaderMaterial(
@@ -48,7 +48,9 @@ function getShaderMaterialByName(name) {
                 uniforms: uniforms,
                 vertexShader:document.getElementById("shader2Vertex").textContent,
                 fragmentShader:document.getElementById("shader2Fragment").textContent,
-                side: THREE.DoubleSide
+                side: THREE.DoubleSide,
+                opacity: .5,
+                transparent: true
             }
             );
             this.waterMaterial.depthTest=!0;
