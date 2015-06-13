@@ -81,7 +81,7 @@ var CameraGuage = function(div, mode, cameraPos) {
             _that._scene.add(cameraHelper);
         },
         addMesh: function(callback) {
-            callback(_that._scene);
+            callback(_that._scene, false);
         }
     }
     function getDirectionVector(vector) {

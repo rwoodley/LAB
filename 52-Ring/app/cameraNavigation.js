@@ -1,8 +1,7 @@
-var cameraNavigator = function(camera, pointLight,jellyGoggles) {
+var cameraNavigator = function(camera, pointLight) {
     this._camera = camera;
     this._matrix = new THREE.Matrix4();
     this._pointLight = pointLight;
-    this._jellyGoggles = jellyGoggles;
     //this._camera.add(this._jellyGoggles);
     //this._jellyGoggles.position.set(0,0,0);
     _that = this;
@@ -45,12 +44,8 @@ var cameraNavigator = function(camera, pointLight,jellyGoggles) {
         if (e.keyCode == 83) {          // S
           _that._rotateCameraY(Math.PI/256);  
         }
-        _that._pointLight.position.set(_that._camera.position.x,_that._camera.position.y,_that._camera.position.z)
-
-        _that._jellyGoggles.position.set(_that._camera.position.x,_that._camera.position.y,_that._camera.position.z);
+        _that._pointLight.position.set(_that._camera.position.x,_that._camera.position.y+5,_that._camera.position.z);
         _that._camera.updateMatrixWorld();
-        _vector.setFromMatrixPosition( _that._jellyGoggles.matrixWorld );
-        console.log(_vector);
     });
     var _radians = 0;
     this._rotateCameraY = function(radians) {
@@ -74,6 +69,4 @@ var cameraNavigator = function(camera, pointLight,jellyGoggles) {
     // Camera initialization
     _that._camera.rotateY(Math.PI/8);
     this._rotateCameraY(-0.1);
-    _that._pointLight.position.set(_that._camera.position.x,_that._camera.position.y,_that._camera.position.z)
-    _that._jellyGoggles.position.set(_that._camera.position.x,_that._camera.position.y,_that._camera.position.z);
 }

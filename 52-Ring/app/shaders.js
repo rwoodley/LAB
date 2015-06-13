@@ -49,11 +49,12 @@ function getShaderMaterialByName(name) {
                 vertexShader:document.getElementById("shader2Vertex").textContent,
                 fragmentShader:document.getElementById("shader2Fragment").textContent,
                 side: THREE.DoubleSide,
-                opacity: .5,
+                opacity: .1,
+            depthTest: false,
+            depthWrite: false,
                 transparent: true
             }
             );
-            this.waterMaterial.depthTest=!0;
             var f=new THREE.PlaneGeometry(1000,1000);
             _that._watermesh=new THREE.Mesh(f,this.waterMaterial);
             _that._scene.add(_that._watermesh);
