@@ -59,6 +59,32 @@ function getShaderMaterialByName(name) {
             _that._watermesh=new THREE.Mesh(f,this.waterMaterial);
             _that._scene.add(_that._watermesh);
     }
+    if (name == 'ShaderParticle') {
+        attributes = {
+            size: {	type: 'f', value: [] },
+            customColor: { type: 'c', value: [] }
+        };
+
+        uniforms = {
+            amplitude: { type: "f", value: 1.0 },
+            color:     { type: "c", value: new THREE.Color( 0xffffff ) },
+            texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "textures/spark1.png" ) },
+        };
+
+        var shaderMaterial = new THREE.ShaderMaterial( {
+
+            uniforms:       uniforms,
+            attributes:     attributes,
+            vertexShader:   document.getElementById( 'shaderParticleVertex' ).textContent,
+            fragmentShader: document.getElementById( 'shaderParticleFragment' ).textContent,
+
+            blending:       THREE.AdditiveBlending,
+            depthTest:      false,
+            transparent:    true
+
+        });
+        return shaderMaterial;
+    }
 }
 function renderByName(name) {
     if (name == 'Shader2') {

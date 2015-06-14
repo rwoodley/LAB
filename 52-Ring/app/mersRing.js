@@ -20,7 +20,7 @@ function buildRingMesh(scene, showBoundingBox) {
         scene.add(mesh);
         
         //if (i == 8)
-        fillWedgeWithBubbles(i, scene, 50,
+        fillWedgeWithParticles(i, scene, 50,
                                     _mersColors[i],
                                     i*Math.PI/4.5,
                                     Math.PI/4.6,            // the 4.6 ensures a tiny gap between wedges
@@ -63,6 +63,55 @@ function fillWedgeWithBubbles(room, scene, n, color, startTheta, thetaLength, ba
         //console.log(x + "," + y + "," + z);
         scene.add(mesh);
     }
+}
+function fillWedgeWithParticles(room, scene, n, color, startTheta, thetaLength, base, height, segments, innerRadius, outerLowerRadius, outerUpperRadius) {
+        var radius = 200;
+        var geometry = new THREE.Geometry();
+        //var material = new THREE.MeshPhongMaterial( {
+        //        color: color,
+        //        emissive: chroma(color).brighten(10).hex(),
+        //        specular: color,
+        //        shininess: 10,
+        //        shading: THREE.SmoothShading,
+        //        opacity: .2, transparent: true } );
+        var material = getShaderMaterialByName('ShaderParticle');
+        for ( var i = 0; i < 1000; i ++ ) {
+
+            var size  = Math.min(2.75,lnRandomScaled(.42,3));
+            var y = Math.random() * (height-size*2) + base + size *2;
+            var radius = Math.random() * (outerLowerRadius - innerRadius - size * 2) + innerRadius + size *2;
+            var theta = Math.random() * thetaLength + startTheta;
+            var x = radius * Math.cos(theta);
+            var z = radius * Math.sin(theta);
+            var vertex = new THREE.Vector3();
+            vertex.x = x;
+            vertex.y = y;
+            vertex.z = z;
+
+            geometry.vertices.push( vertex );
+
+        }
+
+        sphere = new THREE.PointCloud( geometry, material );
+
+        var vertices = sphere.geometry.vertices;
+        var values_size = attributes.size.value;
+        var values_color = attributes.customColor.value;
+
+        for ( var v = 0; v < vertices.length; v++ ) {
+            var size  = Math.min(2.75,lnRandomScaled(.3,1));
+        
+            values_size[ v ] = size;
+            values_color[ v ] = new THREE.Color( color );
+        
+            if ( vertices[ v ].x < 0 )
+                values_color[ v ].setHSL( 0.5 + 0.1 * ( v / vertices.length ), 0.7, 0.5 );
+            else
+                values_color[ v ].setHSL( 0.0 + 0.1 * ( v / vertices.length ), 0.9, 0.5 );
+        
+        }
+
+        scene.add( sphere );
 }
 function getWedgeGeo(startTheta, thetaLength, base, height, segments, innerRadius, outerLowerRadius, outerUpperRadius) {
 
