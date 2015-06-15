@@ -68,7 +68,7 @@ function getShaderMaterialByName(name) {
         uniforms = {
             amplitude: { type: "f", value: 1.0 },
             color:     { type: "c", value: new THREE.Color( 0xffffff ) },
-            texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "textures/spark1.png" ) },
+            texture:   { type: "t", value: THREE.ImageUtils.loadTexture( "textures/bubble_101.png" ) },
         };
 
         var shaderMaterial = new THREE.ShaderMaterial( {

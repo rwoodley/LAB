@@ -9,7 +9,7 @@
 				font-family:Monospace;
 				font-size:13px;
 				text-align:center;
-
+                background: #111;
 				margin: 0px;
 			}
             .gauges {
@@ -17,6 +17,14 @@
                 background: blue;
                 width: 200px;
                 height: 200px;
+                border: 1px solid black;
+
+            }
+            .outsideView {
+                margin: 4px;
+                background: blue;
+                width: 600px;
+                height: 600px;
                 border: 1px solid black;
 
             }
@@ -40,11 +48,11 @@
             <tr>
                 <td>
                     <div id="wrapper">
-                        <div style="">
+ <!--                       <div style="">
                              <span id='text1' style="height:30px;width:100px;color:#00000;">test</span>
                         </div>
-                        <div id="container1" class="gauges"></div>
-                        <div id="container2" class="gauges"></div>
+--><!--                        <div id="container1" class="gauges"></div>-->
+                        <div id="container2" class="outsideView"></div>
                     </div>
                     
                 </td>
@@ -103,7 +111,8 @@
                 for (var i = 0; i < getContent.length; i++)
                     document.body.appendChild(document.importNode(getContent[i], true));
             }
-            var guage1 = new CameraGuage(document.getElementById('container1'), 1, new THREE.Vector3(2, 1.5, 1.5));
+            var guage1 = null;
+            //var guage1 = new CameraGuage(document.getElementById('container1'), 1, new THREE.Vector3(2, 1.5, 1.5));
             var guage2 = new CameraGuage(document.getElementById('container2'), 2, new THREE.Vector3(70, 70, 70));
             var app = new MainApp(document.getElementById('mainPanel'), guage1, guage2);
         </script>

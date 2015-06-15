@@ -1,4 +1,19 @@
-function buildRingMesh(scene, showBoundingBox) {
+var _paramsBig = {
+    base: 0,
+    height: 20,
+    innerRadius: 90,
+    outerLowerRadius: 105,
+    outerUpperRadius: 110
+}
+var _paramsSmall = {
+    base: 0,
+    height: 20,
+    innerRadius: 30,
+    outerLowerRadius: 45,
+    outerUpperRadius: 50
+}
+
+function buildRingMesh(scene, showBoundingBox, params, addParticles) {
 
     for (var i = 0; i < 9; i++) {
         //var color = chroma.scale('RdYlBu').mode('lab')(i/9).hex();
@@ -7,30 +22,30 @@ function buildRingMesh(scene, showBoundingBox) {
         var geometry1 = getWedgeGeo(
                                     i*Math.PI/4.5,
                                     Math.PI/4.51,            // the 4.51 ensures a tiny gap between wedges
-                                    0,
-                                    20,
+                                    params.base,
+                                    params.height,
                                     9,
-                                    90,
-                                    105,
-                                    110
+                                    params.innerRadius,
+                                    params.outerLowerRadius,
+                                    params.outerUpperRadius
                                     );  
         var mesh = new THREE.Mesh( geometry1, material ); 
         mesh.rotateX(Math.PI/2);
         mesh.castShadow = true;
         scene.add(mesh);
         
-        //if (i == 8)
-        fillWedgeWithParticles(i, scene, 50,
-                                    _mersColors[i],
-                                    i*Math.PI/4.5,
-                                    Math.PI/4.6,            // the 4.6 ensures a tiny gap between wedges
-                                    0,
-                                    20,
-                                    9,
-                                    90,
-                                    105,
-                                    110
-                            );
+        if (addParticles)
+            fillWedgeWithParticles(i, scene, 50,
+                                        _mersColors[i],
+                                        i*Math.PI/4.5,
+                                        Math.PI/4.6,            // the 4.6 ensures a tiny gap between wedges
+                                        params.base,
+                                        params.height,
+                                        9,
+                                        params.innerRadius,
+                                        params.outerLowerRadius,
+                                        params.outerUpperRadius
+                                );
 
         
         if (i == 0 && showBoundingBox) {
@@ -75,7 +90,7 @@ function fillWedgeWithParticles(room, scene, n, color, startTheta, thetaLength, 
         //        shading: THREE.SmoothShading,
         //        opacity: .2, transparent: true } );
         var material = getShaderMaterialByName('ShaderParticle');
-        for ( var i = 0; i < 1000; i ++ ) {
+        for ( var i = 0; i < 10000; i ++ ) {
 
             var size  = Math.min(2.75,lnRandomScaled(.42,3));
             var y = Math.random() * (height-size*2) + base + size *2;
@@ -99,7 +114,7 @@ function fillWedgeWithParticles(room, scene, n, color, startTheta, thetaLength, 
         var values_color = attributes.customColor.value;
 
         for ( var v = 0; v < vertices.length; v++ ) {
-            var size  = Math.min(2.75,lnRandomScaled(.3,1));
+            var size  = Math.min(0.75,lnRandomScaled(.1,.3));
         
             values_size[ v ] = size;
             values_color[ v ] = new THREE.Color( color );
@@ -170,7 +185,7 @@ function getMaterial(room) {
     //    return getMaterialByName('color');
     
     //var color = chroma.scale('RdYlBu').mode('lab')(room/9).hex();
-    _mersColors = [0x45C5FF,0x45BCFF,0x45D6FF,0xFFFF9A,0x22D6FF,0x45CDFF,0x00C76D,0x45BCFF,0x904100];
+    _mersColors = [0x45BCFF,0x45D6FF,0xFFFF9A,0x22D6FF,0x45CDFF,0x00C76D,0x45BCFF,0x904100,0x45C5FF];
     var color = _mersColors[room];
     return getMaterialByName('color', color);
 }

@@ -8,7 +8,7 @@ var CameraGuage = function(div, mode, cameraPos) {
 
     _that._scene = new THREE.Scene();
 
-    _that._renderer =  new THREE.WebGLRenderer();
+    _that._renderer =  new THREE.WebGLRenderer({antialias: true});
     _that._renderer.setSize( _that._width, _that._height );
     _that._renderer.setClearColor( 0x000000 );
 
@@ -23,9 +23,24 @@ var CameraGuage = function(div, mode, cameraPos) {
     function init() {
     
         _that._camera.position.set(cameraPos.x, cameraPos.y, cameraPos.z);
-        var axes = new THREE.AxisHelper( _that._mode == 1 ? 1 : 80 );
-        _that._scene.add(axes);
-        _that._scene.add( new THREE.AmbientLight( 0xaaaaaa ) );
+        //var axes = new THREE.AxisHelper( _that._mode == 1 ? 1 : 80 );
+        //_that._scene.add(axes);
+//        _that._scene.add( new THREE.AmbientLight( 0xaaaaaa ) );
+        var spotLight = new THREE.SpotLight( 0xaaaa00 );
+        spotLight.position.set( 180, 160, 0 );
+        _that._scene.add(spotLight);
+        var spotLight = new THREE.SpotLight( 0xaaaa00 );
+        spotLight.position.set( -80, 160, 0 );
+        _that._scene.add(spotLight);
+        var grid = new THREE.GridHelper(1000, 10);
+        _that._scene.add(grid);       
+        _that._scene.fog = new THREE.Fog( 0x444, 150.0, 300 );
+        
+        
+        _that._pointLight = new THREE.PointLight( 0xfff, 1000, 20 );
+        _that._scene.add( _that._pointLight );
+        var pointLightHelper = new THREE.PointLightHelper(_that._pointLight, 1);
+        _that._scene.add( pointLightHelper );
 
         if (_that._mode == 2) {
             var geometry = new THREE.SphereGeometry(2,16,16);
@@ -68,7 +83,9 @@ var CameraGuage = function(div, mode, cameraPos) {
     }
     var _radians = 0;
     return {
-        render: function() {
+        render: function(lightPosition) {
+            _that._pointLight.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
+            _that._pointLight.updateMatrix();
             _that._render();
         },
         showArrow: function(camera) {
@@ -81,7 +98,7 @@ var CameraGuage = function(div, mode, cameraPos) {
             _that._scene.add(cameraHelper);
         },
         addMesh: function(callback) {
-            callback(_that._scene, false);
+            callback(_that._scene, false, _paramsSmall);
         }
     }
     function getDirectionVector(vector) {

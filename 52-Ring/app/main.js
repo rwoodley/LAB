@@ -7,7 +7,7 @@ var MainApp = function(div, angleGuage, positionGuage) {
     _that._camera = new THREE.PerspectiveCamera( 60, _that._width / _that._height, .1, 20000 );    
 
     this._angleGuage = angleGuage;
-    this._angleGuage.showArrow(_that._camera);
+    //this._angleGuage.showArrow(_that._camera);
     this._positionGuage = positionGuage;
     _that._clock = new THREE.Clock();
     //_that._controls = new THREE.OrbitControls( _that._camera, _that._container );
@@ -37,12 +37,12 @@ var MainApp = function(div, angleGuage, positionGuage) {
     _that._scene.add(axes);
     
     _that._positionGuage.addMesh(buildRingMesh);
-    buildRingMesh(_that._scene, false);
+    buildRingMesh(_that._scene, false, _paramsBig, true);
 
     var grid = new THREE.GridHelper(1000, 10);
     _that._scene.add(grid);       
 
-    _that._positionGuage.showCameraHelper(_that._camera);
+    //_that._positionGuage.showCameraHelper(_that._camera);
     _that._scene.fog = new THREE.Fog( 0x444, 10.0, 100 );
     //_that._scene.add( new THREE.AmbientLight( 0xaaaaaa ) );
     //_that._scene.add(shadowLighting(plane));
@@ -54,36 +54,12 @@ var MainApp = function(div, angleGuage, positionGuage) {
     spotLight.position.set( -80, 160, 0 );
     _that._scene.add(spotLight);
         
-    var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 } );
-    var plane = new THREE.Mesh( new THREE.PlaneGeometry( 10000, 10000 ), groundMat);
-    plane.receiveShadow = true;
-    plane.rotation.x = -1.57;
-    plane.position.y = -20;
-    //_that._scene.add( plane );
     //postProcessing();
     //_that._composer = setupShaderDotScreen( _that._renderer, _that._scene, _that._camera);
     _that._renderer.render( _that._scene, _that._camera );
 
     animate();
 
-    function shadowLighting(floor) {
-        // add spotlight for the shadows
-        var spotLight = new THREE.SpotLight( 0xffffff );
-        spotLight.position.set( -80, 160, 0 );
-        spotLight.castShadow = true;
-        spotLight.shadowCameraVisible = true;
-        spotLight.angle = 2.0;
-        //spotLight.intensity = 30;
-        spotLight.distance=400;
-        spotLight.shadowCameraNear = 2;
-        spotLight.shadowCameraFar = 300;
-        spotLight.shadowCameraFov = 500;
-        spotLight.shadowDarkness = 1;
-        spotLight.shadowMapWidth = 2048;
-        spotLight.shadowMapHeight = 2048;
-        spotLight.target = floor;
-        return spotLight;
-    }
     function postProcessing() {
         _that._renderer.autoClear = false;
         
@@ -106,14 +82,14 @@ var MainApp = function(div, angleGuage, positionGuage) {
     var _tick = 0;
     function render() {
         _that._renderer.render( _that._scene, _that._camera );
-        _that._angleGuage.render();
-        _that._positionGuage.render();
+        //_that._angleGuage.render();
+        _that._positionGuage.render(_that._camera.position);
         if (_that._composer != null)
             _that._composer.render();
-        document.getElementById('text1').innerHTML = "<nobr>("
-                + Math.floor(_that._camera.position.x) + ","
-                + Math.floor(_that._camera.position.y) + ","
-                + Math.floor(_that._camera.position.z) + ")</nobr>" ;
+        //document.getElementById('text1').innerHTML = "<nobr>("
+        //        + Math.floor(_that._camera.position.x) + ","
+        //        + Math.floor(_that._camera.position.y) + ","
+        //        + Math.floor(_that._camera.position.z) + ")</nobr>" ;
         renderMaterials(_that._clock.getDelta());
     }
 }
