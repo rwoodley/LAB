@@ -77,6 +77,7 @@
 		<script src="main.js"></script>
 		<script src="mersRing.js"></script>
 		<script src="shaders.js"></script>
+		<script src="utils.js"></script>
 
 <!--    	<script type="text/javascript" src="r69/ShaderExtras.js"></script>
 -->
@@ -112,9 +113,8 @@
                     document.body.appendChild(document.importNode(getContent[i], true));
             }
             var guage1 = null;
-            //var guage1 = new CameraGuage(document.getElementById('container1'), 1, new THREE.Vector3(2, 1.5, 1.5));
-            var guage2 = new CameraGuage(document.getElementById('container2'), 2, new THREE.Vector3(70, 70, 70));
-            var app = new MainApp(document.getElementById('mainPanel'), guage1, guage2);
+            var guage2 = new CameraGuage(document.getElementById('container2'), new THREE.Vector3(70, 70, 70));
+            var app = new MainApp(document.getElementById('mainPanel'), guage2);
         </script>
 	</body>
 </html>

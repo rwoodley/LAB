@@ -1,4 +1,4 @@
-var MainApp = function(div, angleGuage, positionGuage) {
+var MainApp = function(div, positionGuage) {
     var _that = this;
     this._container = div;
     this._width = div.offsetWidth;
@@ -6,18 +6,14 @@ var MainApp = function(div, angleGuage, positionGuage) {
     this._composer = null;
     _that._camera = new THREE.PerspectiveCamera( 60, _that._width / _that._height, .1, 20000 );    
 
-    this._angleGuage = angleGuage;
-    //this._angleGuage.showArrow(_that._camera);
     this._positionGuage = positionGuage;
     _that._clock = new THREE.Clock();
     //_that._controls = new THREE.OrbitControls( _that._camera, _that._container );
 
     _that._scene = new THREE.Scene();
-    var pointLight = new THREE.PointLight( 0xfff, 100, 60 );
-    //this._scene.add( pointLight );
 
     _that._camera.position.x = 100; _that._camera.position.y = 10; _that._camera.position.z = 0;
-    this._navigator = new cameraNavigator(_that._camera, pointLight);
+    this._navigator = new cameraNavigator(_that._camera, positionGuage.getPointLight());
 
     _that._renderer =  new THREE.WebGLRenderer({antialias: true});
     _that._renderer.sortObjects = false;
@@ -32,7 +28,6 @@ var MainApp = function(div, angleGuage, positionGuage) {
         return;
     }
     
-    
     var axes = new THREE.AxisHelper( 1 );
     _that._scene.add(axes);
     
@@ -42,10 +37,7 @@ var MainApp = function(div, angleGuage, positionGuage) {
     var grid = new THREE.GridHelper(1000, 10);
     _that._scene.add(grid);       
 
-    //_that._positionGuage.showCameraHelper(_that._camera);
     _that._scene.fog = new THREE.Fog( 0x444, 10.0, 100 );
-    //_that._scene.add( new THREE.AmbientLight( 0xaaaaaa ) );
-    //_that._scene.add(shadowLighting(plane));
 
     var spotLight = new THREE.SpotLight( 0xaaaa00 );
     spotLight.position.set( 180, 160, 0 );
@@ -82,14 +74,9 @@ var MainApp = function(div, angleGuage, positionGuage) {
     var _tick = 0;
     function render() {
         _that._renderer.render( _that._scene, _that._camera );
-        //_that._angleGuage.render();
         _that._positionGuage.render(_that._camera.position);
         if (_that._composer != null)
             _that._composer.render();
-        //document.getElementById('text1').innerHTML = "<nobr>("
-        //        + Math.floor(_that._camera.position.x) + ","
-        //        + Math.floor(_that._camera.position.y) + ","
-        //        + Math.floor(_that._camera.position.z) + ")</nobr>" ;
         renderMaterials(_that._clock.getDelta());
     }
 }

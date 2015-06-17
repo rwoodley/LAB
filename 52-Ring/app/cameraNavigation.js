@@ -1,5 +1,6 @@
 var cameraNavigator = function(camera, pointLight) {
     this._camera = camera;
+    this._utils = new utils();
     this._matrix = new THREE.Matrix4();
     this._pointLight = pointLight;
     //this._camera.add(this._jellyGoggles);
@@ -39,34 +40,19 @@ var cameraNavigator = function(camera, pointLight) {
             _that._camera.position.add(dir.clone().multiplyScalar(amount));
         }
         if (e.keyCode == 87) {          // W
-          _that._rotateCameraY(-Math.PI/256);  
+            rotateCameraY(-Math.PI/256);
         }
         if (e.keyCode == 83) {          // S
-          _that._rotateCameraY(Math.PI/256);  
+            rotateCameraY(Math.PI/256);
         }
-        _that._pointLight.position.set(_that._camera.position.x,_that._camera.position.y+5,_that._camera.position.z);
+        //_that._pointLight.position.set(_that._camera.position.x,_that._camera.position.y+5,_that._camera.position.z);
         _that._camera.updateMatrixWorld();
     });
-    var _radians = 0;
-    this._rotateCameraY = function(radians) {
-        var x = _that._camera.position.x;	var y = _that._camera.position.y;	var z = _that._camera.position.z;
-        var signx = x > 0 ? 1 : -1;
-    
-        // get current radians from z and x coords.
-        _radians = x == 0 ? Math.PI/2 : Math.atan(z/x);
-        if (signx == -1) _radians += Math.PI;
-    
-        _radians += radians;
-        if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
-        while (_radians < 0) _radians += Math.PI*2;
-    
-        var radius = Math.sqrt(x*x + z*z);
-        _that._camera.position.x = radius * Math.cos(_radians);
-        _that._camera.position.z = radius * Math.sin(_radians);
-        _that._camera.rotateY(-radians);
-        
+    function rotateCameraY(increment) {
+            var radius =  _paramsSmall.innerRadius + (_paramsSmall.outerLowerRadius - _paramsSmall.innerRadius)/2.0;
+          _that._utils.setPositionForRadiansRadius(_that._pointLight, _that._utils.rotateCameraY(increment, _that._camera), radius);  
     }
     // Camera initialization
-    _that._camera.rotateY(Math.PI/8);
-    this._rotateCameraY(-0.1);
+    _that._camera.rotateY(Math.PI/8);       // rotate along camera axis
+    rotateCameraY(-0.1);     // rotate along world axis
 }

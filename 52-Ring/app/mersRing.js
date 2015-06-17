@@ -56,29 +56,6 @@ function buildRingMesh(scene, showBoundingBox, params, addParticles) {
     }
     return mesh;
 }
-function fillWedgeWithBubbles(room, scene, n, color, startTheta, thetaLength, base, height, segments, innerRadius, outerLowerRadius, outerUpperRadius) {
-    console.log(color + "," + chroma(color).darken());
-    var material = new THREE.MeshPhongMaterial( {
-            color: color,
-            emissive: chroma(color).brighten(10).hex(),
-            specular: color,
-            shininess: 10,
-            shading: THREE.SmoothShading,
-            opacity: .2, transparent: true } );
-    //var material = getShaderMaterialByName('Shader2');
-    for (var i = 0; i < n; i++) {
-        var size  = Math.min(2.75,lnRandomScaled(.42,3));
-        var y = Math.random() * (height-size*2) + base + size *2;
-        var radius = Math.random() * (outerLowerRadius - innerRadius - size * 2) + innerRadius + size *2;
-        var theta = Math.random() * thetaLength + startTheta;
-        var x = radius * Math.cos(theta);
-        var z = radius * Math.sin(theta);
-        var mesh = new THREE.Mesh( new THREE.SphereGeometry( size, 16 , 16 ), material);
-        mesh.position.set(x,y,z);
-        //console.log(x + "," + y + "," + z);
-        scene.add(mesh);
-    }
-}
 function fillWedgeWithParticles(room, scene, n, color, startTheta, thetaLength, base, height, segments, innerRadius, outerLowerRadius, outerUpperRadius) {
         var radius = 200;
         var geometry = new THREE.Geometry();
@@ -211,7 +188,7 @@ function getMaterialByName(name, color) {
         return  new THREE.MeshPhongMaterial( {
             color: color,
             side: THREE.DoubleSide,
-            emissive: chroma(color).darken(10).hex(),
+            emissive: chroma(color).darken(40).hex(),
             specular: color,
             shininess: 1,
             shading: THREE.SmoothShading,
