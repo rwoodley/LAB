@@ -31,14 +31,26 @@ var CameraGuage = function(div, cameraPos) {
         spotLight.position.set( -80, 160, 0 );
         //_that._scene.add(spotLight);
         var grid = new THREE.GridHelper(1000, 10);
+        var grid = new THREE.GridHelper(1000, 10);
+        grid.setColors('red','blue');
         _that._scene.add(grid);       
+        var f=new THREE.PlaneGeometry(1000,1000);
+        var planemesh=new THREE.Mesh(f, new THREE.MeshLambertMaterial({color: 0xffffff, emissive:0x222222, side: THREE.DoubleSide }));
+        planemesh.rotateX(Math.PI/2);
+        planemesh.position.y -= 10;
+//        _that._scene.add(planemesh);
         _that._scene.fog = new THREE.Fog( 0x444, 150.0, 300 );
         
         
-        _that._pointLight = new THREE.PointLight( 0xfff, 1000, 0 );
+        _that._pointLight = new THREE.PointLight( 0xfff, 1000, 2 );
+        _that._pointLight.position.y = 5;
         _that._scene.add( _that._pointLight );
-        var pointLightHelper = new THREE.PointLightHelper(_that._pointLight, 1);
-        _that._scene.add( pointLightHelper );
+        //var pointLightHelper = new THREE.PointLightHelper(_that._pointLight, 1);
+        //_that._scene.add( pointLightHelper );
+        var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+        var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.FrontSide} );
+        var sphere = new THREE.Mesh( geometry, material );
+        _that._pointLight.add(sphere);
 
         _that._container.appendChild( _that._renderer.domElement );
 

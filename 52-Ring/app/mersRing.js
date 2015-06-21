@@ -12,50 +12,68 @@ var _paramsSmall = {
     outerLowerRadius: 45,
     outerUpperRadius: 50
 }
-
-function buildRingMesh(scene, showBoundingBox, params, addParticles) {
-
-    for (var i = 0; i < 9; i++) {
-        //var color = chroma.scale('RdYlBu').mode('lab')(i/9).hex();
-        //var material =  new THREE.MeshPhongMaterial( { color: color, side: THREE.DoubleSide } );
-        var material = getMaterial(i);
-        var geometry1 = getWedgeGeo(
-                                    i*Math.PI/4.5,
-                                    Math.PI/4.51,            // the 4.51 ensures a tiny gap between wedges
-                                    params.base,
-                                    params.height,
-                                    9,
-                                    params.innerRadius,
-                                    params.outerLowerRadius,
-                                    params.outerUpperRadius
-                                    );  
-        var mesh = new THREE.Mesh( geometry1, material ); 
-        mesh.rotateX(Math.PI/2);
-        mesh.castShadow = true;
-        scene.add(mesh);
-        
-        if (addParticles)
-            fillWedgeWithParticles(i, scene, 50,
-                                        _mersColors[i],
-                                        i*Math.PI/4.5,
-                                        Math.PI/4.6,            // the 4.6 ensures a tiny gap between wedges
+var mersRing = function(mode) {
+    var _that = this;
+    _that._mode = mode;
+    _that._nWedges = 9;
+    _that._thetaLength = 2*Math.PI/_that._nWedges;
+    _that._wedges = [];
+    _that.buildRingMesh = function(scene, showBoundingBox, params, addParticles) {
+        _that._params = params;
+        for (var i = 0; i < _that._nWedges; i++) {
+            //var color = chroma.scale('RdYlBu').mode('lab')(i/9).hex();
+            //var material =  new THREE.MeshPhongMaterial( { color: color, side: THREE.DoubleSide } );
+            var material = getMaterial(i);
+            var geometry1 = getWedgeGeo(
+                                        i*_that._thetaLength,
+                                        _that._thetaLength*.999,            //  ensure a tiny gap between wedges
                                         params.base,
                                         params.height,
                                         9,
                                         params.innerRadius,
                                         params.outerLowerRadius,
                                         params.outerUpperRadius
-                                );
-
-        
-        if (i == 0 && showBoundingBox) {
-            var bbox = new THREE.BoundingBoxHelper( mesh, 0xff0000 );
-            bbox.update();
-            scene.add( bbox );
+                                        );  
+            var mesh = new THREE.Mesh( geometry1, material ); 
+            mesh.rotateX(Math.PI/2);
+            mesh.castShadow = true;
+            scene.add(mesh);
+            _that._wedges.push(mesh);
+            
+            if (addParticles)
+                fillWedgeWithParticles(i, scene, 50,
+                                            _mersColors[i],
+                                            i*_that._thetaLength,
+                                            _that._thetaLength*.999,            // ensure a tiny gap between wedges
+                                            params.base,
+                                            params.height,
+                                            9,
+                                            params.innerRadius,
+                                            params.outerLowerRadius,
+                                            params.outerUpperRadius
+                                    );
+    
+            
+            if (i == 0 && showBoundingBox) {
+                var bbox = new THREE.BoundingBoxHelper( mesh, 0xff0000 );
+                bbox.update();
+                scene.add( bbox );
+            }
+        }
+        return mesh;
+    }
+    _that.listener = function(radians) {
+        var windex = Math.floor(_that._nWedges * radians/(Math.PI*2))
+        console.log('mode ' + _that._mode);
+        if (_that._mode == 0) {
+            //for (var i = 0; i < _that._nWedges; i++) 
+            //    _that._wedges[i].material.emissive.setStyle(chroma(_that._wedges[i].material.color.getHex()).darken(0).hex());
+            //console.log(radians + ": " + windex);
+            //_that._wedges[windex].material.emissive.setStyle(chroma(_that._wedges[windex].material.color.getHex()).brighten(10).hex());
         }
     }
-    return mesh;
 }
+// ---------- functions, not methods ------
 function fillWedgeWithParticles(room, scene, n, color, startTheta, thetaLength, base, height, segments, innerRadius, outerLowerRadius, outerUpperRadius) {
         var radius = 200;
         var geometry = new THREE.Geometry();
@@ -162,7 +180,7 @@ function getMaterial(room) {
     //    return getMaterialByName('color');
     
     //var color = chroma.scale('RdYlBu').mode('lab')(room/9).hex();
-    _mersColors = [0x45BCFF,0x45D6FF,0xFFFF9A,0x22D6FF,0x45CDFF,0x00C76D,0x45BCFF,0x904100,0x45C5FF];
+    _mersColors = [0x45BCFF,0x45D6FF,0xFFFF9A,0x22D6FF,0x45CDFF,0x00C76D,0x45BCFF,0xc35433,0x45C5FF];
     var color = _mersColors[room];
     return getMaterialByName('color', color);
 }
@@ -188,7 +206,7 @@ function getMaterialByName(name, color) {
         return  new THREE.MeshPhongMaterial( {
             color: color,
             side: THREE.DoubleSide,
-            emissive: chroma(color).darken(40).hex(),
+            emissive: chroma(color).brighten(0).hex(),
             specular: color,
             shininess: 1,
             shading: THREE.SmoothShading,

@@ -13,7 +13,6 @@ var MainApp = function(div, positionGuage) {
     _that._scene = new THREE.Scene();
 
     _that._camera.position.x = 100; _that._camera.position.y = 10; _that._camera.position.z = 0;
-    this._navigator = new cameraNavigator(_that._camera, positionGuage.getPointLight());
 
     _that._renderer =  new THREE.WebGLRenderer({antialias: true});
     _that._renderer.sortObjects = false;
@@ -31,10 +30,14 @@ var MainApp = function(div, positionGuage) {
     var axes = new THREE.AxisHelper( 1 );
     _that._scene.add(axes);
     
-    _that._positionGuage.addMesh(buildRingMesh);
-    buildRingMesh(_that._scene, false, _paramsBig, true);
+    _that._leftRing = new mersRing(0);
+    _that._rightRing = new mersRing(1);
+    _that._positionGuage.addMesh(_that._leftRing.buildRingMesh);
+    _that._rightRing.buildRingMesh(_that._scene, false, _paramsBig, true);
+    this._navigator = new cameraNavigator(_that._camera, positionGuage.getPointLight(), _that._leftRing.listener);
 
     var grid = new THREE.GridHelper(1000, 10);
+    grid.setColors('red','blue');
     _that._scene.add(grid);       
 
     _that._scene.fog = new THREE.Fog( 0x444, 10.0, 100 );
