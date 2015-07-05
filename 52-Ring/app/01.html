@@ -25,7 +25,6 @@
                 background: blue;
                 width: 600px;
                 height: 600px;
-                border: 1px solid black;
 
             }
             #wrapper{
@@ -35,10 +34,43 @@
                 background: yellow;
                 width: 600px;
                 height: 600px;
-                border: 1px solid black;
             }
 
     </style>
+    <script id="shaderParticleVertex" type="x-shader/x-vertex">
+        uniform float amplitude;
+        attribute float size;
+        attribute vec3 customColor;
+    
+        varying vec3 vColor;
+    
+        void main() {
+    
+            vColor = customColor;
+    
+            vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    
+            //gl_PointSize = size;
+            gl_PointSize = size * ( 300.0 / length( mvPosition.xyz ) );
+    
+            gl_Position = projectionMatrix * mvPosition;
+    
+        }
+    </script>
+    
+    <script id="shaderParticleFragment" type="x-shader/x-fragment"> 
+        uniform vec3 color;
+        uniform sampler2D texture;
+    
+        varying vec3 vColor;
+    
+        void main() {
+    
+            gl_FragColor = vec4( color * vColor, 1.0 );
+            gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
+    
+        }
+    </script>
     <link rel="import" href="Shader1.html">
     <link rel="import" href="Shader2.html">
     <link rel="import" href="ShaderParticle.html">
@@ -108,13 +140,7 @@
         <script src="r71/postprocessing/DotScreenPass.js"></script>
         <script src="r71/postprocessing/TexturePass.js"></script>
         <script>
-            var imports = document.querySelectorAll('link[rel=import]');
-            for (var j = 0; j < imports.length; j++) {
-                var getContent = imports[j].import.querySelectorAll('script');
-                for (var i = 0; i < getContent.length; i++)
-                    document.body.appendChild(document.importNode(getContent[i], true));
-            }
-            var app = new MainApp(document.getElementById('mainPanel'));
+           var app = new MainApp(document.getElementById('mainPanel'));
         </script>
 	</body>
 </html>
