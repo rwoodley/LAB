@@ -31,10 +31,10 @@ var MainApp = function(div) {
     
     _that._leftRing = new mersRing(0);
     _that._rightRing = new mersRing(1);
-    this._positionGuage = new CameraGuage(document.getElementById('container2'), new THREE.Vector3(90, 50, 0));
-    _that._positionGuage.addMesh(_that._leftRing.buildRingMesh);
+    this._leftPanel = new LeftPanel(document.getElementById('container2'), new THREE.Vector3(90, 50, 0));
+    _that._leftPanel.addMesh(_that._leftRing.buildRingMesh);
     _that._rightRing.buildRingMesh(_that._scene, false, _paramsBig, true);
-    this._navigator = new cameraNavigator(_that._camera, _that._positionGuage.listener, _that._leftRing.listener);
+    this._navigator = new cameraNavigator(_that._camera, _that._leftPanel.listener, _that._leftRing.listener);
 
     var grid = new THREE.GridHelper(1000, 10);
     grid.setColors('red',0xbbbbbb);
@@ -49,27 +49,10 @@ var MainApp = function(div) {
     spotLight.position.set( -80, 160, 0 );
     _that._scene.add(spotLight);
         
-    //postProcessing();
-    //_that._composer = setupShaderDotScreen( _that._renderer, _that._scene, _that._camera);
     _that._renderer.render( _that._scene, _that._camera );
 
     animate();
 
-    function postProcessing() {
-        _that._renderer.autoClear = false;
-        
-        var renderModel = new THREE.RenderPass( _that._scene, _that._camera );
-        var effectBloom = new THREE.BloomPass( 0.25 );
-        var effectFilm = new THREE.FilmPass( 0.5, 0.125, 2048, false );
-        
-        effectFilm.renderToScreen = true;
-        
-        _that._composer = new THREE.EffectComposer( _that._renderer );
-        
-        _that._composer.addPass( renderModel );
-        //_that._composer.addPass( effectBloom );
-        _that._composer.addPass( effectFilm );
-    }
     function animate() {
         requestAnimationFrame( animate );    
         render();
@@ -77,7 +60,7 @@ var MainApp = function(div) {
     var _tick = 0;
     function render() {
         _that._renderer.render( _that._scene, _that._camera );
-        _that._positionGuage.render(_that._camera.position);
+        _that._leftPanel.render(_that._camera.position);
         if (_that._composer != null)
             _that._composer.render();
         renderMaterials(_that._clock.getDelta());
