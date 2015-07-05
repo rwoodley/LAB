@@ -1,8 +1,8 @@
-var cameraNavigator = function(camera, pointLight, listener) {
+var cameraNavigator = function(camera, listener2, listener) {
     this._camera = camera;
     this._utils = new utils();
     this._matrix = new THREE.Matrix4();
-    this._pointLight = pointLight;
+    this._listener2 = listener2;
     this._listener = listener;
 
     _that = this;
@@ -58,10 +58,9 @@ var cameraNavigator = function(camera, pointLight, listener) {
         _that._camera.updateMatrixWorld();
     });
     function rotateCameraY(increment) {
-            var radius =  _paramsSmall.innerRadius + (_paramsSmall.outerLowerRadius - _paramsSmall.innerRadius)/2.0;
-            var radians = _that._utils.rotateCameraY(increment, _that._camera);
-          _that._utils.setPositionForRadiansRadius(_that._pointLight, radians, radius);
-          _that._listener(radians);
+        var radians = _that._utils.rotateCameraY(increment, _that._camera);
+        _that._listener(radians);
+        _that._listener2(radians, this._params);
     }
     // Camera initialization
     _that._camera.rotateY(Math.PI*.05);       // rotate along camera axis

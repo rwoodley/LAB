@@ -9,7 +9,7 @@
 				font-family:Monospace;
 				font-size:13px;
 				text-align:center;
-                background: #111;
+                background: #bfd1e5;
 				margin: 0px;
 			}
             .gauges {
@@ -52,7 +52,8 @@
                              <span id='text1' style="height:30px;width:100px;color:#00000;">test</span>
                         </div>
 --><!--                        <div id="container1" class="gauges"></div>-->
-                        <div id="container2" class="outsideView"></div>
+<!--                        <div id="container3" class="outsideView"></div>
+-->                        <div id="container2" class="outsideView"></div>
                     </div>
                     
                 </td>
@@ -64,6 +65,7 @@
             </tr>
         </table>
         <table><tr><td>
+        &nbsp;&nbsp;&nbsp;&nbsp;W - move forward, S - move backwards
         </td><td>
         </td></tr></table>
 		<script src="lib/jquery-1.11.2.min.js"></script>
@@ -112,9 +114,7 @@
                 for (var i = 0; i < getContent.length; i++)
                     document.body.appendChild(document.importNode(getContent[i], true));
             }
-            var guage1 = null;
-            var guage2 = new CameraGuage(document.getElementById('container2'), new THREE.Vector3(90, 50, 0));
-            var app = new MainApp(document.getElementById('mainPanel'), guage2);
+            var app = new MainApp(document.getElementById('mainPanel'));
         </script>
 	</body>
 </html>

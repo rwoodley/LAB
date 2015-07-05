@@ -1,4 +1,4 @@
-var MainApp = function(div, positionGuage) {
+var MainApp = function(div) {
     var _that = this;
     this._container = div;
     this._width = div.offsetWidth;
@@ -6,7 +6,6 @@ var MainApp = function(div, positionGuage) {
     this._composer = null;
     _that._camera = new THREE.PerspectiveCamera( 60, _that._width / _that._height, .1, 20000 );    
 
-    this._positionGuage = positionGuage;
     _that._clock = new THREE.Clock();
     //_that._controls = new THREE.OrbitControls( _that._camera, _that._container );
 
@@ -32,12 +31,13 @@ var MainApp = function(div, positionGuage) {
     
     _that._leftRing = new mersRing(0);
     _that._rightRing = new mersRing(1);
+    this._positionGuage = new CameraGuage(document.getElementById('container2'), new THREE.Vector3(90, 50, 0));
     _that._positionGuage.addMesh(_that._leftRing.buildRingMesh);
     _that._rightRing.buildRingMesh(_that._scene, false, _paramsBig, true);
-    this._navigator = new cameraNavigator(_that._camera, positionGuage.getPointLight(), _that._leftRing.listener);
+    this._navigator = new cameraNavigator(_that._camera, _that._positionGuage.listener, _that._leftRing.listener);
 
     var grid = new THREE.GridHelper(1000, 10);
-    grid.setColors('red','blue');
+    grid.setColors('red',0xbbbbbb);
     _that._scene.add(grid);       
 
     _that._scene.fog = new THREE.Fog( 0x444, 10.0, 100 );

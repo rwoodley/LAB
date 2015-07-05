@@ -36,7 +36,8 @@ var mersRing = function(mode) {
                                         );  
             var mesh = new THREE.Mesh( geometry1, material ); 
             mesh.rotateX(Math.PI/2);
-            mesh.castShadow = true;
+            mesh.renderOrder = -10;
+
             scene.add(mesh);
             _that._wedges.push(mesh);
             
