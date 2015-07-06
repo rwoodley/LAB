@@ -63,14 +63,18 @@ var mersRing = function(mode) {
         }
         return mesh;
     }
+    _that._windex = -1;
     _that.listener = function(radians) {
         var windex = Math.floor(_that._nWedges * radians/(Math.PI*2))
         console.log('mode ' + _that._mode);
         if (_that._mode == 0) {
-            //for (var i = 0; i < _that._nWedges; i++) 
-            //    _that._wedges[i].material.emissive.setStyle(chroma(_that._wedges[i].material.color.getHex()).darken(0).hex());
-            //console.log(radians + ": " + windex);
-            //_that._wedges[windex].material.emissive.setStyle(chroma(_that._wedges[windex].material.color.getHex()).brighten(10).hex());
+            console.log(radians + ": window is " + windex);
+            if (windex != _that._windex) {
+                if (_that._windex != -1)
+                    document.getElementById(_that._windex.toString()).pause();
+                document.getElementById(windex.toString()).play();
+                _that._windex = windex;
+            }
         }
     }
 }

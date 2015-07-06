@@ -9,7 +9,7 @@ var cameraNavigator = function(camera, listener2, listener) {
     var _vector = new THREE.Vector3();
     $(document).keydown(function(e){
         var incr = Math.PI/32;
-        console.log(e.ctrlKey + " " + e.keyCode);
+        console.log("key " + e.ctrlKey + " " + e.keyCode);
         if (e.keyCode==37) {
             _that._camera.rotateY( + incr );
         }
