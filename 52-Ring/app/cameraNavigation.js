@@ -1,8 +1,7 @@
-var cameraNavigator = function(camera, listener2, listener) {
-    this._camera = camera;
+var cameraNavigator = function(rightCamera, listener) {
+    this._camera = rightCamera;
     this._utils = new utils();
     this._matrix = new THREE.Matrix4();
-    this._listener2 = listener2;
     this._listener = listener;
 
     _that = this;
@@ -60,7 +59,6 @@ var cameraNavigator = function(camera, listener2, listener) {
     function rotateCameraY(increment) {
         var radians = _that._utils.rotateCameraY(increment, _that._camera);
         _that._listener(radians);
-        _that._listener2(radians, this._params);
     }
     // Camera initialization
     _that._camera.rotateY(Math.PI*.05);       // rotate along camera axis

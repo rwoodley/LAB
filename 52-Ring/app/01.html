@@ -20,23 +20,35 @@
                 border: 1px solid black;
 
             }
-            .outsideView {
-                margin: 4px;
+            #leftPanel {
+                border-spacing: 0px;
+                margin: 0px;
                 background: blue;
-                width: 600px;
+/*                width: 600px;
                 height: 600px;
-
+*/
             }
-            #wrapper{
-            }
-            #mainPanel {
-                margin: 4px;
+            #rightPanel {
+                border-spacing: 0px;
+                margin: 0px;
                 background: yellow;
-                width: 600px;
+/*                width: 600px;
                 height: 600px;
-            }
+*/            }
 
     </style>
+    <script src="lib/jquery-1.11.2.min.js"></script>
+    <script src="lib/chroma.min.js"></script>
+    <script src="r71/three.min.js"></script>
+    <script src="r71/OrbitControls.js"></script>
+    <script src="r71/Detector.js"></script>
+    <script src="math.js"></script>
+    <script src="cameraNavigation.js"></script>
+    <script src="leftpanel.js"></script>
+    <script src="main.js"></script>
+    <script src="mersRing.js"></script>
+    <script src="shaders.js"></script>
+    <script src="utils.js"></script>
     <script id="shaderParticleVertex" type="x-shader/x-vertex">
         uniform float amplitude;
         attribute float size;
@@ -76,20 +88,14 @@
         <table>
             <tr>
                 <td>
-                    <div id="wrapper">
- <!--                       <div style="">
-                             <span id='text1' style="height:30px;width:100px;color:#00000;">test</span>
-                        </div>
---><!--                        <div id="container1" class="gauges"></div>-->
-<!--                        <div id="container3" class="outsideView"></div>
--->                        <div id="container2" class="outsideView"></div>
+                    <div id="leftPanel" >
+                        <canvas id="leftCanvas" />
                     </div>
-                    
                 </td>
                 <td>
-                    <div id="mainPanel">
+                    <div id="rightPanel">
+                            <canvas id="rightCanvas" />
                     </div>
-                    
                 </td>
             </tr>
         </table>
@@ -97,18 +103,6 @@
         &nbsp;&nbsp;&nbsp;&nbsp;W - move forward, S - move backwards
         </td><td>
         </td></tr></table>
-		<script src="lib/jquery-1.11.2.min.js"></script>
-		<script src="lib/chroma.min.js"></script>
-		<script src="r71/three.min.js"></script>
-        <script src="r71/OrbitControls.js"></script>
-		<script src="r71/Detector.js"></script>
-		<script src="math.js"></script>
-		<script src="cameraNavigation.js"></script>
-		<script src="leftpanel.js"></script>
-		<script src="main.js"></script>
-		<script src="mersRing.js"></script>
-		<script src="shaders.js"></script>
-		<script src="utils.js"></script>
         <audio id='0' style="display: none;">
 		  <source src="audio/01.mp3" type="audio/mpeg">
 		</audio> 
@@ -131,13 +125,68 @@
 		  <source src="audio/induction_song.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='7' style="display: none;">
-		  <source src="audio/Friz_drone_planet_chileww.mp3" type="audio/mpeg">
+		  <source src="audio/Friz_drone_planet_chile.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='8' style="display: none;">
 		  <source src="audio/dog_drone_chile.mp3" type="audio/mpeg">
 		</audio> 
         <script>
-           var app = new MainApp(document.getElementById('mainPanel'));
+            var leftPanel, rightPanel;
+            function resizeDiagram() {
+                console.log(document.body.offsetWidth + "," + document.body.offsetHeight);
+                var width = Math.floor((document.body.offsetWidth - 20)/2);
+                document.getElementById('leftPanel').width = width ;
+                document.getElementById('leftPanel').height = width ;
+                document.getElementById('rightPanel').width = width ;
+                document.getElementById('rightPanel').height = width ;
+                document.getElementById('leftCanvas').width = width ;
+                document.getElementById('leftCanvas').height = width ;
+                document.getElementById('rightCanvas').width = width ;
+                document.getElementById('rightCanvas').height = width ;
+                width += 'px';
+                document.getElementById('leftCanvas').style.width = width ;
+                document.getElementById('leftCanvas').style.height = width ;
+                document.getElementById('rightCanvas').style.width = width ;
+                document.getElementById('rightCanvas').style.height = width ;
+
+                document.getElementById('leftPanel').style.width = width ;
+                document.getElementById('leftPanel').style.height = width ;
+                document.getElementById('rightPanel').style.width = width ;
+                document.getElementById('rightPanel').style.height = width ;
+
+                redrawForCamera(leftPanel._camera, document.getElementById('leftCanvas'), leftPanel._renderer);
+                redrawForCamera(rightPanel._camera, document.getElementById('rightCanvas'), rightPanel._renderer);
+            }
+            function redrawForCamera(camera, canvas, renderer) {
+                renderer.setViewport(0, 0, canvas.clientWidth, canvas.clientHeight);
+                camera.aspect = canvas.clientWidth / canvas.clientHeight;
+                camera.updateProjectionMatrix();
+            }
+            
+            window.onresize = resizeDiagram;
+            window.addEventListener('orientationchange', function (e) { setTimeout(resizeDiagram, 250); });
+            leftPanel = new LeftPanel(document.getElementById('leftPanel'), document.getElementById('leftCanvas'), new THREE.Vector3(90, 50, 0));
+            rightPanel = new MainApp(
+                document.getElementById('rightPanel'),
+                document.getElementById('rightCanvas')
+                                 );
+            var navigator = new cameraNavigator(rightPanel._camera, leftPanel.listener);
+            animate();
+        
+            function animate() {
+                requestAnimationFrame( animate );    
+                render();
+            }
+            var _tick = 0;
+            function render() {
+                rightPanel._renderer.render( rightPanel._scene, rightPanel._camera );
+                leftPanel.render(rightPanel._camera.position);
+                //renderMaterials(_that._clock.getDelta());
+                if (_tick == 0) {
+                    resizeDiagram();
+                    _tick++;
+                }
+            }
         </script>
 	</body>
 </html>
