@@ -72,12 +72,17 @@ var mersRing = function(mode) {
             if (windex != _that._windex) {
                 if (_that._windex != -1)
                     document.getElementById(_that._windex.toString()).pause();
+                else
+                    setFirstWindex(windex);
                 document.getElementById(windex.toString()).play();
                 _that._windex = windex;
             }
         }
     }
 }
+_firstWindex = -1;
+function setFirstWindex(windex) { _firstWindex = windex; }
+function startPlayingAudioForFirstWedge() { document.getElementById(_firstWindex.toString()).play(); }
 // ---------- functions, not methods ------
 function fillWedgeWithParticles(room, scene, n, color, startTheta, thetaLength, base, height, segments, innerRadius, outerLowerRadius, outerUpperRadius) {
         var radius = 200;

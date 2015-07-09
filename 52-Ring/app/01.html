@@ -104,33 +104,53 @@
         </td><td>
         </td></tr></table>
         <audio id='0' style="display: none;">
-		  <source src="audio/01.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='1' style="display: none;">
-		  <source src="audio/02.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='2' style="display: none;">
-		  <source src="audio/03.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='3' style="display: none;">
-		  <source src="audio/04.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='4' style="display: none;">
-		  <source src="audio/05.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='5' style="display: none;">
-		  <source src="audio/06.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='6' style="display: none;">
-		  <source src="audio/induction_song.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='7' style="display: none;">
-		  <source src="audio/Friz_drone_planet_chile.mp3" type="audio/mpeg">
 		</audio> 
         <audio id='8' style="display: none;">
-		  <source src="audio/dog_drone_chile.mp3" type="audio/mpeg">
 		</audio> 
         <script>
+            $(document).ready(function() {
+                loops = [
+                    'audio/01.mp3',
+                    'audio/02.mp3',
+                    'audio/03.mp3',
+                    'audio/04.mp3',
+                    'audio/05.mp3',
+                    'audio/06.mp3',
+                    'audio/induction_song.mp3',
+                    'audio/Friz_drone_planet_chile.mp3',
+                    'audio/dog_drone_chile.mp3'
+                ];
+                addEventListener('touchstart', function (e) { initializeAudio();  });
+                addEventListener('click', function (e) { initializeAudio();  });
+            });
+            var _firstTime = true;
+            function initializeAudio() {
+                if (!_firstTime) return;
+                _firstTime = false;
+                console.log("initing audio");
+                for (var i = 0; i < 9; i++) {
+                    soundHandle = document.getElementById(i);
+                    soundHandle.src = loops[i];
+                    soundHandle.loop = true;
+                    soundHandle.play();
+                    soundHandle.pause();
+                }
+                startPlayingAudioForFirstWedge();
+            }
             var leftPanel, rightPanel;
             function resizeDiagram() {
                 console.log(document.body.offsetWidth + "," + document.body.offsetHeight);
