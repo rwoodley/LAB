@@ -94,6 +94,12 @@
                 </td>
                 <td>
                     <div id="rightPanel">
+                            <div id='upArrowContainer' style=' position: absolute;' onclick='upArrowClicked()' >
+                                <img src='textures/arrow_up.png' id='upArrow' />
+                            </div>
+                            <div id='downArrowContainer' style=' position: absolute;' onclick='downArrowClicked()' >
+                                <img src='textures/arrow_down.png' id='downArrow' />
+                            </div>
                             <canvas id="rightCanvas" />
                     </div>
                 </td>
@@ -151,7 +157,7 @@
                 }
                 startPlayingAudioForFirstWedge();
             }
-            var leftPanel, rightPanel;
+            var leftPanel, rightPanel, _navigator;
             function resizeDiagram() {
                 console.log(document.body.offsetWidth + "," + document.body.offsetHeight);
                 var width = Math.floor((document.body.offsetWidth - 20)/2);
@@ -176,6 +182,28 @@
 
                 redrawForCamera(leftPanel._camera, document.getElementById('leftCanvas'), leftPanel._renderer);
                 redrawForCamera(rightPanel._camera, document.getElementById('rightCanvas'), rightPanel._renderer);
+
+                var rightEL = document.getElementById('rightPanel');
+
+                var el = document.getElementById('upArrowContainer');
+                el.style.top = (rightEL.offsetTop + rightEL.offsetHeight*.725) + 'px';
+                el.style.left = (rightEL.parentElement.offsetLeft + rightEL.offsetWidth*.4) + 'px';
+
+                var width = window.getComputedStyle(rightEL.parentElement).width.replace('px','');
+                var img = document.getElementById('upArrow');
+                img.style.width = (width*.15)+'px';
+                img.style.height = img.style.width;
+
+                var el = document.getElementById('downArrowContainer');
+                el.style.top = (rightEL.offsetTop + rightEL.offsetHeight*.85) + 'px';
+                el.style.left = (rightEL.parentElement.offsetLeft + rightEL.offsetWidth*.48) + 'px';
+
+                var width = window.getComputedStyle(rightEL.parentElement).width.replace('px','');
+                var img = document.getElementById('downArrow');
+                img.style.width = (width*.15)+'px';
+                img.style.height = img.style.width;
+
+
             }
             function redrawForCamera(camera, canvas, renderer) {
                 renderer.setViewport(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -190,9 +218,14 @@
                 document.getElementById('rightPanel'),
                 document.getElementById('rightCanvas')
                                  );
-            var navigator = new cameraNavigator(rightPanel._camera, leftPanel.listener);
+            _navigator = new cameraNavigator(rightPanel._camera, leftPanel.listener);
             animate();
-        
+            function upArrowClicked() {
+                _navigator.forwards();
+            }
+            function downArrowClicked() {
+                _navigator.backwards();
+            }
             function animate() {
                 requestAnimationFrame( animate );    
                 render();
