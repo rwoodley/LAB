@@ -95,7 +95,9 @@
                 <td>
                     <div id="rightPanel">
                             <div id='upArrowContainer' style=' position: absolute;' onclick='upArrowClicked()' >
-                                <img src='textures/arrow_up.png' id='upArrow' />
+                                <img src='textures/arrow_up.png' id='upArrow' style='display: none' />
+                                <img src='textures/arrow_up grey.png' id='upArrowGrey' style='display: none' />
+                                <img src='textures/arrow_up light.png' id='upArrowLight' style='display: none' />
                             </div>
                             <div id='downArrowContainer' style=' position: absolute;' onclick='downArrowClicked()' >
                                 <img src='textures/arrow_down.png' id='downArrow' />
@@ -106,7 +108,6 @@
             </tr>
         </table>
         <table><tr><td>
-        &nbsp;&nbsp;&nbsp;&nbsp;W - move forward, S - move backwards
         </td><td>
         </td></tr></table>
         <audio id='0' style="display: none;">
@@ -189,10 +190,7 @@
                 el.style.top = (rightEL.offsetTop + rightEL.offsetHeight*.725) + 'px';
                 el.style.left = (rightEL.parentElement.offsetLeft + rightEL.offsetWidth*.4) + 'px';
 
-                var width = window.getComputedStyle(rightEL.parentElement).width.replace('px','');
-                var img = document.getElementById('upArrow');
-                img.style.width = (width*.15)+'px';
-                img.style.height = img.style.width;
+                positionUpArrow('upArrow');
 
                 var el = document.getElementById('downArrowContainer');
                 el.style.top = (rightEL.offsetTop + rightEL.offsetHeight*.85) + 'px';
@@ -202,8 +200,17 @@
                 var img = document.getElementById('downArrow');
                 img.style.width = (width*.15)+'px';
                 img.style.height = img.style.width;
-
-
+            }
+            function positionUpArrow(imgName) {
+                document.getElementById('upArrow').style.display='none';
+                document.getElementById('upArrowGrey').style.display='none';
+                document.getElementById('upArrowLight').style.display='none';
+                var rightEL = document.getElementById('rightPanel');
+                var img = document.getElementById(imgName);
+                img.style.display='inline-block'
+                var width = window.getComputedStyle(rightEL.parentElement).width.replace('px','');
+                img.style.width = (width*.15)+'px';
+                img.style.height = img.style.width;
             }
             function redrawForCamera(camera, canvas, renderer) {
                 renderer.setViewport(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -222,9 +229,13 @@
             animate();
             function upArrowClicked() {
                 _navigator.forwards();
+                positionUpArrow(leftPanel.leftRing._closeToWall == 0 ? 'upArrow' : leftPanel.leftRing._closeToWall == 1 ? 'upArrowGrey' : 'upArrowLight');
+                console.log('===' + leftPanel.leftRing._closeToWall);
             }
             function downArrowClicked() {
                 _navigator.backwards();
+                positionUpArrow(leftPanel.leftRing._closeToWall == 0 ? 'upArrow' : leftPanel.leftRing._closeToWall == 1 ? 'upArrowGrey' : 'upArrowLight');
+                console.log('===' + leftPanel.leftRing._closeToWall);
             }
             function animate() {
                 requestAnimationFrame( animate );    

@@ -45,5 +45,4 @@ var MainApp = function(rightdiv, rightCanvas) {
     _that._scene.add(spotLight);
         
     //_that._renderer.render( _that._scene, _that._camera );
-    
 }

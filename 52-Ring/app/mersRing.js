@@ -64,8 +64,12 @@ var mersRing = function(mode) {
         return mesh;
     }
     _that._windex = -1;
+    _that._closeToWall = 0; // 0 = false, 1 = close, 2 = very close.
     _that.listener = function(radians) {
-        var windex = Math.floor(_that._nWedges * radians/(Math.PI*2))
+        var windex = Math.floor(_that._nWedges * radians/(Math.PI*2));
+        var windex1 = Math.floor(_that._nWedges * .98 * radians/(Math.PI*2));
+        var windex2 = Math.floor(_that._nWedges * .95 * radians/(Math.PI*2));
+        _that._closeToWall = windex1 != windex ? 2 : windex2 != windex ? 1 : 0;
         console.log('mode ' + _that._mode);
         if (_that._mode == 0) {
             console.log(radians + ": window is " + windex);

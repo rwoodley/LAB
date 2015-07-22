@@ -26,7 +26,7 @@ var LeftPanel = function(div, leftCanvas, cameraPos) {
     _that._renderer.autoClear = false;
 
     _that._camera.position.set(_that._cameraPos.x, _that._cameraPos.y, _that._cameraPos.z);
-    _that._controls = new THREE.OrbitControls( _that._camera, _that._container );
+//    _that._controls = new THREE.OrbitControls( _that._camera, _that._container );
 
     var grid = new THREE.GridHelper(1000, 10);
     grid.setColors(0x222222,0x222222);
