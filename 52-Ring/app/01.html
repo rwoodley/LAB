@@ -143,6 +143,8 @@
                 ];
                 addEventListener('touchstart', function (e) { initializeAudio();  });
                 addEventListener('click', function (e) { initializeAudio();  });
+                document.getElementById('upArrowContainer').addEventListener("touchend", upArrowClicked, false);
+                document.getElementById('downArrowContainer').addEventListener("touchend", downArrowClicked, false);
             });
             var _firstTime = true;
             function initializeAudio() {
