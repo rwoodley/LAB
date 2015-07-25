@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Mission 23</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+                background: #bfd1e5;
+				margin: 0px;
+			}
+            .gauges {
+                margin: 4px;
+                background: blue;
+                width: 200px;
+                height: 200px;
+                border: 1px solid black;
+
+            }
+            #leftPanel {
+                border-spacing: 0px;
+                margin: 0px;
+                background: blue;
+/*                width: 600px;
+                height: 600px;
+*/
+            }
+            #rightPanel {
+                border-spacing: 0px;
+                margin: 0px;
+                background: yellow;
+/*                width: 600px;
+                height: 600px;
+*/            }
+                img {
+                    pointer-events: none;       /* prevent ipad from show 'save image'pop-up */
+                       -webkit-user-select:none;
+                }
+    </style>
+    <script src="lib/jquery-1.11.2.min.js"></script>
+    <script src="lib/chroma.min.js"></script>
+    <script src="r71/three.min.js"></script>
+    <script src="r71/OrbitControls.js"></script>
+    <script src="r71/Detector.js"></script>
+    <script src="math.js"></script>
+    <script src="utils.js"></script>
+    <script src="TextPanel.js"></script>
+    <script src="Locator.js"></script>
+    <script src="RandomBroadcaster.js"></script>
+    <script>
+        $(document).ready(function() {
+            WireUp();
+        });
+        function WireUp() {
+            var locator = new Locator();
+            locator.addService('RandomBroadcaster', new RandomBroadcaster(locator));
+            var textPanel = new TextPanel(locator, document.getElementById('leftPanel'));
+        }
+    </script>
+	</head>
+	<body>
+        <table>
+            <tr>
+                <td>
+                    <div id="leftPanel" >
+                    </div>
+                </td>
+                <td>
+                    <div id="rightPanel">
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <table><tr><td>
+        </td><td>
+        </td></tr></table>
+        </script>
+	</body>
+</html>
