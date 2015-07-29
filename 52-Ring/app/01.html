@@ -35,7 +35,10 @@
 /*                width: 600px;
                 height: 600px;
 */            }
-
+                img {
+                    pointer-events: none;       /* prevent ipad from show 'save image'pop-up */
+                       -webkit-user-select:none;
+                }
     </style>
     <script src="lib/jquery-1.11.2.min.js"></script>
     <script src="lib/chroma.min.js"></script>
@@ -94,13 +97,13 @@
                 </td>
                 <td>
                     <div id="rightPanel">
-                            <div id='upArrowContainer' style=' position: absolute;' onclick='upArrowClicked()' >
-                                <img src='textures/arrow_up.png' id='upArrow' style='display: none' />
-                                <img src='textures/arrow_up grey.png' id='upArrowGrey' style='display: none' />
-                                <img src='textures/arrow_up light.png' id='upArrowLight' style='display: none' />
+                            <div id='upArrowContainer' style=' position: absolute;' >
+                                <img src='textures/arrow_up.png' id='upArrow' style='display: none' style="pointer-events:none" onclick='upArrowClicked()' />
+                                <img src='textures/arrow_up 60.png' id='upArrowGrey' style='display: none' style="pointer-events:none" onclick='upArrowClicked()' />
+                                <img src='textures/arrow_up 30.png' id='upArrowLight' style='display: none' style="pointer-events:none" onclick='upArrowClicked()' />
                             </div>
-                            <div id='downArrowContainer' style=' position: absolute;' onclick='downArrowClicked()' >
-                                <img src='textures/arrow_down.png' id='downArrow' />
+                            <div id='downArrowContainer' style=' position: absolute;'  >
+                                <img src='textures/arrow_down.png' id='downArrow' onclick='downArrowClicked()' style="pointer-events:none"/>
                             </div>
                             <canvas id="rightCanvas" />
                     </div>
@@ -227,17 +230,24 @@
                 document.getElementById('rightPanel'),
                 document.getElementById('rightCanvas')
                                  );
-            _navigator = new cameraNavigator(rightPanel._camera, leftPanel.listener);
+            _navigator = new cameraNavigator(rightPanel._camera, leftPanel.listener,
+                                             function () {
+                console.log('yoohoo');
+                positionUpArrow(leftPanel.leftRing._closeToWall == 0 ? 'upArrow' : leftPanel.leftRing._closeToWall == 1 ? 'upArrowGrey' : 'upArrowLight');
+                                             }
+                                             );
             animate();
-            function upArrowClicked() {
+            function upArrowClicked(e) {
                 _navigator.forwards();
                 positionUpArrow(leftPanel.leftRing._closeToWall == 0 ? 'upArrow' : leftPanel.leftRing._closeToWall == 1 ? 'upArrowGrey' : 'upArrowLight');
                 console.log('===' + leftPanel.leftRing._closeToWall);
+                e.preventDefault();
             }
-            function downArrowClicked() {
+            function downArrowClicked(e) {
                 _navigator.backwards();
                 positionUpArrow(leftPanel.leftRing._closeToWall == 0 ? 'upArrow' : leftPanel.leftRing._closeToWall == 1 ? 'upArrowGrey' : 'upArrowLight');
                 console.log('===' + leftPanel.leftRing._closeToWall);
+                e.preventDefault();
             }
             function animate() {
                 requestAnimationFrame( animate );    

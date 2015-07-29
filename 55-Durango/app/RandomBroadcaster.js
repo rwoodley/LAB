@@ -1,4 +1,4 @@
-var RandomBroadcaster = function(locator) {
+var RandomBroadcaster = function() {
     var _that = this;
     this._listeners = {};
     this.State = {
