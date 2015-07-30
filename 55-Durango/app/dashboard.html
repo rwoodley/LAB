@@ -13,12 +13,12 @@
 				margin: 0px;
 			}
             .gauges {
-                margin: 4px;
-                background: blue;
+                margin: 5px;
+                border: 2px solid;
+                border-color: #ff0000;
                 width: 300px;
                 height: 300px;
-                border: 1px solid black;
-
+                background: #00ff00;
             }
             #leftPanel {
                 border-spacing: 0px;
@@ -80,24 +80,13 @@
     </script>
 	</head>
 	<body>
-        <table>
-            <tr>
-                <td>
                      <div id="leftPanel" >
                     </div>
-                   <div id="cameraGuage" class="gauges" >
-                    </div>
-                </td>
-                <td>
+                   <div id="cameraGuage" class="gauges" style="position: fixed; top: 20px; left: 20px;  " >
+                     </div>
                     <div id="mainPanel">
                             <canvas id="mainCanvas" />
                     </div>
-                </td>
-            </tr>
-        </table>
-        <table><tr><td>
-        </td><td>
-        </td></tr></table>
         </script>
 	</body>
 </html>

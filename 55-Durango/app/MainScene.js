@@ -3,9 +3,6 @@
 var MainScene = function(containingDiv, canvas, camera) {
     var _that = this;
     this._containingDiv = containingDiv;
-    this._width = this._containingDiv.offsetWidth;
-    this._height = this._containingDiv.offsetHeight;
-    //_that._camera = new THREE.PerspectiveCamera( 60, _that._width / _that._height, .1, 20000 );    
     _that._camera = camera;
     
     _that._clock = new THREE.Clock();
@@ -17,10 +14,14 @@ var MainScene = function(containingDiv, canvas, camera) {
 
     _that._renderer =  new THREE.WebGLRenderer({antialias: true, canvas: canvas});
     _that._renderer.sortObjects = false;
-    _that._renderer.setSize( _that._width, _that._height );
     _that._renderer.setClearColor( 0x0000ff );
 	_that._renderer.shadowMapEnabled = true;
-	_that._renderer.shadowMapCullFace = THREE.CullFaceBack;        
+	_that._renderer.shadowMapCullFace = THREE.CullFaceBack;
+
+    _that._renderer.setSize( window.innerWidth, window.innerHeight );
+    _that._containingDiv.innerHTML = "";
+    _that._containingDiv.appendChild( _that._renderer.domElement );
+    
     if ( ! Detector.webgl ) {
         Detector.addGetWebGLMessage();
         containingDiv.innerHTML = "No WebGL";

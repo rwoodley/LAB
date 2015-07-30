@@ -9,7 +9,9 @@ var CameraGuage = function(div, locator) {
     _that._scene = new THREE.Scene();
 
     _that._renderer =  new THREE.WebGLRenderer();
-    _that._renderer.setSize( _that._width, _that._height );
+    var border = getComputedStyle(div).getPropertyValue('border-width').replace('px','');
+    console.log(border);
+    _that._renderer.setSize( _that._width-border*2, _that._height-border*2 );
     _that._renderer.setClearColor( 0x000000 );
 
     if ( ! Detector.webgl ) {
@@ -18,7 +20,7 @@ var CameraGuage = function(div, locator) {
         return;
     }
 
-    _that._camera.position.set(2,2,2);
+    _that._camera.position.set(1.3,1.3,1.3);
     var axes = new THREE.AxisHelper( 1 );
     _that._scene.add(axes);
     
