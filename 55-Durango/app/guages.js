@@ -41,12 +41,7 @@ var CameraGuage = function(div, locator) {
     _that._camera.lookAt(new THREE.Vector3(0,0,0));
     _that._renderer.render( _that._scene, _that._camera );
     
-    this.animate = function() {
-    
-        requestAnimationFrame( _that.animate );
-        _that._render();
-    }
-    _that._render = function() {
+    _that.render = function() {
     
         if (_that._position != undefined && _that._matrixWorld != undefined) {
             _that._arrowMinusZ.setDirection(getDirectionVector(new THREE.Vector3( 0, 0, -1 )));
@@ -60,7 +55,6 @@ var CameraGuage = function(div, locator) {
     this.updatePanel = function(orientation) {
         _that._matrixWorld = orientation['MatrixWorld'];
         _that._position = orientation['Position'];
-        _that._render();
     }
     function getDirectionVector(vector) {
         // see: http://stackoverflow.com/questions/15696963/three-js-set-and-read-camera-look-vector/15697227#15697227
@@ -69,5 +63,4 @@ var CameraGuage = function(div, locator) {
         return direction;
     }
     this._locator.getService('Ship').addListener('Orientation', this.updatePanel);
-    _that.animate();
 }

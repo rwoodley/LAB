@@ -1,6 +1,6 @@
 // the main camera always looks forward.
 // 
-var MainScene = function(containingDiv, canvas, camera) {
+var MainScene = function(containingDiv, canvas, camera, objectCache) {
     var _that = this;
     this._containingDiv = containingDiv;
     _that._camera = camera;
@@ -10,7 +10,7 @@ var MainScene = function(containingDiv, canvas, camera) {
 
     _that._scene = new THREE.Scene();
 
-    _that._camera.position.x = 100; _that._camera.position.y = 10; _that._camera.position.z = 0;
+//    _that._camera.position.x = 100; _that._camera.position.y = 10; _that._camera.position.z = 0;
 
     _that._renderer =  new THREE.WebGLRenderer({antialias: true, canvas: canvas});
     _that._renderer.sortObjects = false;
@@ -18,7 +18,8 @@ var MainScene = function(containingDiv, canvas, camera) {
 	_that._renderer.shadowMapEnabled = true;
 	_that._renderer.shadowMapCullFace = THREE.CullFaceBack;
 
-    _that._renderer.setSize( window.innerWidth, window.innerHeight );
+    console.log(window.innerWidth + "," + window.innerHeight);
+    _that._renderer.setSize( containingDiv.offsetWidth, containingDiv.offsetHeight );
     _that._containingDiv.innerHTML = "";
     _that._containingDiv.appendChild( _that._renderer.domElement );
     
@@ -33,9 +34,11 @@ var MainScene = function(containingDiv, canvas, camera) {
     
     var grid = new THREE.GridHelper(1000, 10);
     grid.setColors('red',0xbbbbbb);
-    _that._scene.add(grid);       
+    //_that._scene.add(grid);       
 
-    var skyGeometry = new THREE.SphereGeometry(5000,50,50);
+    var deepSpace = 100 * AUm;
+    console.log('deep space = ' + deepSpace);
+    var skyGeometry = new THREE.SphereGeometry(deepSpace,50,50);
     var texture;
     texture = THREE.ImageUtils.loadTexture('textures/eso_dark.jpg');
     var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
@@ -44,6 +47,14 @@ var MainScene = function(containingDiv, canvas, camera) {
     skyBox.rotation.x = Math.PI/4;
     _that._scene.add( skyBox );
 
+    var radiusPluto = 736/AUm;
+    var plutoGeometry = new THREE.SphereGeometry( radiusPluto * 2, 32, 32 );
+    var material = new THREE.MeshNormalMaterial();
+    var plutoMesh = new THREE.Mesh( plutoGeometry, material );
+    plutoMesh.position.set(AUm * 40,0,0);
+    console.log(plutoMesh.position);
+    _that._scene.add(plutoMesh);
+    objectCache.plutoMesh = plutoMesh;
 
     var spotLight = new THREE.SpotLight( 0xaaaa00 );
     spotLight.position.set( 180, 160, 0 );
@@ -51,20 +62,13 @@ var MainScene = function(containingDiv, canvas, camera) {
     var spotLight = new THREE.SpotLight( 0xaaaa00 );
     spotLight.position.set( -80, 160, 0 );
     _that._scene.add(spotLight);
-        
+
     _that._renderer.render( _that._scene, _that._camera );
-    this.animate = function() {
-    
-        requestAnimationFrame( _that.animate );
-    
-        _that.render();
-    }
     this.render = function() {
     
         //_that._controls.update( _that._clock.getDelta() );
         _that._renderer.render( _that._scene, _that._camera );
 
     }
-    _that.animate();
 }
 

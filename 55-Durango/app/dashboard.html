@@ -9,7 +9,6 @@
 				font-family:Monospace;
 				font-size:13px;
 				text-align:center;
-                background: #bfd1e5;
 				margin: 0px;
 			}
             .gauges {
@@ -18,22 +17,19 @@
                 border-color: #ff0000;
                 width: 300px;
                 height: 300px;
-                background: #00ff00;
             }
             #leftPanel {
                 border-spacing: 0px;
                 margin: 0px;
-                background: blue;
-/*                width: 600px;
-                height: 600px;
-*/
+                color: orange;
+                font-size: 14pt;
             }
             #mainPanel {
                 border-spacing: 0px;
                 margin: 0px;
                 background: yellow;
-                width: 2000px;
-                height: 1200px;
+                width: 100%;
+                height: 100%;
             }
                 img {
                     pointer-events: none;       /* prevent ipad from show 'save image'pop-up */
@@ -54,39 +50,61 @@
     <script src="Ship.js"></script>
     <script src="RandomBroadcaster.js"></script>
     <script>
+        // all units in AU
+        AUk = 149597871/1000000;
+        AUm = AUk/1.6;
+        var _guage, _mainScene, _textPanel;
         $(document).ready(function() {
-            WireUp();
+            var img = new Image();
+            img.src = 'textures/eso_dark.jpg';
+            // THREE.ImageUtils.loadTexture('textures/eso_dark.jpg')
+            // load reasources before displaying...
+            img.onload = function() {
+                WireUp();
+            }
         });
         function WireUp() {
             var locator = new Locator();
-            //locator.addService('Ship', new RandomBroadcaster(locator));
-            //locator.addService('RandomBroadcaster', new RandomBroadcaster(locator));
-            //var textPanel = new TextPanel(locator, document.getElementById('leftPanel'));
 
-            var ship = new Ship(locator);
+            //var shipCameraAspectRatio = document.getElementById('mainCanvas').offsetWidth/document.getElementById('mainCanvas').offsetHeight;
+            var shipCameraAspectRatio = window.innerWidth/window.innerHeight;
+            var ship = new Ship(locator, shipCameraAspectRatio);
             locator.addService('Ship', ship);
-
-            rightPanel = new MainScene(
+            locator.ship = ship;
+            _textPanel = new TextPanel(locator, document.getElementById('leftPanel'), locator);
+            
+            _mainScene = new MainScene(
                 document.getElementById('mainPanel'),
                 document.getElementById('mainCanvas'),
-                ship.getCamera()
-                                 );
-            var guage1 = new CameraGuage(document.getElementById('cameraGuage'), locator);
+                ship.getCamera(),
+                locator
+            );
+            _guage = new CameraGuage(document.getElementById('cameraGuage'), locator);
             
             $(document).keydown(function(e){
                 ship.updateOrientation(e);  // for now. later make it a service.
             });
+            animate();
+        }
+        function animate() {
+            requestAnimationFrame( animate );
+            render();
+        }
+        function render() {
+            _mainScene.render();
+            _guage.render();
+            _textPanel.render();
         }
     </script>
 	</head>
 	<body>
-                     <div id="leftPanel" >
+                    <div id="mainPanel" style="position: fixed; top: 0px; left: 0px;  ">
+                            <canvas id="mainCanvas" />
+                    </div>
+                     <div id="leftPanel"  class="gauges" style="position: fixed; top: 420px; left: 20px;  " >
                     </div>
                    <div id="cameraGuage" class="gauges" style="position: fixed; top: 20px; left: 20px;  " >
                      </div>
-                    <div id="mainPanel">
-                            <canvas id="mainCanvas" />
-                    </div>
         </script>
 	</body>
 </html>
