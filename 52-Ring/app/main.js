@@ -12,7 +12,11 @@ var MainApp = function(rightdiv, rightCanvas) {
 
     _that._camera.position.x = 100; _that._camera.position.y = 10; _that._camera.position.z = 0;
 
-    _that._renderer =  new THREE.WebGLRenderer({antialias: true, canvas: rightCanvas});
+        _that._renderer =  new THREE.WebGLRenderer({antialias: true, canvas: rightCanvas});
+    //}
+    //catch (exception) {
+    //    document.getElementById('errorBox').innerHTML = "NO WEBGL!";
+    //}
     _that._renderer.sortObjects = false;
     _that._renderer.setSize( _that._width, _that._height );
     _that._renderer.setClearColor( 0x000000 );

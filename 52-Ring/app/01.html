@@ -98,12 +98,10 @@
                 <td>
                     <div id="rightPanel">
                             <div id='upArrowContainer' style=' position: absolute;' >
-                                <img src='textures/arrow_up.png' id='upArrow' style='display: none' style="pointer-events:none" onclick='upArrowClicked()' />
-                                <img src='textures/arrow_up 60.png' id='upArrowGrey' style='display: none' style="pointer-events:none" onclick='upArrowClicked()' />
-                                <img src='textures/arrow_up 30.png' id='upArrowLight' style='display: none' style="pointer-events:none" onclick='upArrowClicked()' />
+                                <img src='textures/upArrow.png' id='upArrow' style='display: none' style="pointer-events:none" onclick='upArrowClicked()' />
                             </div>
                             <div id='downArrowContainer' style=' position: absolute;'  >
-                                <img src='textures/arrow_down.png' id='downArrow' onclick='downArrowClicked()' style="pointer-events:none"/>
+                                <img src='textures/downArrow.png' id='downArrow' onclick='downArrowClicked()' style="pointer-events:none"/>
                             </div>
                             <canvas id="rightCanvas" />
                     </div>
@@ -146,8 +144,17 @@
                 ];
                 addEventListener('touchstart', function (e) { initializeAudio();  });
                 addEventListener('click', function (e) { initializeAudio();  });
-                document.getElementById('upArrowContainer').addEventListener("touchend", upArrowClicked, false);
-                document.getElementById('downArrowContainer').addEventListener("touchend", downArrowClicked, false);
+                document.getElementById('upArrowContainer').addEventListener("touchstart", beginUpArrowPress, false);
+                document.getElementById('upArrowContainer').addEventListener("touchend", endArrowPress, false);
+                document.getElementById('upArrowContainer').addEventListener("click", upArrowClicked, false);
+                document.getElementById('upArrowContainer').addEventListener("mousedown", beginUpArrowPress, false);
+                document.getElementById('upArrowContainer').addEventListener("mouseup", endArrowPress, false);
+
+                document.getElementById('downArrowContainer').addEventListener("touchstart", beginDownArrowPress, false);
+                document.getElementById('downArrowContainer').addEventListener("touchend", endArrowPress, false);
+                document.getElementById('downArrowContainer').addEventListener("click", upArrowClicked, false);
+                document.getElementById('downArrowContainer').addEventListener("mousedown", beginDownArrowPress, false);
+                document.getElementById('downArrowContainer').addEventListener("mouseup", endArrowPress, false);
             });
             var _firstTime = true;
             function initializeAudio() {
@@ -193,13 +200,13 @@
 
                 var el = document.getElementById('upArrowContainer');
                 el.style.top = (rightEL.offsetTop + rightEL.offsetHeight*.725) + 'px';
-                el.style.left = (rightEL.parentElement.offsetLeft + rightEL.offsetWidth*.4) + 'px';
+                el.style.left = (rightEL.parentElement.offsetLeft + rightEL.offsetWidth*.85) + 'px';
 
                 positionUpArrow('upArrow');
 
                 var el = document.getElementById('downArrowContainer');
                 el.style.top = (rightEL.offsetTop + rightEL.offsetHeight*.85) + 'px';
-                el.style.left = (rightEL.parentElement.offsetLeft + rightEL.offsetWidth*.48) + 'px';
+                el.style.left = (rightEL.parentElement.offsetLeft + rightEL.offsetWidth*.85) + 'px';
 
                 var width = window.getComputedStyle(rightEL.parentElement).width.replace('px','');
                 var img = document.getElementById('downArrow');
@@ -208,8 +215,8 @@
             }
             function positionUpArrow(imgName) {
                 document.getElementById('upArrow').style.display='none';
-                document.getElementById('upArrowGrey').style.display='none';
-                document.getElementById('upArrowLight').style.display='none';
+                //document.getElementById('upArrowGrey').style.display='none';
+                //document.getElementById('upArrowLight').style.display='none';
                 var rightEL = document.getElementById('rightPanel');
                 var img = document.getElementById(imgName);
                 img.style.display='inline-block'
@@ -231,23 +238,36 @@
                 document.getElementById('rightCanvas')
                                  );
             _navigator = new cameraNavigator(rightPanel._camera, leftPanel.listener,
-                                             function () {
-                console.log('yoohoo');
-                positionUpArrow(leftPanel.leftRing._closeToWall == 0 ? 'upArrow' : leftPanel.leftRing._closeToWall == 1 ? 'upArrowGrey' : 'upArrowLight');
-                                             }
-                                             );
+                function () {
+                    console.log('yoohoo');
+                    positionUpArrow('upArrow');
+                    //positionUpArrow(leftPanel.leftRing._closeToWall == 0 ? 'upArrow' : leftPanel.leftRing._closeToWall == 1 ? 'upArrowGrey' : 'upArrowLight');
+                }
+            );
             animate();
+            var arrowPressUnderway = false;
+            function beginUpArrowPress(e) {
+                arrowPressUnderway = true;
+                upArrowClicked(e);
+            }
+            function beginDownArrowPress(e) {
+                arrowPressUnderway = true;
+                downArrowClicked(e);
+            }
+            function endArrowPress(e) { arrowPressUnderway = false; }
             function upArrowClicked(e) {
                 _navigator.forwards();
-                positionUpArrow(leftPanel.leftRing._closeToWall == 0 ? 'upArrow' : leftPanel.leftRing._closeToWall == 1 ? 'upArrowGrey' : 'upArrowLight');
+                positionUpArrow('upArrow');
                 console.log('===' + leftPanel.leftRing._closeToWall);
-                e.preventDefault();
+                if (e != undefined) e.preventDefault();
+                if (arrowPressUnderway) setTimeout(upArrowClicked, 100);
             }
             function downArrowClicked(e) {
                 _navigator.backwards();
-                positionUpArrow(leftPanel.leftRing._closeToWall == 0 ? 'upArrow' : leftPanel.leftRing._closeToWall == 1 ? 'upArrowGrey' : 'upArrowLight');
+                positionUpArrow('upArrow');
                 console.log('===' + leftPanel.leftRing._closeToWall);
-                e.preventDefault();
+                if (e != undefined) e.preventDefault();
+                if (arrowPressUnderway) setTimeout(downArrowClicked, 100);
             }
             function animate() {
                 requestAnimationFrame( animate );    
