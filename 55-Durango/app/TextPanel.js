@@ -18,6 +18,10 @@ var TextPanel = function(locator, containerDiv, objectCache) {
             .replace('$1', _that._oCache.plutoMesh.position.x.toFixed(0))
             .replace('$2', _that._oCache.plutoMesh.position.y.toFixed(0))
             .replace('$3', _that._oCache.plutoMesh.position.z.toFixed(0))
+        str += 'Neptune: ($1,$2,$3)<br/>'
+            .replace('$1', _that._oCache.neptuneMesh.position.x.toFixed(0))
+            .replace('$2', _that._oCache.neptuneMesh.position.y.toFixed(0))
+            .replace('$3', _that._oCache.neptuneMesh.position.z.toFixed(0))
         this._container.innerHTML = str;
     }
     //this._locator.getService('RandomBroadcaster').addListener('SomeValue', this.updatePanel);

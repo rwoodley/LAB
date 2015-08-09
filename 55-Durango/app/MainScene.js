@@ -47,23 +47,60 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
 
     var radiusPluto = 736/AUm;
     var plutoGeometry = new THREE.SphereGeometry( radiusPluto * 2, 32, 32 );
-    var material = new THREE.MeshNormalMaterial();
-    var plutoMesh = new THREE.Mesh( plutoGeometry, material );
+    plutoTexture = THREE.ImageUtils.loadTexture('textures/ganymede.jpg');
+    var plutoMaterial = new THREE.MeshBasicMaterial({map: plutoTexture, side: THREE.DoubleSide });
+    var plutoMesh = new THREE.Mesh( plutoGeometry, plutoMaterial );
     plutoMesh.position.set(AUm * 40,0,0);
-    console.log(plutoMesh.position);
     _that._scene.add(plutoMesh);
     objectCache.plutoMesh = plutoMesh;
 
+    var radiusNeptune = 1236/AUm;
+    var neptuneGeometry = new THREE.SphereGeometry( radiusPluto * 2, 32, 32 );
+    neptuneTexture = THREE.ImageUtils.loadTexture('textures/pluto.jpg');
+    var neptuneMaterial = new THREE.MeshBasicMaterial({map: neptuneTexture, side: THREE.DoubleSide });
+    var neptuneMesh = new THREE.Mesh( neptuneGeometry, neptuneMaterial );
+    neptuneMesh.position.set(AUm * 40.5,2.5,0);
+    _that._scene.add(neptuneMesh);
+    objectCache.neptuneMesh = neptuneMesh;
+    
+    _that._physics = new engine();
+    // positions, everything is in AUm/Divisor
+    var ff = AUDivisor/AUm;      // fudge factor
+    _that._physics.addPlanet({
+        'name': 'pluto',
+        'mass': 1e20,   // in units of earth. should really be 333,000
+        'radius': 2440000,
+        'pos': new Cart3(-57900000000, 0, 0),
+//        'pos': new Cart3(plutoMesh.position.x*ff,plutoMesh.position.y*ff,plutoMesh.position.z*ff)        
+    });
+    _that._physics.addPlanet({
+        'name': 'neptune',
+        'mass': 1.989e30,   // in units of earth. should really be 333,000
+        'radius': 2440000,
+        'pos': new Cart3(0, 0, 0),
+//        'pos': new Cart3(neptuneMesh.position.x*ff,neptuneMesh.position.y*ff,neptuneMesh.position.z*ff)        
+    });
+
+
+
     var spotLight = new THREE.SpotLight( 0xaaaa00 );
-    spotLight.position.set( 180, 160, 0 );
-    _that._scene.add(spotLight);
-    var spotLight = new THREE.SpotLight( 0xaaaa00 );
-    spotLight.position.set( -80, 160, 0 );
+    spotLight.position.set( 0, 0, 0 );
     _that._scene.add(spotLight);
 
     _that._renderer.render( _that._scene, _that._camera );
+    _that._frame = 0;
     this.render = function() {
-    
+        _that._frame += .001;
+        _that._physics.updateObjects(_that._frame);
+        var ff = 1e12;
+        for (var i = 0; i < 2; i++)
+            console.log(_that._physics.planets[i].pos.x/ff,_that._physics.planets[i].pos.y/ff,_that._physics.planets[i].pos.z/ff);
+        var ff2 = ff/900;
+        objectCache.neptuneMesh.position.set(
+            _that._physics.planets[0].pos.x/ff2 + objectCache.plutoMesh.position.x,
+            _that._physics.planets[0].pos.y/ff2 + objectCache.plutoMesh.position.y,
+            _that._physics.planets[0].pos.z/ff2 + objectCache.plutoMesh.position.z
+            );
         //_that._controls.update( _that._clock.getDelta() );
         _that._renderer.render( _that._scene, _that._camera );
 
