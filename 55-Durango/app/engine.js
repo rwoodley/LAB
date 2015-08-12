@@ -9,16 +9,22 @@ var engine = function() {
     //    'position': new Cart3(0,0,0)        
     //});
     this.addPlanet = function(obj) {
-        //var ob = new OrbitBody(fields[0], vals[1], pos, vel, 1e9, color);
-        var v = ((Math.random() * 200) + 100) * 50.0;
-        //v = (i % 2 == 1) ? -v : v;
-        v /= -100;
-        var vel = new Cart3(0, 0, 47900);
+        var vel = new Cart3(0,0,obj.vel);
 
         var ob = new OrbitBody(obj.name, obj.radius, obj.pos, vel, obj.mass, undefined);
         this.planets.push(ob);
     }
+    var _firstTime = false;
     this.updateOrbit = function(pa, pb, dt, lambda) {
+        if (_firstTime) {
+            var radius = pa.pos.sub(pb.pos).x;
+            var v = Math.sqrt(_that.G * pb.mass/radius);
+            console.log("v, radius = " + v + "," + radius);
+            pa.vel = new Cart3(0,0,v);
+        }
+        // pa rotates around pb
+        // vel, pos for pa is updated.
+        // inputs: pa.pos, pb.pos, pa.vel, pb.mass
       // don't compute self-gravitation
       if (pa != undefined && pb != undefined && pa != pb) {
         // this trig-free method does this:
@@ -30,16 +36,22 @@ var engine = function() {
         var radius = pa.pos.sub(pb.pos);
         // update velocity with gravitational acceleration
         pa.vel.addTo(radius.mult(dt * (lambda - _that.G * pb.mass * radius.invSumCube())));
+        if (_firstTime)
+            console.log(radius.mult(dt * (lambda - _that.G * pb.mass * radius.invSumCube())));
         // update position with velocity
         pa.pos.addTo(pa.vel.mult(dt));
       }
+        _firstTime = false;
     }
     this.updateObjects = function(dt) {
-        dt = 115200;
+        dt = 1150;
       // compute gravitation only wrt the sun, not wrt all other bodies
-//      for (var i = 0;i < array.length;i++) {
-        _that.updateOrbit(_that.planets[0], _that.planets[1], dt, 0);
-//      }
+      //for (var i = 0;i < _that.planets.length;i++) {
+          //for (var j = 0;j < _that.planets.length;j++) {
+                _that.updateOrbit(_that.planets[0], _that.planets[1], dt, 0);
+                _that.updateOrbit(_that.planets[1], _that.planets[0], dt, 0);
+          //}
+      //}
     }
 }
 
