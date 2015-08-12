@@ -86,7 +86,7 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
         'mass': 1.27e22,   // in units of earth. should really be 333,000
         'radius': 1137 * 1000,
         'pos': new Cart3(0, 0, 0),
-        'vel': .2
+        'vel': -26
     });
 
     /*

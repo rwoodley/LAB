@@ -18,7 +18,8 @@ var engine = function() {
     this.updateOrbit = function(pa, pb, dt, lambda) {
         if (_firstTime) {
             var radius = pa.pos.sub(pb.pos).x;
-            var v = Math.sqrt(_that.G * pb.mass/radius);
+            var v = Math.sqrt(Math.abs(_that.G * pb.mass/radius));
+            v *= Math.sign(radius);
             console.log("v, radius = " + v + "," + radius);
             pa.vel = new Cart3(0,0,v);
         }
@@ -41,7 +42,6 @@ var engine = function() {
         // update position with velocity
         pa.pos.addTo(pa.vel.mult(dt));
       }
-        _firstTime = false;
     }
     this.updateObjects = function(dt) {
         dt = 1150;
@@ -50,6 +50,7 @@ var engine = function() {
           //for (var j = 0;j < _that.planets.length;j++) {
                 _that.updateOrbit(_that.planets[0], _that.planets[1], dt, 0);
                 _that.updateOrbit(_that.planets[1], _that.planets[0], dt, 0);
+        _firstTime = false;
           //}
       //}
     }
