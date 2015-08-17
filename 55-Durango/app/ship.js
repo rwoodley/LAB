@@ -7,9 +7,9 @@ var Ship = function(locator, aspectRatio) {
     this._listeners = {};
     //this._locator.getService('ManualNavigator').addListener('KeyCode', this.updateOrientation);
     // FOV is vertical FOV, see: http://stackoverflow.com/a/26665260
-    _that._camera = new THREE.PerspectiveCamera( 45, aspectRatio, .1, 20000 );
-    _that._camera.position.set(AUm*41,AUm*4.8,0);
-    _that._camera.lookAt(new THREE.Vector3(AUm*40,0,0));
+    _that._camera = new THREE.PerspectiveCamera( 45, aspectRatio, .1, 20000000 );
+    _that._camera.position.set(AUk*40,100000,0);
+    _that._camera.lookAt(new THREE.Vector3(AUk*40,0,0));
     this.getCamera = function() { return _that._camera; }
     this.Orientation = {
         'Position': _that._camera.position,

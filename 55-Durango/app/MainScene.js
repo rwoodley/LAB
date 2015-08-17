@@ -27,7 +27,7 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
         return;
     }
     
-    var deepSpace = 100 * AUm;
+    var deepSpace = 100 * AUk;
     console.log('deep space = ' + deepSpace);
     var skyGeometry = new THREE.SphereGeometry(deepSpace,50,50);
     var texture;
