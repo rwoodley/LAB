@@ -44,7 +44,7 @@ function addPlanets(scene, objectCache) {
         'mass': 2*1.52e21,
         'radius': 1000 * 1000,
         'startPosition': new Cart3(19640 * 1000, 0, 0),
-        'startVelocity': new Cart3(0, 0, 210),
+        'startVelocity': new Cart3(0, 0, 300),
         'mesh': neptuneMesh
     }));
     _planets.push(new Planet({
@@ -52,10 +52,14 @@ function addPlanets(scene, objectCache) {
         'mass': 2*1.27e22,
         'radius': 1137 * 1000,
         'startPosition': new Cart3(0, 0, 0),
-        'startVelocity': new Cart3(0, 0, -26),
+        'startVelocity': new Cart3(0, 0, -37),
         'mesh': plutoMesh
     }));
     _physics = new engine(_planets);
+    var v = _physics.getRelativeVelocity(_planets[0], _planets[1]);
+    //_planets[0].velocity = new Cart3(0,0,v);
+    v = _physics.getRelativeVelocity(_planets[1], _planets[0]);
+//    _planets[1].velocity = new Cart3(0,0,v);
 }
 var Planet = function(obj) {
     var self = this;

@@ -32,7 +32,7 @@ var cameraNavigator = function(camera) {
             var pLocal = new THREE.Vector3( 0, 0, -1 );
             var pWorld = pLocal.applyMatrix4( _that._camera.matrixWorld );
             var dir = pWorld.sub( _that._camera.position ).normalize();
-            _that._camera.position.add(dir.clone().multiplyScalar(amount));
+            _that._camera.position.add(dir.clone().multiplyScalar(100*amount));
         }
     });
 }

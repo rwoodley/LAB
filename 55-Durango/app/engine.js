@@ -1,14 +1,17 @@
 var engine = function(planets) {
     var _that = this;
     this.G = 6.6742e-11; // universal gravitational constant
-
     this.planets = planets;
+
+    this.getRelativeVelocity = function(pa, pb) {
+        // set velocity of pa relative to pb
+        var radius = pa.position.sub(pb.position).x;
+        var v = Math.sqrt(Math.abs(_that.G * pb.mass/radius));
+        v *= Math.sign(radius);
+        console.log("v, radius = " + v + "," + radius);
+        return v;
+    }
     this.updateOrbit = function(pa, pb, dt, lambda) {
-        //var radius = pa.position.sub(pb.position).x;
-        //var v = Math.sqrt(Math.abs(_that.G * pb.mass/radius));
-        //v *= Math.sign(radius);
-        //console.log("v, radius = " + v + "," + radius);
-        //pa.velocity = new Cart3(0,0,v);
 
         // pa rotates around pb
         // vel, pos for pa is updated.
