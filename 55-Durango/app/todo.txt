@@ -1,0 +1,24 @@
+ToDo:
+-----
+- Put in sun-light
+- Planet textures sparkle. Why? not multiple of 2?
+- Fix camera rotation at zenith.
+- Arrows aren't updating.
+
+
+Engines:
+--------
+
+
+Guages:
+-------
+Have guages show forces acting on ship, as vectors.
+
+Fun
+---
+- Can we orbit Neptune?
+- Rounded corners on boxes.
+
+Longer term:
+------------
+Put window inside ship? Need to build room in blender?

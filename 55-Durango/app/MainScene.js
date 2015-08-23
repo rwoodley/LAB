@@ -55,6 +55,7 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
             objectCache.ship._mesh.position.y,
             objectCache.ship._mesh.position.z
             );
+        objectCache.ship.sendUpdates();     // update guage.
         objectCache.ship._camera.lookAt(objectCache.plutoMesh.position);
         _that._renderer.render( _that._scene, _that._camera );
     }

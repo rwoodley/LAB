@@ -27,6 +27,15 @@ function updatePlanetPhysics(frame) {
         _planets[i].updateMeshPosition();           // update three.js position
     }
 }
+function calcDistance(name1, name2, objectCache) {
+    var p1 = objectCache[name1];
+    var p2 = objectCache[name2];
+    var x = p1.position.x - p2.position.x;
+    var y = p1.position.y - p2.position.y;
+    var z = p1.position.z - p2.position.z;
+    return Math.sqrt(x*x + y*y + z*z);
+//    return p1.mesh.position.distanceTo(p2.mesh.position);
+}
 function addPlanets(scene, objectCache) {
     var radiusPluto = 1186; // km
     var plutoGeometry = new THREE.SphereGeometry( radiusPluto, 32, 32 );
@@ -36,30 +45,34 @@ function addPlanets(scene, objectCache) {
     scene.add(plutoMesh);
     objectCache.plutoMesh = plutoMesh;
 
-    var radiusNeptune = 635;    // km
-    var neptuneGeometry = new THREE.SphereGeometry( radiusPluto, 32, 32 );
-    neptuneTexture = THREE.ImageUtils.loadTexture('textures/ganymede.jpg');
-    var neptuneMaterial = new THREE.MeshBasicMaterial({map: neptuneTexture, side: THREE.DoubleSide });
-    var neptuneMesh = new THREE.Mesh( neptuneGeometry, neptuneMaterial );
-    scene.add(neptuneMesh);
-    objectCache.neptuneMesh = neptuneMesh;
+    var radiusCharon = 635;    // km
+    var charonGeometry = new THREE.SphereGeometry( radiusPluto, 32, 32 );
+    charonTexture = THREE.ImageUtils.loadTexture('textures/ganymede.jpg');
+    var charonMaterial = new THREE.MeshBasicMaterial({map: charonTexture, side: THREE.DoubleSide });
+    var charonMesh = new THREE.Mesh( charonGeometry, charonMaterial );
+    scene.add(charonMesh);
+    objectCache.charonMesh = charonMesh;
     
-    _planets.push(new Planet({
+    var charonPlanet = new Planet({
         'name': 'charon',
         'mass': 2*1.52e21,
         'radius': 1000 * 1000,
         'startPosition': new Cart3(19640 * 1000, 0, 0),
         'startVelocity': new Cart3(0, 0, 300),
-        'mesh': neptuneMesh
-    }));
-    _planets.push(new Planet({
+        'mesh': charonMesh
+    });
+    objectCache.charonPlanet = charonPlanet;
+    _planets.push(charonPlanet);
+    var plutoPlanet = new Planet({
         'name': 'pluto',
         'mass': 2*1.27e22,
         'radius': 1137 * 1000,
         'startPosition': new Cart3(0, 0, 0),
         'startVelocity': new Cart3(0, 0, -37),
         'mesh': plutoMesh
-    }));
+    });
+    objectCache.plutoPlanet = plutoPlanet;
+    _planets.push(plutoPlanet);
     var shipPlanet = new Planet({
         'name': 'ship',
         'mass': 1*1e9,
