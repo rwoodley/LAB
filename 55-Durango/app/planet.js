@@ -8,11 +8,11 @@
 var _planets = [];
 var _physics;
 function updatePlanetPhysics(frame) {
-    var dt = 1150;
+    var dt = 112;
     //var dt = 60;
     for (var i = 0; i < _planets.length; i++) {
         for (var j = 0; j < _planets.length; j++) {
-            if (i != j)
+            if (i != j && _planets[i].mass < _planets[j].mass*100) 
                 _physics.updateOrbit(_planets[i], _planets[j], dt, 0);
         }
     }
@@ -26,7 +26,6 @@ function addPlanets(scene, objectCache) {
     plutoTexture = THREE.ImageUtils.loadTexture('textures/pluto.jpg');
     var plutoMaterial = new THREE.MeshBasicMaterial({map: plutoTexture, side: THREE.DoubleSide });
     var plutoMesh = new THREE.Mesh( plutoGeometry, plutoMaterial );
-    //plutoMesh.position.set(_plutoCenter.x, _plutoCenter.y, _plutoCenter.z);
     scene.add(plutoMesh);
     objectCache.plutoMesh = plutoMesh;
 
@@ -35,7 +34,6 @@ function addPlanets(scene, objectCache) {
     neptuneTexture = THREE.ImageUtils.loadTexture('textures/ganymede.jpg');
     var neptuneMaterial = new THREE.MeshBasicMaterial({map: neptuneTexture, side: THREE.DoubleSide });
     var neptuneMesh = new THREE.Mesh( neptuneGeometry, neptuneMaterial );
-    //neptuneMesh.position.set(_plutoCenter.x -  AUm * .5, _plutoCenter.y, _plutoCenter.z);
     scene.add(neptuneMesh);
     objectCache.neptuneMesh = neptuneMesh;
     
@@ -55,11 +53,23 @@ function addPlanets(scene, objectCache) {
         'startVelocity': new Cart3(0, 0, -37),
         'mesh': plutoMesh
     }));
+    var shipPlanet = new Planet({
+        'name': 'ship',
+        'mass': 1*1e18,
+        'radius': 11 * 1000,
+        'startPosition': new Cart3(0, 40000*1000,  0),
+        'startVelocity': new Cart3(0, 0, 1),
+        'mesh': objectCache.ship._mesh
+    });
+    _planets.push(shipPlanet);
+    objectCache.shipPlanet = shipPlanet;
     _physics = new engine(_planets);
-    var v = _physics.getRelativeVelocity(_planets[0], _planets[1]);
-    //_planets[0].velocity = new Cart3(0,0,v);
-    v = _physics.getRelativeVelocity(_planets[1], _planets[0]);
-//    _planets[1].velocity = new Cart3(0,0,v);
+//    var v = _physics.getRelativeVelocity(_planets[0], _planets[1]);
+//    //_planets[0].velocity = new Cart3(0,0,v);
+    //v = _physics.getRelativeVelocity(_planets[1], _planets[0]);
+    //_planets[1].velocity = new Cart3(0,0,v);
+//    v = _physics.getRelativeVelocity(_planets[2], _planets[0]);
+//    //_planets[2].velocity = new Cart3(0,0,-v);
 }
 var Planet = function(obj) {
     var self = this;

@@ -14,6 +14,10 @@ var TextPanel = function(locator, containerDiv, objectCache) {
             .replace('$1', _that._oCache.ship._camera.position.x.toFixed(0))
             .replace('$2', _that._oCache.ship._camera.position.y.toFixed(0))
             .replace('$3', _that._oCache.ship._camera.position.z.toFixed(0))
+        str += 'Mesh: ($1,$2,$3)<br/>'
+            .replace('$1', _that._oCache.ship._mesh.position.x - _that._oCache.ship._camera.position.x)
+            .replace('$2', _that._oCache.ship._mesh.position.y - _that._oCache.ship._camera.position.y)
+            .replace('$3', _that._oCache.ship._mesh.position.z - _that._oCache.ship._camera.position.z)
         str += 'Pluto: ($1,$2,$3)<br/>'
             .replace('$1', _that._oCache.plutoMesh.position.x.toFixed(0))
             .replace('$2', _that._oCache.plutoMesh.position.y.toFixed(0))

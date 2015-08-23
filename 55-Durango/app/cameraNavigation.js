@@ -1,10 +1,11 @@
-var cameraNavigator = function(camera) {
+var cameraNavigator = function(camera,ship) {
     this._camera = camera;
+    this._ship = ship;
     this._matrix = new THREE.Matrix4();
     _that = this;
     $(document).keydown(function(e){
         var incr = Math.PI/32;
-        console.log(e.ctrlKey + " " + e.keyCode);
+        console.log('----' + e.ctrlKey + " " + e.keyCode);
         if (e.keyCode==37) {
             _that._camera.rotateY( - incr );
         }
@@ -34,5 +35,11 @@ var cameraNavigator = function(camera) {
             var dir = pWorld.sub( _that._camera.position ).normalize();
             _that._camera.position.add(dir.clone().multiplyScalar(100*amount));
         }
+
+        if (e.keyCode==90) {
+            objectCache.shipPlanet.velocity.z += 10;
+        }
+
+
     });
 }

@@ -9,6 +9,7 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
     //_that._controls = new THREE.OrbitControls( _that._camera, _that._containingDiv );
 
     _that._scene = new THREE.Scene();
+    //_that._scene.add(objectCache.ship._mesh);
 
     _that._renderer =  new THREE.WebGLRenderer({antialias: true, canvas: canvas});
     _that._renderer.sortObjects = false;
@@ -49,8 +50,13 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
     this.render = function() {
         _that._frame += .001;
         updatePlanetPhysics(_that._frame);
+        objectCache.ship._camera.position.set(
+            objectCache.ship._mesh.position.x,
+            objectCache.ship._mesh.position.y,
+            objectCache.ship._mesh.position.z
+            );
+        objectCache.ship._camera.lookAt(objectCache.plutoMesh.position);
         _that._renderer.render( _that._scene, _that._camera );
-
     }
 }
 

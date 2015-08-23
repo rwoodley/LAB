@@ -73,7 +73,7 @@
 
             //var shipCameraAspectRatio = document.getElementById('mainCanvas').offsetWidth/document.getElementById('mainCanvas').offsetHeight;
             var shipCameraAspectRatio = window.innerWidth/window.innerHeight;
-            var ship = new Ship(locator, shipCameraAspectRatio);
+            var ship = new Ship(locator, shipCameraAspectRatio, locator);
             locator.addService('Ship', ship);
             locator.ship = ship;
             _textPanel = new TextPanel(locator, document.getElementById('leftPanel'), locator);
