@@ -49,14 +49,16 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
     _that._frame = 0;
     this.render = function() {
         _that._frame += .001;
-        updatePlanetPhysics(_that._frame);
+        updatePlanetPhysics(_that._frame, objectCache.dt);
         objectCache.ship._camera.position.set(
             objectCache.ship._mesh.position.x,
             objectCache.ship._mesh.position.y,
             objectCache.ship._mesh.position.z
             );
         objectCache.ship.sendUpdates();     // update guage.
-        objectCache.ship._camera.lookAt(objectCache.plutoMesh.position);
+        //objectCache.ship._camera.lookAt(objectCache.plutoMesh.position);
+        objectCache.ship._camera.rotateX(objectCache.ship._yVelocity);
+        objectCache.ship._camera.rotateY(objectCache.ship._xVelocity);
         _that._renderer.render( _that._scene, _that._camera );
     }
 }

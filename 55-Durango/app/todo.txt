@@ -22,3 +22,7 @@ Fun
 Longer term:
 ------------
 Put window inside ship? Need to build room in blender?
+
+Engine fires
+1 engine just goes into rotational momentum
+both engine gives thrust

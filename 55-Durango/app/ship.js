@@ -10,6 +10,13 @@ var Ship = function(locator, aspectRatio, objectCache) {
     _that._camera = new THREE.PerspectiveCamera( 45, aspectRatio, .1, 20000000 );
     _that._objectCache = objectCache;
 
+    // the ship has velocity around its Y or X axis or both. X is horizontal axis, Y is vertical axis.
+    // positive rotation around X means pushing the up arrow.
+    // the ship always faces in the -z direction.
+    // The x and y velocity are angular velocities and do not affect the ships position until forward thrust is applied.
+    _that._yVelocity = 0;
+    _that._xVelocity = 0;
+
     var shipGeometry = new THREE.SphereGeometry( 10, 32, 32 );
     var shipMaterial = new THREE.MeshNormalMaterial();
     var shipMesh = new THREE.Mesh( shipGeometry, shipMaterial );
@@ -29,30 +36,20 @@ var Ship = function(locator, aspectRatio, objectCache) {
         _that._listeners['Orientation'](_that.Orientation);
     };
     this.updateOrientation = function(e) {
-        var incr = Math.PI/32;
+        var incr = (_that._objectCache.dt/11) * Math.PI/2048;
         console.log("posx = " + _that._camera.position.x);
         console.log(e.ctrlKey + " " + e.keyCode);
-        if (e.keyCode==37) {
-            _that._camera.rotateY( - incr );
+        if (e.keyCode==38) {    // up arrow
+            _that._yVelocity += incr;
         }
-        if (e.keyCode==39) {
-            _that._camera.rotateY( + incr );
+        if (e.keyCode==40) {    // down arrow
+            _that._yVelocity -= incr;
         }
-        if (e.keyCode==40 && e.ctrlKey == false) {
-            console.log('-y');
-            _that._camera.rotateX( - incr );
+        if (e.keyCode==37) {    // left arrow
+            _that._xVelocity += incr;
         }
-        if (e.keyCode==38  && e.ctrlKey == false) {
-            console.log('+y');
-            _that._camera.rotateX( + incr );
-        }
-        if (e.keyCode==40  && e.ctrlKey == true) {
-            console.log('-z');
-            _that._camera.rotateZ( - incr );
-        }
-        if (e.keyCode==38 && e.ctrlKey == true) {
-            console.log('+z');
-            _that._camera.rotateZ( + incr );
+        if (e.keyCode==39) {    // right arrow
+            _that._xVelocity -= incr;
         }
         if (e.keyCode==32) {
             var amount = e.ctrlKey ? -1 : 1;

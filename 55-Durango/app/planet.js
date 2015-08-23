@@ -7,8 +7,8 @@
 // This wraps the physics engine. 
 var _planets = [];
 var _physics;
-function updatePlanetPhysics(frame) {
-    var dt = 1120;
+function updatePlanetPhysics(frame, dt) {
+//    var dt = 11.20;
 
     // First update velocities
     for (var i = 0; i < _planets.length; i++) {
@@ -83,7 +83,7 @@ function addPlanets(scene, objectCache) {
     });
     _planets.push(shipPlanet);
     objectCache.shipPlanet = shipPlanet;
-    _physics = new engine(_planets);
+    _physics = new physics(_planets);
 //    var v = _physics.getRelativeVelocity(_planets[0], _planets[1]);
 //    //_planets[0].velocity = new Cart3(0,0,v);
     //v = _physics.getRelativeVelocity(_planets[1], _planets[0]);

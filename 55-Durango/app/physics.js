@@ -1,4 +1,4 @@
-var engine = function(planets) {
+var physics = function(planets) {
     var _that = this;
     this.G = 6.6742e-11; // universal gravitational constant
     this.planets = planets;
