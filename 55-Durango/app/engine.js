@@ -11,10 +11,10 @@ var engine = function(planets) {
         console.log("v, radius = " + v + "," + radius);
         return v;
     }
-    this.updateOrbit = function(pa, pb, dt, lambda) {
+    this.updateVelocity = function(pa, pb, dt, lambda) {
 
         // pa rotates around pb
-        // vel, pos for pa is updated.
+        // vel for pa is updated.
         // inputs: pa.position, pb.position, pa.velocity, pb.mass
       // don't compute self-gravitation
       if (pa != undefined && pb != undefined && pa != pb) {
@@ -27,10 +27,11 @@ var engine = function(planets) {
         var radius = pa.position.sub(pb.position);
         // update velocity with gravitational acceleration
         pa.velocity.addTo(radius.mult(dt * (lambda - _that.G * pb.mass * radius.invSumCube())));
-
+      }
+    }
+    this.updatePosition = function(pa, dt) {
         // update position with velocity
         pa.position.addTo(pa.velocity.mult(dt));
-      }
     }
 }
 

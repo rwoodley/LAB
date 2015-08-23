@@ -8,16 +8,23 @@
 var _planets = [];
 var _physics;
 function updatePlanetPhysics(frame) {
-    var dt = 112;
-    //var dt = 60;
+    var dt = 1120;
+
+    // First update velocities
     for (var i = 0; i < _planets.length; i++) {
         for (var j = 0; j < _planets.length; j++) {
-            if (i != j && _planets[i].mass < _planets[j].mass*100) 
-                _physics.updateOrbit(_planets[i], _planets[j], dt, 0);
+            if (i != j ) // && _planets[i].mass < _planets[j].mass*100)
+            {
+                if (i == 2 || j == 2)
+                    console.log('here');
+                _physics.updateVelocity(_planets[i], _planets[j], dt, 0);
+            }
         }
     }
+    // now update positions
     for (var i = 0; i < _planets.length; i++) {
-        _planets[i].updateMeshPosition();
+        _physics.updatePosition(_planets[i], dt);   // update internal physics position
+        _planets[i].updateMeshPosition();           // update three.js position
     }
 }
 function addPlanets(scene, objectCache) {
@@ -55,10 +62,10 @@ function addPlanets(scene, objectCache) {
     }));
     var shipPlanet = new Planet({
         'name': 'ship',
-        'mass': 1*1e18,
+        'mass': 1*1e9,
         'radius': 11 * 1000,
         'startPosition': new Cart3(0, 40000*1000,  0),
-        'startVelocity': new Cart3(0, 0, 1),
+        'startVelocity': new Cart3(200, 0, 0),
         'mesh': objectCache.ship._mesh
     });
     _planets.push(shipPlanet);
