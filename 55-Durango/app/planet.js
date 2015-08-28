@@ -36,21 +36,30 @@ function calcDistance(name1, name2, objectCache) {
     return Math.sqrt(x*x + y*y + z*z);
 //    return p1.mesh.position.distanceTo(p2.mesh.position);
 }
+function planetLighting(planetMesh, scene) {
+    var light = new THREE.DirectionalLight( 0xffffff );
+    light.position.set( 0, 0, 0 );
+    light.target = planetMesh;
+    scene.add(light);
+}
 function addPlanets(scene, objectCache) {
+    
     var radiusPluto = 1186; // km
-    var plutoGeometry = new THREE.SphereGeometry( radiusPluto, 32, 32 );
-    plutoTexture = THREE.ImageUtils.loadTexture('textures/pluto.jpg');
-    var plutoMaterial = new THREE.MeshBasicMaterial({map: plutoTexture, side: THREE.DoubleSide });
+    var plutoGeometry = new THREE.SphereGeometry( radiusPluto, 64, 64 );
+    plutoTexture = THREE.ImageUtils.loadTexture('textures/neptune2.jpg');
+    var plutoMaterial = new THREE.MeshPhongMaterial({map: plutoTexture, side: THREE.DoubleSide });
     var plutoMesh = new THREE.Mesh( plutoGeometry, plutoMaterial );
     scene.add(plutoMesh);
+//    planetLighting(plutoMesh, scene);
     objectCache.plutoMesh = plutoMesh;
 
     var radiusCharon = 635;    // km
-    var charonGeometry = new THREE.SphereGeometry( radiusPluto, 32, 32 );
-    charonTexture = THREE.ImageUtils.loadTexture('textures/ganymede.jpg');
-    var charonMaterial = new THREE.MeshBasicMaterial({map: charonTexture, side: THREE.DoubleSide });
+    var charonGeometry = new THREE.SphereGeometry( radiusPluto, 64, 64 );
+    charonTexture = THREE.ImageUtils.loadTexture('textures/rhea.jpg');
+    var charonMaterial = new THREE.MeshPhongMaterial({map: charonTexture, side: THREE.DoubleSide });
     var charonMesh = new THREE.Mesh( charonGeometry, charonMaterial );
     scene.add(charonMesh);
+    planetLighting(charonMesh, scene);
     objectCache.charonMesh = charonMesh;
     
     var charonPlanet = new Planet({
@@ -77,8 +86,9 @@ function addPlanets(scene, objectCache) {
         'name': 'ship',
         'mass': 1*1e9,
         'radius': 11 * 1000,
-        'startPosition': new Cart3(0, 40000*1000,  0),
-        'startVelocity': new Cart3(200, 0, 0),
+        //'startPosition': new Cart3(19640*1000, 4000*1000,  0),      // orbit charon view
+        'startPosition': new Cart3(0, 4000*10000,  0),             // view from above
+        'startVelocity': new Cart3(0, 0, 200),
         'mesh': objectCache.ship._mesh
     });
     _planets.push(shipPlanet);
@@ -106,7 +116,7 @@ var Planet = function(obj) {
         // Physics deals in meters and KG. This is fine for short distances, but
         // three.js space (for us) is modeling larger differences (sun to pluto), so
         // we don't want to use meters.
-        var _physicsOriginInThreeJSSpace = new Cart3(0, 0, 0);  // put at zero to avoid rounding errors
+        var _physicsOriginInThreeJSSpace = new Cart3(100000, 0, 0);  // put at zero to avoid rounding errors
         var _scaleAdjustment = 1000.0;    // convert from m to km.
         self.mesh.position.set(
             self.position.x/_scaleAdjustment + _physicsOriginInThreeJSSpace.x,

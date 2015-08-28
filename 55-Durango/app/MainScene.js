@@ -38,13 +38,11 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
     skyBox.position.set(0,0,0);
     skyBox.rotation.x = Math.PI/4;
     _that._scene.add( skyBox );
-
-    var spotLight = new THREE.SpotLight( 0xaaaa00 );
-    spotLight.position.set( 0, 0, 0 );
-    _that._scene.add(spotLight);
+    var axisHelper = new THREE.AxisHelper( 500000 );
+    _that._scene.add( axisHelper );
 
     addPlanets(_that._scene, objectCache);
-    
+
     _that._renderer.render( _that._scene, _that._camera );
     _that._frame = 0;
     this.render = function() {
