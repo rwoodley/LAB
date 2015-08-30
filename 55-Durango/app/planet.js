@@ -54,7 +54,7 @@ function addPlanets(scene, objectCache) {
     objectCache.plutoMesh = plutoMesh;
 
     var radiusCharon = 635;    // km
-    var charonGeometry = new THREE.SphereGeometry( radiusPluto, 64, 64 );
+    var charonGeometry = new THREE.SphereGeometry( radiusCharon, 64, 64 );
     charonTexture = THREE.ImageUtils.loadTexture('textures/rhea.jpg');
     var charonMaterial = new THREE.MeshLambertMaterial({map: charonTexture });
     var charonMesh = new THREE.Mesh( charonGeometry, charonMaterial );
@@ -86,9 +86,9 @@ function addPlanets(scene, objectCache) {
         'name': 'ship',
         'mass': 1*1e9,
         'radius': 11 * 1000,
-        //'startPosition': new Cart3(19640*1000, 4000*1000,  0),      // orbit charon view
-        'startPosition': new Cart3(0, 4000*10000,  0),             // view from above
-        'startVelocity': new Cart3(0, 0, 200),
+        'startPosition': new Cart3(19640*1000, 5000*1000,  0),      // orbit charon view
+        //'startPosition': new Cart3(0, 4000*10000,  0),             // view from above
+        'startVelocity': new Cart3(0, 0, 85),
         'mesh': objectCache.ship._mesh
     });
     _planets.push(shipPlanet);
