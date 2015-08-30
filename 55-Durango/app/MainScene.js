@@ -11,7 +11,9 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
     _that._scene = new THREE.Scene();
     //_that._scene.add(objectCache.ship._mesh);
 
-    _that._renderer =  new THREE.WebGLRenderer({antialias: true, canvas: canvas});
+    _that._renderer =  new THREE.WebGLRenderer({
+        antialias: true,
+        canvas: canvas});
     _that._renderer.sortObjects = false;
     _that._renderer.setClearColor( 0x0000ff );
 	_that._renderer.shadowMapEnabled = true;
@@ -33,7 +35,7 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
     var skyGeometry = new THREE.SphereGeometry(deepSpace,50,50);
     var texture;
     texture = THREE.ImageUtils.loadTexture('textures/eso_dark.jpg');
-    var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
+    var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.BackSide });
     var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
     skyBox.position.set(0,0,0);
     skyBox.rotation.x = Math.PI/4;
@@ -47,13 +49,15 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
     _that._frame = 0;
     this.render = function() {
         _that._frame += .001;
-        updatePlanetPhysics(_that._frame, objectCache.dt);
-        objectCache.ship._camera.position.set(
-            objectCache.ship._mesh.position.x,
-            objectCache.ship._mesh.position.y,
-            objectCache.ship._mesh.position.z
-            );
-        objectCache.ship.sendUpdates();     // update guage.
+        //if (_that._frame < 0.010) {
+            updatePlanetPhysics(_that._frame, objectCache.dt);
+            objectCache.ship._camera.position.set(
+                objectCache.ship._mesh.position.x,
+                objectCache.ship._mesh.position.y,
+                objectCache.ship._mesh.position.z
+                );
+            objectCache.ship.sendUpdates();     // update guage.
+        //}
         //objectCache.ship._camera.lookAt(objectCache.plutoMesh.position);
         objectCache.ship._camera.rotateX(objectCache.ship._yVelocity);
         objectCache.ship._camera.rotateY(objectCache.ship._xVelocity);

@@ -46,8 +46,8 @@ function addPlanets(scene, objectCache) {
     
     var radiusPluto = 1186; // km
     var plutoGeometry = new THREE.SphereGeometry( radiusPluto, 64, 64 );
-    plutoTexture = THREE.ImageUtils.loadTexture('textures/neptune2.jpg');
-    var plutoMaterial = new THREE.MeshPhongMaterial({map: plutoTexture, side: THREE.DoubleSide });
+    plutoTexture = THREE.ImageUtils.loadTexture('textures/venusmap.jpg');
+    var plutoMaterial = new THREE.MeshLambertMaterial({map: plutoTexture});
     var plutoMesh = new THREE.Mesh( plutoGeometry, plutoMaterial );
     scene.add(plutoMesh);
 //    planetLighting(plutoMesh, scene);
@@ -56,7 +56,7 @@ function addPlanets(scene, objectCache) {
     var radiusCharon = 635;    // km
     var charonGeometry = new THREE.SphereGeometry( radiusPluto, 64, 64 );
     charonTexture = THREE.ImageUtils.loadTexture('textures/rhea.jpg');
-    var charonMaterial = new THREE.MeshPhongMaterial({map: charonTexture, side: THREE.DoubleSide });
+    var charonMaterial = new THREE.MeshLambertMaterial({map: charonTexture });
     var charonMesh = new THREE.Mesh( charonGeometry, charonMaterial );
     scene.add(charonMesh);
     planetLighting(charonMesh, scene);
