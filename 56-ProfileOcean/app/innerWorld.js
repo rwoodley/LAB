@@ -12,9 +12,9 @@ innerWorld = function() {
         //var ambientLight = new THREE.AmbientLight(0xfff);
         //scene.add(ambientLight);
         
-        camera.position.x = -40; camera.position.y = 13; camera.position.z = -5;
+        camera.position.x = -40; camera.position.y = 3; camera.position.z = -5;
         var axes = new THREE.AxisHelper( 5000 );
-        scene.add(axes);
+        //scene.add(axes);
         
         //===== Begin sphere shader code
         //var geometry = new THREE.SphereGeometry(5, 40, 40);

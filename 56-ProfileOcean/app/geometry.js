@@ -2,32 +2,42 @@ function makeProfileLatheMesh(material) {
     var svgString = $("#path1").attr("d");
     var shape = transformSVGPathExposed(svgString);
 
-    var extrudeSettings = { amount: 148, bevelEnabled: true, bevelSegments: 9, steps: 10, bevelSize: 10, bevelThickness: 10 };    
-    
-    var geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings );
-    assignUVs(geometry);
-    //geometry.scale(.1,.1,.1);
-    //geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,-10,0));
-    geometry.applyMatrix(new THREE.Matrix4().makeRotationZ(Math.PI));
-    geometry.center();
-    var mesh = new THREE.Mesh( geometry, material);
-    mesh.scale.set(.3,.3,.3);
-    //return mesh;
+    ////var extrudeSettings = { amount: 148, bevelEnabled: true, bevelSegments: 9, steps: 10, bevelSize: 10, bevelThickness: 10 };    
+    ////
+    ////var geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings );
+    //geometry.applyMatrix(new THREE.Matrix4().makeRotationY(Math.PI/2));
+    //assignUVs(geometry);
+    ////geometry.scale(.1,.1,.1);
+    ////geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0,-10,0));
+    //geometry.applyMatrix(new THREE.Matrix4().makeRotationZ(Math.PI));
+    //geometry.center();
+    //var mesh = new THREE.Mesh( geometry, material);
+    //mesh.scale.set(.3,.3,.3);
+    ////return mesh;
 
     var points = [];
     var minx = shape[0].extractPoints(10).shape[0].x;
     var minz = shape[0].extractPoints(10).shape[0].y;
+    var maxz = shape[0].extractPoints(10).shape[0].y;
     for (index in shape[0].extractPoints(10).shape) {
         var vec2 = shape[0].extractPoints(10).shape[index];
         points.push(new THREE.Vector3(vec2.x,0,vec2.y));
+        if (vec2.x < minx) minx = vec2.x;
+        if (vec2.z < minz) minz = vec2.z;
+        if (vec2.z > maxz) maxz = vec2.z;
     }
+    var rangeZ = maxz - minz;
     for (index in points) {
         points[index].x -= minx;
         points[index].z -= minz;
     }
     
-    var mesh = new THREE.Mesh( new THREE.LatheGeometry( points, 48), material);
-    mesh.rotateX(Math.PI/2);
+    var geometry = new THREE.LatheGeometry(points, 48);
+    geometry.applyMatrix(new THREE.Matrix4().makeRotationY(Math.PI));
+    assignUVs(geometry);
+    
+    var mesh = new THREE.Mesh(geometry, material);
+    mesh.rotateX(-Math.PI/2);
     mesh.scale.set(.2,.2,.2);
     //mesh.overdraw = true;
     //mesh.doubleSided = true;
