@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+    <style>
+        body {
+            background: #ccc;
+        }
+    </style>
+	<body>
+        <div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+       <div style="position: fixed; top: 3%; width:95%; ">
+            <div style="float: right; ">
+                 <span id='text1' style="display:inline-block;height:30px;width:100px;color:#00ff00;"></span>
+            </div>
+        </div>
+        <script src="r69/three.js"></script>
+        <script src="r69/OrbitControls.js"></script>
+        <script src="innerWorld.js"></script>
+        <script src="geometry.js"></script>
+        <script src="utils.js"></script>
+        <script src="libs/jquery-2.1.4.min.js"></script>
+        <script src="libs/d3-threeD.js"></script>
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="864px"
+            height="864px" viewBox="0 0 864 864" enable-background="new 0 0 864 864" xml:space="preserve">
+            <g>
+                <path id='path1'  fill="none" stroke="#000000" stroke-miterlimit="10" d="M201.295,551.723c-5.838-4.511-11.678-9.027-17.519-13.542c-2.542-1.961-5.116-3.963-7.037-6.532c-3.583-4.809-4.505-11.2-3.696-17.137c0.811-5.939,3.193-11.538,5.713-16.979c1.799-3.879,3.701-7.756,6.331-11.133c5.052-6.485,12.417-10.681,19.584-14.705c2.575-1.45,5.188-2.911,8.048-3.647c6.286-1.614,12.907,0.462,18.852,3.061c8.143,3.562,15.832,8.151,22.828,13.629c0.753,0.59,1.529,1.23,1.877,2.119c0.539,1.372-0.08,2.9-0.137,4.375c-0.136,3.461,2.845,6.268,5.944,7.817c3.1,1.547,6.599,2.395,9.302,4.562c0.621,0.494,1.209,1.089,1.454,1.847c0.96,2.958-3.735,5.479-2.936,8.488c2.613,1.297,4.163,4.446,3.592,7.306c3.259,4.289,0.4,10.48,1.333,15.781c0.494,2.811,2.057,5.303,2.955,8.008c0.896,2.708,0.968,6.058-1.095,8.022c-1.947,1.859-5.038,1.193-7.654,1.828c-5.781,1.403-12.793,5.084-27.496,5.232c-9.35,0.095-18.941,3.172-27.606-0.35C209.289,557.892,205.26,554.79,201.295,551.723z"/>
+            </g>
+        </svg>
+		<script>
+
+    var _container, render_stats, physics_stats;
+    var _camera, _controls, _scene, _renderer;
+    var _boxPivotPoint, textElement, _shaderMaterial;
+    _textElement = document.getElementById('text1');
+    var _scene = new THREE.Scene();
+
+    _container = document.getElementById( 'container' );
+
+    _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+    _controls = new THREE.OrbitControls( _camera, _container.domElement );
+    _renderer =  new THREE.WebGLRenderer({antialias: true, alpha: true});
+    _renderer.setSize( window.innerWidth, window.innerHeight );
+    document.getElementById( 'container' ).innerHTML = "";
+    _container.appendChild( _renderer.domElement );
+
+    _camera.position.x = 31; _camera.position.y = 14; _camera.position.z = 25;
+    var axes = new THREE.AxisHelper( 5000 );
+    _scene.add(axes);
+    
+    var _innercamera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+    var _innerScene = innerWorldScene(_innercamera);
+
+    texture = THREE.ImageUtils.loadTexture('textures/eso_dark.jpg');    //custom_uv_diag
+    //texture = THREE.ImageUtils.loadTexture('textures/custom_uv_diag.png');    //custom_uv_diag
+    var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
+
+
+    var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false};
+    //var renderTargetParameters = { format: THREE.RGBAFormat, stencilBuffer: false };
+    var _rtTexture = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameters);
+    _screenMaterial = new THREE.ShaderMaterial({ uniforms: {tDiffuse: {type:"t", value: _rtTexture }}});
+    var newMat = new THREE.MeshBasicMaterial({color:0xffffff, map: _rtTexture});
+    var cube = new THREE.Mesh(new THREE.SphereGeometry(12, 20, 20), skyMaterial);
+    //var cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), newMat);
+    //_scene.add(cube);
+                
+                
+    //placeSphere(_scene, 0,0,0,0,0,0, newMat);
+    head = makeProfileLatheMesh(newMat);
+    _scene.add(head);
+    
+    var clock = new THREE.Clock();
+    requestAnimationFrame( render );
+
+    var _matrix = new THREE.Matrix4();
+    var _tick = 1;
+    function render() {
+        requestAnimationFrame( render );
+        _controls.update( clock.getDelta() );
+        _camera.lookAt(new THREE.Vector3(0,0,0));
+        _innercamera.lookAt(new THREE.Vector3(0,0,0));
+        rotateCameraY(_camera, Math.PI/512);
+        rotateCameraY(_innercamera, Math.PI/512);
+        _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
+        _renderer.render(_innerScene, _innercamera, _rtTexture, true);
+        //_renderer.render(_innerScene, _innercamera);
+        _renderer.render( _scene, _camera );
+        _tick++;
+    }
+</script>
+	</body>
+</html>
