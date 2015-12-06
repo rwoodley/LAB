@@ -14,8 +14,10 @@
         </div>
         <script src="r71/three.min.js"></script>
         <script src="r71/OrbitControls.js"></script>
+		<script src="r71/Mirror.js"></script>
         <script src="innerWorld.js"></script>
         <script src="geometry.js"></script>
+        <script src="WaterShader.js"></script>
         <script src="utils.js"></script>
         <script src="libs/jquery-2.1.4.min.js"></script>
         <script src="libs/d3-threeD.js"></script>
@@ -35,39 +37,40 @@
 
     _container = document.getElementById( 'container' );
 
-    _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
-    _controls = new THREE.OrbitControls( _camera, _container.domElement );
     _renderer =  new THREE.WebGLRenderer({antialias: true, alpha: true});
     _renderer.setSize( window.innerWidth, window.innerHeight );
     document.getElementById( 'container' ).innerHTML = "";
     _container.appendChild( _renderer.domElement );
 
+    //var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false};
+    ////var renderTargetParameters = { format: THREE.RGBAFormat, stencilBuffer: false };
+    //var _rtTexture = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameters);
+
+    _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
     _camera.position.x = 31; _camera.position.y = 14; _camera.position.z = 25;
     var axes = new THREE.AxisHelper( 5000 );
     _scene.add(axes);
     
-    var _innercamera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+    var _innercamera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.5, 2000000 );
+    _controls = new THREE.OrbitControls( _innercamera, _container.domElement );
 
-    var _innerScene = innerWorldScene(_innercamera);
+    var _innerWorld = new innerWorld();
+    var _innerScene = _innerWorld.init(_innercamera, _renderer);
 
     texture = THREE.ImageUtils.loadTexture('textures/eso_dark.jpg');    //custom_uv_diag
     //texture = THREE.ImageUtils.loadTexture('textures/custom_uv_diag.png');    //custom_uv_diag
     var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
 
 
-    var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false};
-    //var renderTargetParameters = { format: THREE.RGBAFormat, stencilBuffer: false };
-    var _rtTexture = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameters);
-    _screenMaterial = new THREE.ShaderMaterial({ uniforms: {tDiffuse: {type:"t", value: _rtTexture }}});
-    var newMat = new THREE.MeshBasicMaterial({color:0xffffff, map: _rtTexture});
-    var cube = new THREE.Mesh(new THREE.SphereGeometry(12, 20, 20), skyMaterial);
+    //var newMat = new THREE.MeshBasicMaterial({color:0xffffff, map: _rtTexture});
+    //var cube = new THREE.Mesh(new THREE.SphereGeometry(12, 20, 20), skyMaterial);
     //var cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), newMat);
     //_scene.add(cube);
                 
                 
     //placeSphere(_scene, 0,0,0,0,0,0, newMat);
-    head = makeProfileLatheMesh(newMat);
-    _scene.add(head);
+    //head = makeProfileLatheMesh(newMat);
+    //_scene.add(head);
     
     var clock = new THREE.Clock();
     requestAnimationFrame( render );
@@ -77,14 +80,15 @@
     function render() {
         requestAnimationFrame( render );
         _controls.update( clock.getDelta() );
-        _camera.lookAt(new THREE.Vector3(0,0,0));
+        //_camera.lookAt(new THREE.Vector3(0,0,0));
         _innercamera.lookAt(new THREE.Vector3(0,0,0));
         rotateCameraY(_camera, Math.PI/512);
-        rotateCameraY(_innercamera, Math.PI/512);
+        //rotateCameraY(_innercamera, Math.PI/512);
         _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
-        _renderer.render(_innerScene, _innercamera, _rtTexture, true);
-        //_renderer.render(_innerScene, _innercamera);
-        _renderer.render( _scene, _camera );
+        //_renderer.render(_innerScene, _innercamera, _rtTexture, true);
+        _innerWorld.render();
+        _renderer.render(_innerScene, _innercamera);
+        //_renderer.render( _scene, _camera );
         _tick++;
     }
 </script>
