@@ -1,5 +1,5 @@
 function makeProfileLatheMesh(material) {
-    var svgString = $("#path1").attr("d");
+    var svgString = $("#muffin").attr("d");
     var shape = transformSVGPathExposed(svgString);
 
     ////var extrudeSettings = { amount: 148, bevelEnabled: true, bevelSegments: 9, steps: 10, bevelSize: 10, bevelThickness: 10 };    
@@ -17,19 +17,20 @@ function makeProfileLatheMesh(material) {
 
     var points = [];
     var minx = shape[0].extractPoints(10).shape[0].x;
+    var maxx = shape[0].extractPoints(10).shape[0].x;
     var minz = shape[0].extractPoints(10).shape[0].y;
     var maxz = shape[0].extractPoints(10).shape[0].y;
     for (index in shape[0].extractPoints(10).shape) {
         var vec2 = shape[0].extractPoints(10).shape[index];
         points.push(new THREE.Vector3(vec2.x,0,vec2.y));
         if (vec2.x < minx) minx = vec2.x;
+        if (vec2.x > maxx) maxx = vec2.x;
         if (vec2.z < minz) minz = vec2.z;
         if (vec2.z > maxz) maxz = vec2.z;
     }
-    var rangeZ = maxz - minz;
     for (index in points) {
-        points[index].x -= minx;
-        points[index].z -= minz;
+        points[index].x = maxx - points[index].x;
+        points[index].z -= minz;    // turn it upside down.
     }
     
     var geometry = new THREE.LatheGeometry(points, 48);
@@ -38,7 +39,7 @@ function makeProfileLatheMesh(material) {
     
     var mesh = new THREE.Mesh(geometry, material);
     mesh.rotateX(-Math.PI/2);
-    mesh.scale.set(.2,.2,.2);
+    mesh.scale.set(.05,.05,.05);
     //mesh.overdraw = true;
     //mesh.doubleSided = true;
     return mesh;
