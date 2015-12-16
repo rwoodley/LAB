@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+	<body>
+		<div id="container"></div>
+		<script src="r73/three.js"></script>
+        <script src="r73/OrbitControls.js"></script>
+        <style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				margin: 0px;
+				overflow: hidden;
+			}
+            .pselector { border: 2px solid; border-color: #00ff00; margin: 5px; padding: 5px; color: #00ff00; }
+		</style>
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+          ga('create', 'UA-41066114-1', 'rwoodley.org');
+          ga('send', 'pageview');
+        
+        </script>
+		<script>
+var _container;
+var _camera, _controls, _scene, _renderer, _uniforms, _pointLight;
+var _mirrorSphere, _mirrorSphereCamera, _rotateSpeed = Math.PI/1024;
+var _textElement;
+
+var clock = new THREE.Clock();
+
+_container = document.getElementById( 'container' );
+
+_camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+_scene = new THREE.Scene();
+_controls = new THREE.OrbitControls( _camera, _container.domElement );
+_renderer =  new THREE.WebGLRenderer();
+
+_camera.position.x = 0; _camera.position.y = 0; _camera.position.z = -30;
+
+// mirror sphere...
+var sphereGeom =  new THREE.SphereGeometry( 5, 32, 16 ); 
+_mirrorSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
+_mirrorSphereCamera.renderTarget.mapping = THREE.CubeRefractionMapping;
+_mirrorSphereCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
+_scene.add( _mirrorSphereCamera );
+var _mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: _mirrorSphereCamera.renderTarget, side: THREE.BackSide, refractionRatio: .09 } );
+_mirrorSphere = new THREE.Mesh( sphereGeom, _mirrorSphereMaterial );
+_mirrorSphere.position.set(0,0,0);
+
+_mirrorSphereCamera.position = _mirrorSphere.position;
+_scene.add(_mirrorSphere);
+
+_renderer.setSize( window.innerWidth, window.innerHeight );
+
+document.getElementById( 'container' ).innerHTML = "";
+_container.appendChild( _renderer.domElement );
+doSkyDome(1);
+animate();
+
+function animate() {
+
+	requestAnimationFrame( animate );
+
+	render();
+}
+var _tick = 0;
+function render() {
+
+	_controls.update( clock.getDelta() );
+	_renderer.render( _scene, _camera );
+    _camera.lookAt(new THREE.Vector3(0,0,0));
+
+    _mirrorSphere.visible = false;
+    _mirrorSphereCamera.updateCubeMap( _renderer, _scene );
+    _mirrorSphere.visible = true;
+    rotateCameraY(_camera, _rotateSpeed);
+}
+var _radians = 0;
+function doSkyDome() {
+    var skyGeometry = new THREE.SphereGeometry(5000,50,50);
+    var texture;
+    texture = THREE.ImageUtils.loadTexture('textures/4.jpg');
+
+    var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
+    var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
+    skyBox.material.fog = false;
+    skyBox.position.set(0,0,0);
+    skyBox.scale.set(-1,1,1);
+    _scene.add( skyBox );
+}
+var _radians = 0;
+function rotateCameraY(camera, radians) {
+    var x = camera.position.x;  var y = camera.position.y;  var z = camera.position.z;
+    var signx = x > 0 ? 1 : -1;
+
+    _radians = x == 0 ? Math.PI/2 : Math.atan(z/x);
+    if (signx == -1) _radians += Math.PI;
+
+    _radians += radians;
+    if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
+    while (_radians < 0) _radians += Math.PI*2;
+
+    var radius = Math.sqrt(x*x + z*z);
+    camera.position.x = radius * Math.cos(_radians);
+    camera.position.z = radius * Math.sin(_radians);
+}
+        </script>
+	</body>
+</html>
