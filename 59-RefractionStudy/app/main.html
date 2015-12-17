@@ -50,8 +50,8 @@ _scene.add( _mirrorSphereCamera );
 var _mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: _mirrorSphereCamera.renderTarget, side: THREE.BackSide, refractionRatio: .09 } );
 _mirrorSphere = new THREE.Mesh( sphereGeom, _mirrorSphereMaterial );
 _mirrorSphere.position.set(0,0,0);
+_mirrorSphereCamera.position.set(0,0,0);
 
-_mirrorSphereCamera.position = _mirrorSphere.position;
 _scene.add(_mirrorSphere);
 
 _renderer.setSize( window.innerWidth, window.innerHeight );
