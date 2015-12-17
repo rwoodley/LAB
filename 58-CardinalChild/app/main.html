@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+	<body>
+		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+		<script src="r73/three.js"></script>
+        <script src="r73/OrbitControls.js"></script>
+		<script src="r73/Detector.js"></script>
+        <script src="utils.js"></script>
+        <style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				margin: 0px;
+				overflow: hidden;
+			}
+            .pselector { border: 2px solid; border-color: #00ff00; margin: 5px; padding: 5px; color: #00ff00; }
+		</style>
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+          ga('create', 'UA-41066114-1', 'rwoodley.org');
+          ga('send', 'pageview');
+        
+        </script>
+        <img src='snap.png' style='display: none;' />
+		<script>
+			var _container;
+			var _camera, _controls, _scene, _renderer, _uniforms, _pointLight;
+			var _mirrorSphere, _mirrorSphereCamera, _rotateSpeed = Math.PI/1024;
+            var _textElement;
+
+			if ( ! Detector.webgl ) {
+				Detector.addGetWebGLMessage();
+				document.getElementById( 'container' ).innerHTML = "";
+			}
+
+			var clock = new THREE.Clock();
+			init();
+
+
+			function init() {
+                _container = document.getElementById( 'container' );
+
+                _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+                _scene = new THREE.Scene();
+                _controls = new THREE.OrbitControls( _camera, _container.domElement );
+                _renderer =  new THREE.WebGLRenderer();
+
+                _camera.position.x = 9; _camera.position.y = -3; _camera.position.z = -15;
+                var axes = new THREE.AxisHelper( 5000 );
+                //_scene.add(axes);
+
+                _scene.add(new THREE.AmbientLight(0x999999));
+                var back_light = new THREE.PointLight(0xffffff, 1.5);
+                back_light.position.set(100, 100, -200);
+                _scene.add(back_light);
+             
+                var spotLight = new THREE.SpotLight( 0xffffff ); 
+                spotLight.position.set( -250, 250, 250 );  
+                spotLight.castShadow = true;  
+                spotLight.shadowMapWidth = 1024; 
+                spotLight.shadowMapHeight = 1024;  
+                spotLight.shadowCameraNear = 500; 
+                spotLight.shadowCameraFar = 4000; 
+                spotLight.shadowCameraFov = 30; 
+                _scene.add( spotLight );
+                var material = 
+                    new THREE.MeshPhongMaterial({ 
+                    color: 0x333333,
+                    shininess: 40,
+                    ambient: 0xffd700,
+                    emissive: 0x111111,
+                    specular: 0xeeeeee,
+                    side: THREE.DoubleSide 
+                    });
+
+				
+                var sphereGeom =  new THREE.SphereGeometry( 5, 32, 16 );
+                _mirrorSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
+                _mirrorSphereCamera.renderTarget.mapping = THREE.CubeRefractionMapping;
+                _mirrorSphereCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
+                _scene.add( _mirrorSphereCamera );
+                var _mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: _mirrorSphereCamera.renderTarget, side: THREE.DoubleSide, refractionRatio: .09 } );
+                _mirrorSphere = new THREE.Mesh( sphereGeom, _mirrorSphereMaterial );
+                _mirrorSphere.position.set(0,0,0);
+                _mirrorSphere.rotateX(Math.PI);
+                _mirrorSphereCamera.position = _mirrorSphere.position;
+                _scene.add(_mirrorSphere);
+                
+				var ambientLight = new THREE.AmbientLight(0x44aacc);
+				_scene.add(ambientLight);
+
+                _renderer.setSize( window.innerWidth, window.innerHeight );
+
+                document.getElementById( 'container' ).innerHTML = "";
+                _container.appendChild( _renderer.domElement );
+                doSkyDome('textures/Louis.jpg')
+                animate();
+			}
+			var _skyBox;
+			var _skyBoxRadius = 5000.0;
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+			}
+			var _tick = 0;
+			function render() {
+
+				_controls.update( clock.getDelta() );
+				_renderer.render( _scene, _camera );
+                _camera.lookAt(new THREE.Vector3(0,0,0));
+
+                _mirrorSphere.visible = false;
+                _mirrorSphereCamera.updateCubeMap( _renderer, _scene );
+                _mirrorSphere.visible = true;
+                rotateCameraY(_camera, _rotateSpeed);
+			}
+            var _radians = 0;
+</script>
+	</body>
+</html>
