@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+    <style>
+        body {
+            background: #ccc;
+        }
+    </style>
+	<body>
+        <div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+       <div style="position: fixed; top: 3%; width:95%; ">
+            <div style="float: right; ">
+                 <span id='text2' style="display:inline-block;height:30px;width:100px;color:#ff00ff;"></span>
+            </div>
+        </div>
+        <script src="r73/three.js"></script>
+        <script src="r73/OrbitControls.js"></script>
+		<script src="r73/Mirror.js"></script>
+        <script src="innerWorld.js"></script>
+        <script src="WaterShader.js"></script>
+        <script src="utils.js"></script>
+		<script>
+
+    var _container, render_stats, physics_stats;
+    var _controls, _scene, _renderer;
+    var _boxPivotPoint, textElement, _shaderMaterial;
+    _textElement2 = document.getElementById('text2');
+    var _scene = new THREE.Scene();
+
+    _container = document.getElementById( 'container' );
+
+    _renderer =  new THREE.WebGLRenderer({antialias: true, alpha: true});
+    _renderer.setSize( window.innerWidth, window.innerHeight );
+    document.getElementById( 'container' ).innerHTML = "";
+    _container.appendChild( _renderer.domElement );
+
+    var _innerCamera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+   
+    var _innerWorld = new innerWorld();
+    var _waterY = -200;
+    var _innerScene = _innerWorld.init(_innerCamera, _renderer, _waterY);
+    _controls = new THREE.OrbitControls( _innerCamera, _container.domElement );
+
+    var clock = new THREE.Clock();
+    requestAnimationFrame( render );
+
+    var _tick = 1;
+
+    function render() {
+        requestAnimationFrame( render );
+        _controls.update( clock.getDelta() );
+        if (_innerCamera.position.y <= _waterY+20)
+                _innerCamera.position.y = _waterY+20;
+        rotateCameraY(_innerCamera, Math.PI/5120);
+        _innerWorld.render();
+
+        _textElement2.innerHTML = "<nobr>(" + Math.floor(_innerCamera.position.x) + "," + Math.floor(_innerCamera.position.y) + ","  + Math.floor(_innerCamera.position.z) + ")</nobr>" ;
+        _renderer.render(_innerScene, _innerCamera);
+        _tick++;
+    }
+</script>
+	</body>
+</html>
