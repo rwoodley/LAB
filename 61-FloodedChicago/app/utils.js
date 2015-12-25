@@ -107,3 +107,17 @@ function loadShaderFiles(urls, callback, errorCallback) {
 }
 
 var gl;
+
+function loadSkyDome(scene, pathToTexture) {
+
+    var skyGeometry = new THREE.SphereGeometry(10000,50,50);
+
+    texture = THREE.ImageUtils.loadTexture(pathToTexture);    //custom_uv_diag
+
+    var skyMaterial = new THREE.MeshBasicMaterial({
+        map: texture, 
+        side: THREE.DoubleSide });
+    var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
+    skyBox.scale.set(-1,1,1);
+    scene.add(skyBox);
+ }

@@ -11,21 +11,15 @@ innerWorld = function() {
         this.scene = this.innerWorldScene(this.camera, renderer);
         return this.scene;
     }
-    this.render = function() {
-        this.camera.lookAt(new THREE.Vector3(0, this.waterY,0));
+    this.render = function(lookAtVector) {
+        this.camera.lookAt(lookAtVector);
         this.water.material.uniforms.time.value += 1.0 / 600.0;
         this.water.render();    // calls render on the underlying Mirror.
     }
     this.innerWorldScene = function(camera, renderer) {    
         var scene = new THREE.Scene();
-        var ambientLight = new THREE.AmbientLight(0xfff);
-        scene.add(ambientLight);
         
-        camera.position.x = 550; camera.position.y = -150; camera.position.z = -1000;
-
-
         this.doWater(scene, renderer, camera);
-        loadSkyDome(scene);
           
         return scene;
     }
@@ -59,18 +53,5 @@ innerWorld = function() {
         mirrorMesh.position.y = this.waterY;
         scene.add( mirrorMesh );
     }
-    function loadSkyDome(scene) {
-
-        var skyGeometry = new THREE.SphereGeometry(10000,50,50);
-
-        texture = THREE.ImageUtils.loadTexture('textures/1.jpg');    //custom_uv_diag
-
-        var skyMaterial = new THREE.MeshBasicMaterial({
-            map: texture, 
-            side: THREE.DoubleSide });
-        var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
-        skyBox.scale.set(-1,1,1);
-        scene.add(skyBox);
-     }
 
 }
