@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+    <style>
+        body {
+            background: #ccc;
+        }
+    </style>
+	<body>
+        <div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+       <div style="position: fixed; top: 3%; width:95%; ">
+            <div style="float: right; ">
+                 <span id='text1' style="display:inline-block;height:30px;width:100px;color:#00aa00;"></span>
+            </div>
+            <div style="float: right; ">
+                 <span id='text2' style="display:inline-block;height:30px;width:100px;color:#000000;"></span>
+            </div>
+        </div>
+        <script src="r73/three.js"></script>
+        <script src="r73/OrbitControls.js"></script>
+		<script src="r73/Mirror.js"></script>
+        <script src="innerWorld.js"></script>
+        <script src="WaterShader.js"></script>
+        <script src="utils.js"></script>
+		<script>
+
+    var _container, render_stats, physics_stats;
+    var _camera, _controls, _scene, _renderer;
+    var _boxPivotPoint, textElement, _shaderMaterial;
+    _textElement = document.getElementById('text1');
+    _textElement2 = document.getElementById('text2');
+    var _scene = new THREE.Scene();
+
+    _container = document.getElementById( 'container' );
+
+    _renderer =  new THREE.WebGLRenderer({antialias: true, alpha: true});
+    _renderer.setSize( window.innerWidth, window.innerHeight );
+    document.getElementById( 'container' ).innerHTML = "";
+    _container.appendChild( _renderer.domElement );
+
+    _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+    //_camera.position.x = 5; _camera.position.y = 5; _camera.position.z = 5;
+     // _camera.position.x = 91; _camera.position.y = 14; _camera.position.z = 25;
+     _camera.position.x = 78; _camera.position.y = 15; _camera.position.z = -78;
+
+    var axes = new THREE.AxisHelper( 5000 );
+
+    _scene.add(axes);
+
+    var _innerCamera = new THREE.PerspectiveCamera( 170, window.innerWidth / window.innerHeight, 1, 20000 );
+    _innerCamera.position.x = 780; _innerCamera.position.y = 150; _innerCamera.position.z = -780;
+   
+    var _cubeCamera = new THREE.CubeCamera( 0.1, 20000, 512 );
+    _cubeCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
+    _cubeCamera.renderTarget.mapping = THREE.CubeRefractionMapping;
+
+    _cubeCamera.position.x = _camera.position.x;
+    _cubeCamera.position.y = _camera.position.y;
+    _cubeCamera.position.z = _camera.position.z;
+
+    _controls = new THREE.OrbitControls( _camera, _container.domElement );
+
+    var _innerWorld = new innerWorld();
+    var _waterY = -200;    
+    var _innerScene = _innerWorld.init(_innerCamera, _renderer, _waterY);
+
+
+    var newMat = new THREE.MeshBasicMaterial( { envMap: _cubeCamera.renderTarget, side: THREE.BackSide, refractionRatio: .6} );
+    var cube = new THREE.Mesh(new THREE.SphereGeometry(20, 64, 64), newMat);
+    _scene.add(cube);
+                
+    var cube = new THREE.Mesh(new THREE.SphereGeometry(20, 64, 64), newMat);
+    cube.position.x = -40;     cube.position.y = -40;     cube.position.z = -40;
+    _scene.add(cube);
+
+    var cube = new THREE.Mesh(new THREE.SphereGeometry(20, 64, 64), newMat);
+    cube.position.x = 40;     cube.position.y = 40;     cube.position.z = -40;
+
+    _scene.add(cube);
+                
+    var clock = new THREE.Clock();
+    requestAnimationFrame( render );
+
+    var _matrix = new THREE.Matrix4();
+    var _tick = 1;
+
+    loadSkyDome(_innerScene, 'textures/1.jpg');
+    loadSkyDome(_scene, 'textures/louis.jpg');
+
+    var _lookAtVector = new THREE.Vector3(0, _waterY + 200,0);
+    function render() {
+        cube.rotation.x = -_tick * Math.PI/256;
+        requestAnimationFrame( render );
+        _controls.update( clock.getDelta() );
+
+        rotateCameraY(_camera, Math.PI/512);
+        _camera.lookAt(new THREE.Vector3(0,0,0));
+
+        _innerCamera.position.x = _camera.position.x/10;
+        _innerCamera.position.y = _camera.position.y/10;
+        _innerCamera.position.z = _camera.position.z/10;
+        if (_innerCamera.position.y <= _waterY+5)
+            _innerCamera.position.y = _waterY+6;
+        _innerCamera.lookAt(_lookAtVector);
+        _innerWorld.render(_lookAtVector);
+
+        _cubeCamera.position.x = _camera.position.x;
+        _cubeCamera.position.y = _camera.position.y;
+        _cubeCamera.position.z = _camera.position.z;
+
+        _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
+        _textElement2.innerHTML = "<nobr>(" + Math.floor(_innerCamera.position.x) + "," + Math.floor(_innerCamera.position.y) + ","  + Math.floor(_innerCamera.position.z) + ")</nobr>" ;
+        //_renderer.render(_innerScene, _innerCamera);
+        _cubeCamera.updateCubeMap(_renderer, _innerScene);        
+        _renderer.render( _scene, _camera );
+        _tick++;
+    }
+</script>
+	</body>
+</html>
