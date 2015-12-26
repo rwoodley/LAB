@@ -40,12 +40,11 @@
     _container.appendChild( _renderer.domElement );
 
     var _innerCamera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
-    var _mirrorCamera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
     _innerCamera.position.x = 550; _innerCamera.position.y = -150; _innerCamera.position.z = -1000;
    
     var _innerWorld = new innerWorld();
     var _waterY = -200;
-    var _innerScene = _innerWorld.init(_mirrorCamera, _renderer, _waterY);
+    var _innerScene = _innerWorld.init(_innerCamera, _renderer, _waterY);
     _controls = new THREE.OrbitControls( _innerCamera, _container.domElement );
     loadSkyDome(_innerScene, 'textures/1.jpg');
 
@@ -53,16 +52,13 @@
     requestAnimationFrame( render );
 
     var _tick = 1;
-    var _lookAtVector = new THREE.Vector3(0, _waterY ,0);
+    var _lookAtVector = new THREE.Vector3(0, _waterY + 200,0);
     function render() {
         requestAnimationFrame( render );
         _controls.update( clock.getDelta() );
 
-        _mirrorCamera.position.x = _innerCamera.position.x;
-        _mirrorCamera.position.y = _innerCamera.position.y;
-        _mirrorCamera.position.z = _innerCamera.position.z;
-        if (_mirrorCamera.position.y < _lookAtVector.y)
-            _mirrorCamera.position.y = _lookAtVector.y + 1;
+        if (_innerCamera.position.y <= _waterY+5)
+            _innerCamera.position.y = _waterY+6;
 
         rotateCameraY(_innerCamera, Math.PI/5120);
         _innerWorld.render(_lookAtVector);

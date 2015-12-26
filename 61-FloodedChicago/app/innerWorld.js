@@ -1,18 +1,25 @@
 innerWorld = function() {
     this.init = function(camera, renderer, waterY) {
         // if the camera goes below the waterY, then the water disappears. so don't do that.
-        // The camera lookAt.y needs to = waterY, otherwise the water goes black
-        // if the camera y drops below the lookAt.y. I don't know why. Something
-        // about how the shader reflects lights. So the water has to occupy the bottom
-        // half of the screen always. not ideal.
-
-        this.camera = camera;
-        this.waterY = waterY;
-        this.scene = this.innerWorldScene(this.camera, renderer);
+        this.outerCamera = camera;
+        this.mirrorCamera = new THREE.PerspectiveCamera( 
+            60, window.innerWidth / window.innerHeight, 
+            1, 
+            20000 );
+         this.waterY = waterY;
+        this.scene = this.innerWorldScene(this.mirrorCamera, renderer);
         return this.scene;
     }
     this.render = function(lookAtVector) {
-        this.camera.lookAt(lookAtVector);
+        this.mirrorCamera.position.x = this.outerCamera.position.x;
+        this.mirrorCamera.position.y = this.outerCamera.position.y;
+        this.mirrorCamera.position.z = this.outerCamera.position.z;
+
+        // if mirror camera goes below lookAt.y, then water goes black.
+        if (this.mirrorCamera.position.y <= lookAtVector.y)
+            this.mirrorCamera.position.y = lookAtVector.y + 1;
+
+        this.mirrorCamera.lookAt(lookAtVector);
         this.water.material.uniforms.time.value += 1.0 / 600.0;
         this.water.render();    // calls render on the underlying Mirror.
     }
