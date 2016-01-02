@@ -251,7 +251,7 @@ THREE.Water.prototype.renderWithMirror = function (otherMirror) {
 };
 
 THREE.Water.prototype.updateTextureMatrix = function () {
-	if ( this.parent !== undefined ) {
+	if ( this.parent !== undefined && this.parent != null) {
 		this.mesh = this.parent;
 	}
 	function sign(x) { return x ? x < 0 ? -1 : 1 : 0; }

@@ -107,3 +107,46 @@ function loadShaderFiles(urls, callback, errorCallback) {
 }
 
 var gl;
+
+function loadSkyDome(scene, pathToTexture) {
+
+    var skyGeometry = new THREE.SphereGeometry(10000,50,50);
+
+    texture = THREE.ImageUtils.loadTexture(pathToTexture);    //custom_uv_diag
+
+    var skyMaterial = new THREE.MeshBasicMaterial({
+        map: texture, 
+        side: THREE.DoubleSide });
+    var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
+    skyBox.scale.set(-1,1,1);
+    scene.add(skyBox);
+ }
+function loadSkyBox(scene) {
+        var aCubeMap = THREE.ImageUtils.loadTextureCube([
+          'textures/px.jpg',
+          'textures/nx.jpg',
+          'textures/py.jpg',
+          'textures/ny.jpg',
+          'textures/pz.jpg',
+          'textures/nz.jpg'
+        ]);
+        aCubeMap.format = THREE.RGBFormat;
+
+        var aShader = THREE.ShaderLib['cube'];
+        aShader.uniforms['tCube'].value = aCubeMap;
+
+        var aSkyBoxMaterial = new THREE.ShaderMaterial({
+          fragmentShader: aShader.fragmentShader,
+          vertexShader: aShader.vertexShader,
+          uniforms: aShader.uniforms,
+          depthWrite: false,
+          side: THREE.BackSide
+        });
+
+        var aSkybox = new THREE.Mesh(
+          new THREE.BoxGeometry(10000, 10000, 10000),
+          aSkyBoxMaterial
+        );
+        
+        scene.add(aSkybox);
+}
