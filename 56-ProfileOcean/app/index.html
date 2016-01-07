@@ -17,7 +17,8 @@
         </div>
         <script src="r73/three.js"></script>
         <script src="r73/OrbitControls.js"></script>
-		<script src="r73/Mirror.js"></script>
+        <script src="r73/Mirror.js"></script>
+        <script src="r73/FresnelShader.js"></script>
         <script src="geometry.js"></script>
         <script src="myCubeCamera.js"></script>
         <script src="innerWorld.js"></script>
@@ -73,40 +74,33 @@
 
     var uvTexture = THREE.ImageUtils.loadTexture('textures/uv.jpg');
 
-    var basicMaterial = new THREE.MeshPhongMaterial({color:0xffffff, 
-        envMap: _cubeCamera.renderTarget,
-        side: THREE.BackSide,
-        normalMap: THREE.ImageUtils.loadTexture( "textures/243-normal.jpg" ),
-    });
-    cube = makeProfileLatheMesh(basicMaterial);
-    cube.position.x = -30;     cube.position.y = 0;     cube.position.z = 0;
-    // _scene.add(cube);
+    var shader = THREE.FresnelShader;
+    var uniforms = THREE.UniformsUtils.merge( [
+        THREE.UniformsLib[ "lights" ],
+        shader.uniforms
+    ] );
+
+    uniforms[ "tCube" ].value = _cubeCamera.renderTarget;
+    // uniforms[ "mRefractionRatio" ].value = .5;
+
+    var parameters = { fragmentShader: shader.fragmentShader, vertexShader: shader.vertexShader, uniforms: uniforms, lights : false };
+    shaderMaterial = new THREE.ShaderMaterial( parameters );
+    shaderMaterial.envMap = _cubeCamera.renderTarget;
+    shaderMaterial.side = THREE.BackSide;
+    // shaderMaterial.refractionRatio = 1.0;
+
 
     var ambientLight = new THREE.AmbientLight(0xfffffff);
     _scene.add(ambientLight);
-    var phongMaterial = new THREE.MeshPhongMaterial({color:0xffffff, 
+    var basicMaterial = new THREE.MeshPhongMaterial({color:0xffffff, 
         envMap: _cubeCamera.renderTarget,
-        refractionRatio: 1.0,
-        // map: _rtTexture, 
-        // map: uvTexture, 
-        // normalMap: THREE.ImageUtils.loadTexture( "textures/243-normal.jpg" ),
-        // normalMap: THREE.ImageUtils.loadTexture( "textures/normalMap3.png" ),
-        side: THREE.BackSide});
-    cube = makeProfileLatheMesh(phongMaterial);
+        refractionRatio: 0.99,
+        side: THREE.BackSide,
+    });
+
+    cube = makeProfileLatheMesh(basicMaterial);
     cube.position.x = 0;     cube.position.y = 0;     cube.position.z = 0;
     _scene.add(cube);
-
-    // cube = makeProfileLatheMesh(phongMaterial);
-    // cube.position.x = 50;     cube.position.y = 00;     cube.position.z = 50;
-    // _scene.add(cube);
-
-    // cube = makeProfileLatheMesh(phongMaterial);
-    // cube.position.x = -50;     cube.position.y = 0;     cube.position.z = 50;
-    // _scene.add(cube);
-
-    // cube = makeProfileLatheMesh(phongMaterial);
-    // cube.position.x = -50;     cube.position.y = 0;     cube.position.z = -50;
-    // _scene.add(cube);
 
                 
     var clock = new THREE.Clock();
