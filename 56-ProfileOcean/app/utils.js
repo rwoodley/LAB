@@ -37,6 +37,7 @@ function rotateCameraY(camera, radians) {
     camera.position.x = radius * Math.cos(_radians);
     camera.position.z = radius * Math.sin(_radians);
     //_camera.position.y = 4;
+    return _radians;
 }
 
 function drawAxes(size,position, rotation) {
@@ -110,7 +111,7 @@ var gl;
 
 function loadSkyDome(scene, pathToTexture) {
 
-    var skyGeometry = new THREE.SphereGeometry(10000,50,50);
+    var skyGeometry = new THREE.SphereGeometry(20000,50,50);
 
     texture = THREE.ImageUtils.loadTexture(pathToTexture);    //custom_uv_diag
 
@@ -140,11 +141,11 @@ function loadSkyBox(scene) {
           vertexShader: aShader.vertexShader,
           uniforms: aShader.uniforms,
           depthWrite: false,
-          side: THREE.BackSide
+          side: THREE.DoubleSide
         });
 
         var aSkybox = new THREE.Mesh(
-          new THREE.BoxGeometry(10000, 10000, 10000),
+          new THREE.BoxGeometry(30000, 30000, 30000),
           aSkyBoxMaterial
         );
         

@@ -33,12 +33,12 @@ function makeProfileLatheMesh(material) {
         points[index].z = points[index].z - minz;    // turn it upside down.
     }
     
-    var geometry = new THREE.LatheGeometry(points, 256);
+    var geometry = new THREE.LatheGeometry(points, 128);
     geometry.applyMatrix(new THREE.Matrix4().makeRotationY(Math.PI));
     //assignUVs(geometry);
     
     var mesh = new THREE.Mesh(geometry, material);
-    mesh.rotateX(Math.PI/2);
+    mesh.rotateX(-Math.PI/2);
     mesh.scale.set(.08,.08,.08);
     //mesh.overdraw = true;
     mesh.doubleSided = true;
