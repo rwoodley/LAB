@@ -111,7 +111,7 @@ var gl;
 
 function loadSkyDome(scene, pathToTexture) {
 
-    var skyGeometry = new THREE.SphereGeometry(20000,50,50);
+    var skyGeometry = new THREE.SphereGeometry(10000,50,50);
 
     texture = THREE.ImageUtils.loadTexture(pathToTexture);    //custom_uv_diag
 
@@ -145,7 +145,7 @@ function loadSkyBox(scene) {
         });
 
         var aSkybox = new THREE.Mesh(
-          new THREE.BoxGeometry(30000, 30000, 30000),
+          new THREE.BoxGeometry(10000, 10000, 10000),
           aSkyBoxMaterial
         );
         

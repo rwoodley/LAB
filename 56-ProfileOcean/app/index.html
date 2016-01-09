@@ -74,22 +74,6 @@
 
     var uvTexture = THREE.ImageUtils.loadTexture('textures/uv.jpg');
 
-    var shader = THREE.FresnelShader;
-    var uniforms = THREE.UniformsUtils.merge( [
-        THREE.UniformsLib[ "lights" ],
-        shader.uniforms
-    ] );
-
-    uniforms[ "tCube" ].value = _cubeCamera.renderTarget;
-    // uniforms[ "mRefractionRatio" ].value = .5;
-
-    var parameters = { fragmentShader: shader.fragmentShader, vertexShader: shader.vertexShader, uniforms: uniforms, lights : false };
-    shaderMaterial = new THREE.ShaderMaterial( parameters );
-    shaderMaterial.envMap = _cubeCamera.renderTarget;
-    shaderMaterial.side = THREE.BackSide;
-    // shaderMaterial.refractionRatio = 1.0;
-
-
     var ambientLight = new THREE.AmbientLight(0xfffffff);
     _scene.add(ambientLight);
     var basicMaterial = new THREE.MeshPhongMaterial({color:0xffffff, 
@@ -112,7 +96,7 @@
     // _camera.up.set(0,-1,0);
     loadSkyBox(_innerScene);
     // loadSkyDome(_innerScene, 'textures/1.jpg');
-    // loadSkyDome(_scene, 'textures/louis.jpg');
+    loadSkyDome(_scene, 'textures/hermit-island-panorama-small.jpg');
 
     // var _lookAtVector = new THREE.Vector3(0, _waterY + 110,0);
     var _lookAtVector = new THREE.Vector3(0, 0,0);
