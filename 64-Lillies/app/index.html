@@ -18,10 +18,8 @@
         <script src="r73/three.js"></script>
         <script src="r73/OrbitControls.js"></script>
         <script src="r73/Mirror.js"></script>
-        <script src="r73/FresnelShader.js"></script>
         <script src="Flower.js"></script>
         <script src="pFuncs.js"></script>
-        <script src="myCubeCamera.js"></script>
         <script src="innerWorld.js"></script>
         <script src="WaterShader.js"></script>
         <script src="utils.js"></script>
@@ -44,42 +42,40 @@
     _container.appendChild( _renderer.domElement );
 
     _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
-    _camera.position.x = 0; _camera.position.y = 200; _camera.position.z = -560;
+    _camera.position.x = -400; _camera.position.y = 119; _camera.position.z = 2;
 
-    var axes = new THREE.AxisHelper( 5000 );
-
+    var axes = new THREE.AxisHelper( 50000 );
     _scene.add(axes);
 
-    var _innerCamera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
-    _innerCamera.position.x = 6; _innerCamera.position.y = 2; _innerCamera.position.z = 109;
+    var _innerCamera = new THREE.PerspectiveCamera( 120, window.innerWidth / window.innerHeight, 1, 20000 );
+    _innerCamera.position.x = 10; _innerCamera.position.y = 10; _innerCamera.position.z = 0;
    
-    var _cubeCamera = new BOB.CubeCamera( 0.1, 30000, 512 );
-    _cubeCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
-    _cubeCamera.renderTarget.mapping = THREE.CubeRefractionMapping;
+    var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false};
+    //var renderTargetParameters = { format: THREE.RGBAFormat, stencilBuffer: false };
+    var _rtTexture = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, renderTargetParameters);
 
     _controls = new THREE.OrbitControls( _camera, _container.domElement );
 
     var _innerWorld = new innerWorld();
-    var _waterY = -15;    
+    var _waterY = -1;    
     var _innerScene = _innerWorld.init(_innerCamera, _renderer, _waterY);
+    var axes = new THREE.AxisHelper( 50000 );
+    _innerScene.add(axes);
 
-    _flowerFactory = new flowerFactory(_scene);
-    var flower5 = _flowerFactory.flower(0,_waterY,0);
-    flower5.scale.set(20,20,20);
+    _flowerFactory = new flowerFactory(_innerScene);
+    var flower5 = _flowerFactory.flower(0,_waterY,0,2);
 
     var uvTexture = THREE.ImageUtils.loadTexture('textures/uv.jpg');
 
     var ambientLight = new THREE.AmbientLight(0xfffffff);
     _scene.add(ambientLight);
-    // _innerScene.fog=new THREE.Fog( 0x1111ff, 1, 5000 );
-    var basicMaterial = new THREE.MeshPhongMaterial({color:0xffffff, 
-        envMap: _cubeCamera.renderTarget,
+    var basicMaterial = new THREE.MeshBasicMaterial({color:0xffffff, 
+        map: _rtTexture,
         refractionRatio: 0.6,
         side: THREE.BackSide,
     });
 
     var cube = new THREE.Mesh(new THREE.SphereGeometry(200, 64, 64), basicMaterial);
-    // cube = makeProfileLatheMesh(basicMaterial);
     cube.position.x = 0;     cube.position.y = 0;     cube.position.z = 0;
     _scene.add(cube);
 
@@ -90,13 +86,11 @@
     var _matrix = new THREE.Matrix4();
     var _tick = 1;
 
-    // _camera.up.set(0,-1,0);
     // loadSkyBox(_innerScene);
     loadSkyDome(_innerScene, 'textures/SkyHoriz.jpg');
     // loadSkyDome(_scene, 'textures/hermit-island-panorama-small.jpg');
 
-    // var _lookAtVector = new THREE.Vector3(0, _waterY + 110,0);
-    var _lookAtVector = new THREE.Vector3(0, 0,0);
+    var _lookAtVector = new THREE.Vector3(0, _waterY,0);
     function render() {
         //cube.rotation.x = -_tick * Math.PI/256;
         requestAnimationFrame( render );
@@ -106,31 +100,42 @@
         _camera.lookAt(new THREE.Vector3(0,0,0));
 
         var radians = _camera.position.x == 0 ? Math.PI/2 : Math.atan(_camera.position.z/_camera.position.x);
-        if (radians < 0)
+        if (_camera.position.x < 0)
             radians += Math.PI; 
-        _innerCamera.position.x = Math.cos(radians)*1;
-        _innerCamera.position.z = Math.sin(radians)*1;
+        if (radians > Math.PI)
+            radians -= Math.PI*2;
+        // As the outer camera rotates we have to keep rotating the mesh in the opposite
+        // direction so that the lilly appears to stays in the center of the globe.
+        cube.rotation.y = -radians + Math.PI;
+        var newRadians = cube.rotation.y;
 
-        _innerCamera.position.x = _camera.position.x/2.;
-        _innerCamera.position.z = _camera.position.z/2.;
+        // To complete the illusion, the inner camera moves as the outer camera
+        // does.
+        var radius = Math.sqrt(Math.pow(_innerCamera.position.x, 2.0) 
+                             + Math.pow(_innerCamera.position.z, 2.0));
+        _innerCamera.position.x = Math.cos(newRadians)*radius;
+        _innerCamera.position.z = Math.sin(newRadians)*radius;
 
-        // if (_innerCamera.position.y <= _waterY+5)
-        //     _innerCamera.position.y = _waterY+6;
         _innerCamera.lookAt(_lookAtVector);
 
         _innerWorld.render(_lookAtVector);
 
-        _textElement.innerHTML = "<nobr>(" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
-        _textElement2.innerHTML = "<nobr>(" + Math.floor(_innerCamera.position.x) + "," + Math.floor(_innerCamera.position.y) + ","  + Math.floor(_innerCamera.position.z) + ")</nobr>" ;
-        // _textElement.innerHTML = "<nobr>(" + radians.toFixed(2) + ")</nobr>" ;
+        _textElement.innerHTML = "<nobr>(" 
+            + newRadians.toFixed(2) + ","
+            + Math.floor(_camera.position.x) + "," 
+            + Math.floor(_camera.position.y) + ","  
+            + Math.floor(_camera.position.z) + ")</nobr>" ;
+        _textElement2.innerHTML = "<nobr>(" 
+            + radians.toFixed(2) + ","
+            + Math.floor(_innerCamera.position.x) + "," + Math.floor(_innerCamera.position.y) + ","  + Math.floor(_innerCamera.position.z) + ")</nobr>" ;
 
         var tick = _tick - 20;             // delay to set up lice.    
         if (tick <= -1) tick = -1;
         _flowerFactory.updateFlowers(tick/10.0);
 
 
+        _renderer.render(_innerScene, _innerCamera, _rtTexture, true);
         _renderer.render(_innerScene, _innerCamera);
-        _cubeCamera.updateCubeMap(_renderer, _innerScene);
 
         _renderer.render( _scene, _camera );
         _tick++;
