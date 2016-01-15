@@ -16,15 +16,16 @@
             </div>
         </div>
         <script src="r73/three.js"></script>
+        <script src="r73/dat.gui.min.js"></script>
         <script src="r73/OrbitControls.js"></script>
         <script src="r73/Mirror.js"></script>
         <script src="Flower.js"></script>
         <script src="pFuncs.js"></script>
         <script src="innerWorld.js"></script>
         <script src="WaterShader.js"></script>
+        <script src="setupDatGui.js"></script>
         <script src="utils.js"></script>
         <script src="libs/jquery-2.1.4.min.js"></script>
-        <script src="libs/d3-threeD.js"></script>
 		<script>
 
     var _container, render_stats, physics_stats;
@@ -48,7 +49,7 @@
     _scene.add(axes);
 
     var _innerCamera = new THREE.PerspectiveCamera( 120, window.innerWidth / window.innerHeight, 1, 20000 );
-    _innerCamera.position.x = 10; _innerCamera.position.y = 10; _innerCamera.position.z = 0;
+    _innerCamera.position.x = 10; _innerCamera.position.y = 4; _innerCamera.position.z = 0;
    
     var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false};
     //var renderTargetParameters = { format: THREE.RGBAFormat, stencilBuffer: false };
@@ -60,10 +61,13 @@
     var _waterY = -1;    
     var _innerScene = _innerWorld.init(_innerCamera, _renderer, _waterY);
     var axes = new THREE.AxisHelper( 50000 );
-    _innerScene.add(axes);
+    // _innerScene.add(axes);
 
     _flowerFactory = new flowerFactory(_innerScene);
-    var flower5 = _flowerFactory.flower(0,_waterY,0,2);
+    var flower5 = _flowerFactory.flower(0,_waterY+3,0,1);
+
+        // _flowerFactory = new flowerFactory(_innerScene);
+        // var flower5 = _flowerFactory.flower(20,_waterY+3,20,1);
 
     var uvTexture = THREE.ImageUtils.loadTexture('textures/uv.jpg');
 
@@ -87,16 +91,17 @@
     var _tick = 1;
 
     // loadSkyBox(_innerScene);
-    loadSkyDome(_innerScene, 'textures/SkyHoriz.jpg');
+    loadSkyDome(_innerScene, 'textures/dome.jpg');
     // loadSkyDome(_scene, 'textures/hermit-island-panorama-small.jpg');
 
     var _lookAtVector = new THREE.Vector3(0, _waterY,0);
+    setupDatGui(flower5.mesh1.material, flower5.mesh2.material, flower5.mesh3.material);
     function render() {
         //cube.rotation.x = -_tick * Math.PI/256;
         requestAnimationFrame( render );
         _controls.update( clock.getDelta() );
 
-        rotateCameraY(_camera, Math.PI/2048);
+        // rotateCameraY(_camera, Math.PI/2048);
         _camera.lookAt(new THREE.Vector3(0,0,0));
 
         var radians = _camera.position.x == 0 ? Math.PI/2 : Math.atan(_camera.position.z/_camera.position.x);
@@ -115,6 +120,7 @@
                              + Math.pow(_innerCamera.position.z, 2.0));
         _innerCamera.position.x = Math.cos(newRadians)*radius;
         _innerCamera.position.z = Math.sin(newRadians)*radius;
+        _innerCamera.position.y = _camera.position.y;    
 
         _innerCamera.lookAt(_lookAtVector);
 
@@ -137,7 +143,7 @@
         _renderer.render(_innerScene, _innerCamera, _rtTexture, true);
         _renderer.render(_innerScene, _innerCamera);
 
-        _renderer.render( _scene, _camera );
+        // _renderer.render( _scene, _camera );
         _tick++;
     }
 </script>

@@ -79,10 +79,10 @@ funcPetals = function(u,v) {
     var theta = v*Math.PI;
     var radius = v;
     theta=Math.exp((Math.abs(Math.cos(phi*8)))/pi)+radius/2;
-    z = radius * Math.cos(theta);
+    z = radius * Math.cos(theta)/8;
     x = radius*Math.sin(theta)*Math.cos(phi);
     y = radius*Math.sin(theta)*Math.sin(phi);
-    var scale = 8;
+    var scale = 9;
     return new THREE.Vector3(x*scale, z*scale, y*scale);
 
 }

@@ -39,7 +39,7 @@ function makeProfileLatheMesh(material) {
     
     var mesh = new THREE.Mesh(geometry, material);
     mesh.rotateX(-Math.PI/2);
-    mesh.scale.set(.08,.08,.08);
+    mesh.scale.set(.4,.4,.4);
     //mesh.overdraw = true;
     // mesh.doubleSided = false;
     return mesh;

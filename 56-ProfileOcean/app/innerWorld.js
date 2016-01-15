@@ -21,7 +21,7 @@ innerWorld = function() {
             this.mirrorCamera.position.y = lookAtVector.y + 1;
 
         this.mirrorCamera.lookAt(lookAtVector);
-        this.water.material.uniforms.time.value += 1.0 / 40.0;
+        this.water.material.uniforms.time.value += 1.0 / 80.0;
         this.water.render();    // calls render on the underlying Mirror.
     }
     this.innerWorldScene = function(camera, renderer) {    
@@ -32,7 +32,7 @@ innerWorld = function() {
         return scene;
     }
     this.doWater = function(scene, renderer, camera) {
-        var directionalLight = new THREE.DirectionalLight(0xffff55, 1);
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
         directionalLight.position.set(-60, 30, 60);
         scene.add(directionalLight);    
         waterNormals = new THREE.ImageUtils.loadTexture( 'textures/waternormals.jpg' );
@@ -44,9 +44,9 @@ innerWorld = function() {
             waterNormals: waterNormals,
             alpha:  1.0,
             sunDirection: directionalLight.position.clone().normalize(),
-            sunColor: 0xffffff,
+            sunColor: 0XFFFFFF,
             waterColor: 0x001e0f,
-            distortionScale: 60.0,      // nice param. how agitated the water
+            distortionScale: 40.0,      // nice param. how agitated the water
             eye: camera.position
         } );
     
