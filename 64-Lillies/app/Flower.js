@@ -59,9 +59,17 @@ function flowerFactory(scene) {
         return func1Geo;
     }
     this.flower = function(x,y,z, scale) {
-        var retval = {}
+        var retval = {};
+        // middle
         var leafGeo = new THREE.ParametricGeometry(funcLeaves, 90, 90, false);
-    	var leafMat = new THREE.MeshPhongMaterial({color: 0xff28ff, opacity: 1 });
+    	var leafMat = new THREE.MeshPhongMaterial({
+            transparent: true,
+            specular: 0x0a1255,
+            color: 0x312278, 
+            shading: THREE.SmoothShading, 
+            opacity: .6 ,
+            shininess: 1
+        });
         this._material1 = leafMat;
         mesh = new THREE.Mesh( leafGeo, leafMat );    
         mesh.position.x = x;
@@ -71,19 +79,32 @@ function flowerFactory(scene) {
         this._scene.add(mesh);
         retval.mesh1 = mesh;
 
+        // bottom
         var petalsGeo = new THREE.ParametricGeometry(funcPetals, 90, 90, false);
-    	var petalsMat = new THREE.MeshPhongMaterial({color: 0x0065ff, opacity: 1 });
+    	var petalsMat = new THREE.MeshPhongMaterial({
+            transparent: true,
+            specular: 0x00ffff,
+            color: 0x0065ff, 
+            opacity: 1 });
         mesh = new THREE.Mesh( petalsGeo, petalsMat );    
         mesh.position.x = x;
         mesh.position.y = y-1;
         mesh.position.z = z;
         mesh.scale.set(scale, scale, scale);
-        this._scene.add(mesh);
+        // this._scene.add(mesh);
         retval.mesh2 = mesh;
 
         var speed = .5;
         //var material = new THREE.MeshPhongMaterial( { ambient: 0x555555, color: 0x007765, specular: 0x00ffff, shininess: 50,shading: THREE.SmoothShading, morphTargets: true }  );
-        var material = new THREE.MeshPhongMaterial( { ambient: 0x555555, color: 0x5100ff, specular: 0x00ffff, shininess: 50,shading: THREE.SmoothShading, morphTargets: true }  );
+        var material = new THREE.MeshPhongMaterial( { 
+            transparent: true,
+            ambient: 0x555555, 
+            color: 0x5100ff, 
+            specular: 0x00ffff, 
+            shininess: 50,
+            opacity: .6,
+            shading: THREE.SmoothShading, 
+            morphTargets: true }  );
         var flat2CupGeo = this.morphGeo(flatDumpling, funcCup);
         var mesh = this.addMorphMesh(x,y,z, flat2CupGeo, material, 1,.4, -0.1 * speed, false, 1.4);
         mesh.scale.set(scale, scale, scale);

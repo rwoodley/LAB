@@ -43,12 +43,12 @@
     _container.appendChild( _renderer.domElement );
 
     _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
-    _camera.position.x = -400; _camera.position.y = 119; _camera.position.z = 2;
+    _camera.position.x = -176; _camera.position.y = 12; _camera.position.z = -379;
 
     var axes = new THREE.AxisHelper( 50000 );
-    _scene.add(axes);
+    // _scene.add(axes);
 
-    var _innerCamera = new THREE.PerspectiveCamera( 120, window.innerWidth / window.innerHeight, 1, 20000 );
+    var _innerCamera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 20000 );
     _innerCamera.position.x = 10; _innerCamera.position.y = 4; _innerCamera.position.z = 0;
    
     var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false};
@@ -64,7 +64,7 @@
     // _innerScene.add(axes);
 
     _flowerFactory = new flowerFactory(_innerScene);
-    var flower5 = _flowerFactory.flower(0,_waterY+3,0,1);
+    var flower5 = _flowerFactory.flower(0,_waterY+3,0,1.0);
 
         // _flowerFactory = new flowerFactory(_innerScene);
         // var flower5 = _flowerFactory.flower(20,_waterY+3,20,1);
@@ -83,7 +83,19 @@
     cube.position.x = 0;     cube.position.y = 0;     cube.position.z = 0;
     _scene.add(cube);
 
-                
+    var _mirrorSphereCamera = new THREE.CubeCamera( 0.1, 12000, 512 );
+    _innerScene.add(_mirrorSphereCamera);
+    var sphereGeom =  new THREE.SphereGeometry( 2, 32, 16 );
+    var _mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: _mirrorSphereCamera.renderTarget, side: THREE.DoubleSide } );
+    _mirrorSphere = new THREE.Mesh( sphereGeom, _mirrorSphereMaterial );
+    _mirrorSphere.position.y = 4;
+    // _mirrorSphere.rotateY(2.0);
+    // _mirrorSphere.rotateZ(2.0);
+    _mirrorSphereCamera.position.y = _mirrorSphere.position.y;
+    var ambientLight = new THREE.AmbientLight(0xffffff);
+    _innerScene.add(ambientLight);
+    _innerScene.add(_mirrorSphere);
+
     var clock = new THREE.Clock();
     requestAnimationFrame( render );
 
@@ -96,12 +108,14 @@
 
     var _lookAtVector = new THREE.Vector3(0, _waterY,0);
     setupDatGui(flower5.mesh1.material, flower5.mesh2.material, flower5.mesh3.material);
+    _flowerFactory.updateFlowers(0);
+
     function render() {
         //cube.rotation.x = -_tick * Math.PI/256;
         requestAnimationFrame( render );
         _controls.update( clock.getDelta() );
 
-        // rotateCameraY(_camera, Math.PI/2048);
+        rotateCameraY(_camera, Math.PI/2048);
         _camera.lookAt(new THREE.Vector3(0,0,0));
 
         var radians = _camera.position.x == 0 ? Math.PI/2 : Math.atan(_camera.position.z/_camera.position.x);
@@ -123,7 +137,9 @@
         _innerCamera.position.y = _camera.position.y;    
 
         _innerCamera.lookAt(_lookAtVector);
-
+        _mirrorSphere.visible = false;
+        _mirrorSphereCamera.updateCubeMap( _renderer, _innerScene );
+        _mirrorSphere.visible = true;
         _innerWorld.render(_lookAtVector);
 
         _textElement.innerHTML = "<nobr>(" 
@@ -135,15 +151,15 @@
             + radians.toFixed(2) + ","
             + Math.floor(_innerCamera.position.x) + "," + Math.floor(_innerCamera.position.y) + ","  + Math.floor(_innerCamera.position.z) + ")</nobr>" ;
 
-        var tick = _tick - 20;             // delay to set up lice.    
+        var tick = _tick;             // delay to set up lice.    
         if (tick <= -1) tick = -1;
-        _flowerFactory.updateFlowers(tick/10.0);
+        _flowerFactory.updateFlowers(tick/40.0);
 
 
         _renderer.render(_innerScene, _innerCamera, _rtTexture, true);
         _renderer.render(_innerScene, _innerCamera);
 
-        // _renderer.render( _scene, _camera );
+        _renderer.render( _scene, _camera );
         _tick++;
     }
 </script>
