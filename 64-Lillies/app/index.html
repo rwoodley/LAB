@@ -43,13 +43,13 @@
     _container.appendChild( _renderer.domElement );
 
     _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
-    _camera.position.x = -176; _camera.position.y = 12; _camera.position.z = -379;
+    _camera.position.x = -176; _camera.position.y = 10; _camera.position.z = -379;
 
     var axes = new THREE.AxisHelper( 50000 );
     // _scene.add(axes);
 
     var _innerCamera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 1, 20000 );
-    _innerCamera.position.x = 10; _innerCamera.position.y = 4; _innerCamera.position.z = 0;
+    _innerCamera.position.x = 10; _innerCamera.position.y = 8; _innerCamera.position.z = 0;
    
     var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false};
     //var renderTargetParameters = { format: THREE.RGBAFormat, stencilBuffer: false };
@@ -95,6 +95,9 @@
     var ambientLight = new THREE.AmbientLight(0xffffff);
     _innerScene.add(ambientLight);
     _innerScene.add(_mirrorSphere);
+    var _innerPointLight = new THREE.PointLight( 0xff0000, 10, 0 );
+    _innerPointLight.position.y = _mirrorSphere.position.y;
+    _innerScene.add( _innerPointLight );
 
     var clock = new THREE.Clock();
     requestAnimationFrame( render );
@@ -107,7 +110,7 @@
     // loadSkyDome(_scene, 'textures/hermit-island-panorama-small.jpg');
 
     var _lookAtVector = new THREE.Vector3(0, _waterY,0);
-    setupDatGui(flower5.mesh1.material, flower5.mesh2.material, flower5.mesh3.material);
+    // setupDatGui(flower5.mesh1.material, flower5.mesh2.material, flower5.mesh3.material);
     _flowerFactory.updateFlowers(0);
 
     function render() {
@@ -115,7 +118,7 @@
         requestAnimationFrame( render );
         _controls.update( clock.getDelta() );
 
-        rotateCameraY(_camera, Math.PI/2048);
+        rotateCameraY(_camera, Math.PI/512);
         _camera.lookAt(new THREE.Vector3(0,0,0));
 
         var radians = _camera.position.x == 0 ? Math.PI/2 : Math.atan(_camera.position.z/_camera.position.x);

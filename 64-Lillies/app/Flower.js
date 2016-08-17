@@ -63,12 +63,13 @@ function flowerFactory(scene) {
         // middle
         var leafGeo = new THREE.ParametricGeometry(funcLeaves, 90, 90, false);
     	var leafMat = new THREE.MeshPhongMaterial({
+            normalMap: THREE.ImageUtils.loadTexture( "textures/normal.jpg" ),
             transparent: true,
-            specular: 0x0a1255,
-            color: 0x312278, 
             shading: THREE.SmoothShading, 
-            opacity: .6 ,
-            shininess: 1
+            color: 0x13137d, 
+            specular: 0x00bb00, 
+            opacity: .4,
+            shininess: 60
         });
         this._material1 = leafMat;
         mesh = new THREE.Mesh( leafGeo, leafMat );    
@@ -85,7 +86,7 @@ function flowerFactory(scene) {
             transparent: true,
             specular: 0x00ffff,
             color: 0x0065ff, 
-            opacity: 1 });
+            opacity: .3 });
         mesh = new THREE.Mesh( petalsGeo, petalsMat );    
         mesh.position.x = x;
         mesh.position.y = y-1;
@@ -97,12 +98,13 @@ function flowerFactory(scene) {
         var speed = .5;
         //var material = new THREE.MeshPhongMaterial( { ambient: 0x555555, color: 0x007765, specular: 0x00ffff, shininess: 50,shading: THREE.SmoothShading, morphTargets: true }  );
         var material = new THREE.MeshPhongMaterial( { 
+            // normalMap: THREE.ImageUtils.loadTexture( "textures/242-normal.jpg" ),
             transparent: true,
             ambient: 0x555555, 
-            color: 0x5100ff, 
-            specular: 0x00ffff, 
+            specular: 0x00ffd1,
+            color: 0x1973a4, 
             shininess: 50,
-            opacity: .6,
+            opacity: .7,
             shading: THREE.SmoothShading, 
             morphTargets: true }  );
         var flat2CupGeo = this.morphGeo(flatDumpling, funcCup);
