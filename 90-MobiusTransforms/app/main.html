@@ -17,14 +17,16 @@
 		<script id="vs" type="x-shader/x-vertex">
 			#define PI 3.1415926535897932384626433832795
 			varying vec2 vUv; 
-			varying float theta;
-			varying float phi;
-			varying float x;
-			varying float y;
-			varying float z;
 			#define product(a, b) vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x)
 			#define conjugate(a) vec2(a.x,-a.y)
 			#define divide(a, b) vec2(((a.x*b.x+a.y*b.y)/(b.x*b.x+b.y*b.y)),((a.y*b.x-a.x*b.y)/(b.x*b.x+b.y*b.y)))
+			uniform float iGlobalTime;
+				 varying float theta;
+				 varying float phi;
+				 varying float x;
+				 varying float y;
+				 varying float z;
+
 			// emulate OpenGL 4.5's mix(,,bool)
 			float mix(float x, float y, bool a) {
 			  return a ? y : x;
@@ -34,18 +36,16 @@
 			// http://stackoverflow.com/questions/26070410/robust-atany-x-on-glsl-for-converting-xy-coordinate-to-angle
 			// swaps params when |x| <= |y|
 			float atan2(in float y, in float x) {
-			    // if (abs(x) > .98)
-			    // 	return atan(1.0,x);
 			    bool s = (abs(x) >= abs(y));
 			    float res = mix(PI/2.0 - atan(x,y), atan(y,x), s);
 			    return res;
 			}
 			vec2 applyMobiusTransformation(in vec2 z) {
-				vec2 a = vec2(1.0, 0.0);
+				vec2 a = vec2(1.0, 1.0);
 				vec2 b = vec2(0.0, 1.0);
 				vec2 top = product(z,a)+b;
-				vec2 c = vec2(0.0, 1.0);
-				vec2 d = vec2(1.0, 0.0);
+				vec2 c = vec2(1.0, 0.0);
+				vec2 d = vec2(0.0, 1.0);
 				vec2 bottom = product(z,c)+d;
 				return divide(top,bottom);
 				// return bottom;
@@ -57,9 +57,9 @@
 			    gl_Position = projectionMatrix * mvPosition;
 
 			    // convert from uv to polar coords
-			    float tempuv1 =uv[1]*.989 + 0.01;	// correct atan errors at phi=0
+			    float tempuv1 = max(0.0001,min(.9999,uv[1]));
 				theta = (1.0-tempuv1) * PI;
-			    float tempuv0 =uv[0]*.99 + 0.01;	// correct atan errors at phi=0
+			    float tempuv0 = max(0.0001,min(.9999,uv[0]));
 				phi = PI * 2.0 * tempuv0;
 
 				// convert polar to cartesian. Theta is polar, phi is azimuth.
@@ -71,15 +71,16 @@
 				// http://math.stackexchange.com/questions/1219406/how-do-i-convert-a-complex-number-to-a-point-on-the-riemann-sphere
 				vec2 a = vec2(x/(1.0-z), y/(1.0-z));
 				vec2 c = applyMobiusTransformation(a);
+				// vec2 c = a;
 
-				// // // now c back to sphere.
+				// // // // now c back to sphere.
 				float denom = 1.0 + c.x*c.x + c.y *c.y;
 				x = 2.0 * c.x/denom;
 				y = 2.0 * c.y/denom;
 				z = (c.x*c.x + c.y*c.y - 1.0)/denom;
 
 				// convert to polar
-				phi = atan2(y,x) + 2.0 * PI;
+				phi = atan2(y,x);
 				if (phi < 0.0) {
 					phi = phi + PI*2.0;	
 				}
@@ -93,7 +94,6 @@
 				float newu = phi/(2.0 * PI);
 
 				vUv = vec2(newu, newv);
-				// vUv = vec2(uv[0], uv[1]);
 
 			}
 		</script>
@@ -115,21 +115,14 @@
 			void main() {
 				vec2 uv = vUv;
 			    vec4 tex1 = texture2D( iChannel0,  uv);
-			 //    float red = (theta+PI/2.0)/PI;
-			 //    float green = phi/(PI * 2.0);
-				// if (uv[0] <= .1)
-				// 	gl_FragColor = vec4(0,0,tex1[2]*.4,1);
-				// else
-				// if (uv[0] >= .9)
-				// 	gl_FragColor = vec4(1,1,tex1[2]*.4,1);
-				// else
-					gl_FragColor = tex1;
+				gl_FragColor = tex1;
+				// gl_FragColor = vec4(1.0-uv[0],0,tex1[2],1);
 			}
 
 		</script>
 		<script>
 			var _container;
-			var _camera, _controls, _scene, _renderer;
+			var _camera, _controls, _scene, _renderer, _uniforms;
 			var myMesh, _rotateSpeed = Math.PI/1024;
 
 			if ( ! Detector.webgl ) {
@@ -153,7 +146,7 @@
                 var axes = new THREE.AxisHelper( 5000 );
                 _scene.add(axes);
 
-				var planeGeometry = new THREE.PlaneBufferGeometry( 2, 2, 32, 32 );
+				var planeGeometry = new THREE.PlaneBufferGeometry( 2, 2, 128, 128 );
 
                 var skyGeometry = new THREE.SphereGeometry(1,128,128);
                 var texture;
@@ -194,7 +187,8 @@
 				_controls.update( clock.getDelta() );
 				_renderer.render( _scene, _camera );
                 _camera.lookAt(new THREE.Vector3(0,0,0));
-                _skyBox.rotateY(0.002);
+                //_skyBox.rotateY(0.002);
+                _uniforms.iGlobalTime.value = _uniforms.iGlobalTime.value  + .1;
 			}
 </script>
 	</body>
