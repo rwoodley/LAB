@@ -15,86 +15,12 @@
 			}
 		</style>
 		<script id="vs" type="x-shader/x-vertex">
-			#define PI 3.1415926535897932384626433832795
 			varying vec2 vUv; 
-			#define product(a, b) vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x)
-			#define conjugate(a) vec2(a.x,-a.y)
-			#define divide(a, b) vec2(((a.x*b.x+a.y*b.y)/(b.x*b.x+b.y*b.y)),((a.y*b.x-a.x*b.y)/(b.x*b.x+b.y*b.y)))
-			uniform float iGlobalTime;
-				 varying float theta;
-				 varying float phi;
-				 varying float x;
-				 varying float y;
-				 varying float z;
-
-			// emulate OpenGL 4.5's mix(,,bool)
-			float mix(float x, float y, bool a) {
-			  return a ? y : x;
-			}
-
-			// proposed solution from 
-			// http://stackoverflow.com/questions/26070410/robust-atany-x-on-glsl-for-converting-xy-coordinate-to-angle
-			// swaps params when |x| <= |y|
-			float atan2(in float y, in float x) {
-			    bool s = (abs(x) >= abs(y));
-			    float res = mix(PI/2.0 - atan(x,y), atan(y,x), s);
-			    return res;
-			}
-			vec2 applyMobiusTransformation(in vec2 z) {
-				vec2 a = vec2(1.0, 1.0);
-				vec2 b = vec2(0.0, 1.0);
-				vec2 top = product(z,a)+b;
-				vec2 c = vec2(1.0, 0.0);
-				vec2 d = vec2(0.0, 1.0);
-				vec2 bottom = product(z,c)+d;
-				return divide(top,bottom);
-				// return bottom;
-			}
 			void main()
 			{
-
 			    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0 );
 			    gl_Position = projectionMatrix * mvPosition;
-
-			    // convert from uv to polar coords
-			    float tempuv1 = max(0.0001,min(.9999,uv[1]));
-				theta = (1.0-tempuv1) * PI;
-			    float tempuv0 = max(0.0001,min(.9999,uv[0]));
-				phi = PI * 2.0 * tempuv0;
-
-				// convert polar to cartesian. Theta is polar, phi is azimuth.
-				x = sin(theta)*cos(phi);
-				y = sin(theta)*sin(phi);
-				z = cos(theta);
-
-				// convert riemann sphere to complex plane (X+Yi)
-				// http://math.stackexchange.com/questions/1219406/how-do-i-convert-a-complex-number-to-a-point-on-the-riemann-sphere
-				vec2 a = vec2(x/(1.0-z), y/(1.0-z));
-				vec2 c = applyMobiusTransformation(a);
-				// vec2 c = a;
-
-				// // // // now c back to sphere.
-				float denom = 1.0 + c.x*c.x + c.y *c.y;
-				x = 2.0 * c.x/denom;
-				y = 2.0 * c.y/denom;
-				z = (c.x*c.x + c.y*c.y - 1.0)/denom;
-
-				// convert to polar
-				phi = atan2(y,x);
-				if (phi < 0.0) {
-					phi = phi + PI*2.0;	
-				}
-				if (phi > (2.0 * PI)) {
-					phi = phi - 2.0 * PI;
-				}
-				theta = acos(z);
-
-				// now get uv in new chart.
-				float newv = 1.0 - theta/PI;
-				float newu = phi/(2.0 * PI);
-
-				vUv = vec2(newu, newv);
-
+			    vUv = uv;
 			}
 		</script>
 
@@ -105,18 +31,129 @@
 			uniform sampler2D iChannel0;
 			
 			varying vec2 vUv;  
-            varying vec4 vColor;
-			varying float theta;
-			varying float phi;
-			varying float x;
-			varying float y;
-			varying float z;
 
+			#define cx_product(a, b) vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x)
+			#define cx_conjugate(a) vec2(a.x,-a.y)
+			#define cx_divide(a, b) vec2(((a.x*b.x+a.y*b.y)/(b.x*b.x+b.y*b.y)),((a.y*b.x-a.x*b.y)/(b.x*b.x+b.y*b.y)))
+
+			// emulate OpenGL 4.5's mix(,,bool)
+			float mix(float x, float y, bool a) {
+			  return a ? y : x;
+			}
+
+			// proposed solution from 
+			// http://stackoverflow.com/questions/26070410/robust-atany-x-on-glsl-for-converting-xy-coordinate-to-angle
+			// swaps params when |x| <= |y|
+			float atan2(in float y, in float x) {
+				float res = atan(y,x);
+				return res;
+			    // // bool s = (abs(x) >= abs(y));
+			    // bool s = abs(y) > 1./32.;
+			    // // float res = mix(PI/2.0 - atan(x,y), atan(y,x), s);
+			    // float res = mix(0.0,atan(y,x), s);
+			    // return res;
+			}
+			// https://github.com/julesb/glsl-util/blob/master/complexvisual.glsl
+			vec2 cx_sqrt(vec2 a) {
+			    float r = sqrt(a.x*a.x+a.y*a.y);
+			    float rpart = sqrt(0.5*(r+a.x));
+			    float ipart = sqrt(0.5*(r-a.x));
+			    if (a.y < 0.0) ipart = -ipart;
+			    return vec2(rpart,ipart);
+			}
+			vec2 cx_log(vec2 a) {
+			    float rpart = sqrt((a.x*a.x)+(a.y*a.y));
+			    float ipart = atan2(a.y,a.x);
+			    if (ipart > PI) ipart=ipart-(2.0*PI);
+			    return vec2(log(rpart),ipart);
+			}
+			// from: https://github.com/Syntopia/Fragmentarium/blob/master/Fragmentarium-Source/Examples/Include/Complex.frag
+			vec2 cx_exp(vec2 z) {
+				return vec2(exp(z.x) * cos(z.y), exp(z.x) * sin(z.y));
+			}
+
+
+			uniform float iGlobalTime;
+
+			vec2 applyMobiusTransformation(in vec2 z) {
+				float fac = tan(iGlobalTime/10.);
+				vec2 a = vec2(1.0, 0.0);
+				vec2 b = vec2(fac, fac);
+				vec2 top = cx_product(z,a)+b;
+				vec2 c = vec2(-fac, fac);
+				vec2 d = vec2(1.0, 0.0);
+				vec2 bottom = cx_product(z,c);
+				bottom.x = bottom.x + d.x;
+				bottom.y = bottom.y + d.y;
+				return cx_divide(top,bottom);
+				// return bottom;
+			}
 			void main() {
+				 float theta;
+				 float phi;
+				 float x;
+				 float y;
+				 float z;
+
 				vec2 uv = vUv;
-			    vec4 tex1 = texture2D( iChannel0,  uv);
+
+				// ---------
+			    // convert from uv to polar coords
+			    vec2 tempuv = uv;
+				theta = (1.0-tempuv[1]) * PI;
+				//phi = PI * 2.0 * tempuv[0];
+				phi = PI * 2.0 * tempuv[0] *0.9999999;
+				// convert polar to cartesian. Theta is polar, phi is azimuth.
+				x = sin(theta)*cos(phi);
+				y = sin(theta)*sin(phi);
+				z = cos(theta);
+
+				// x = x * x;
+
+				// convert riemann sphere to complex plane (X+Yi)
+				// http://math.stackexchange.com/questions/1219406/how-do-i-convert-a-complex-number-to-a-point-on-the-riemann-sphere
+				vec2 a = vec2(x/(1.0-z), y/(1.0-z));
+				// vec2 c = applyMobiusTransformation(a);
+				// vec2 c = cx_divide(1.+a,1.-a);
+				// c = cx_exp(c);
+				vec2 c = cx_product(a,a);
+				// vec2 c = a;
+
+				// // // // now c back to sphere.
+				float denom = 1.0 + c.x*c.x + c.y *c.y;
+				x = 2.0 * c.x/denom;
+				y = 2.0 * c.y/denom;
+				z = (c.x*c.x + c.y*c.y - 1.0)/denom;
+
+				// convert to polar
+				// problem: the phi above is [0,2*PI]. this phi is [0,2*PI)
+				phi = atan2(y, x);
+				// phi = phi + 2.0 * PI * 1./32.;
+				// phi = phi *32./31.;
+				if (phi < 0.0) {
+					phi = phi + PI*2.0;	
+				}
+				if (phi > (2.0 * PI)) {	// allow 2PI since we gen uv over [0,1]
+					phi = phi - 2.0 * PI;
+				}
+				// if (phi > 2.0 * PI * 31./32.)
+				// 	phi = 2.0 * PI;
+				// if (phi == (2.0 * PI)) {
+				// 	phi = 0.0;
+				// }
+				// phi = phi *  32./31.;
+				if (phi > .999 * PI*2.0)
+					phi = PI * 2.0;
+				theta = acos(z);
+
+				// now get uv in new chart.
+				float newv = 1.0 - theta/PI;
+				float newu = phi/(2.0 * PI);
+				vec2 newuv = vec2(newu, newv);
+			    vec4 tex1 = texture2D( iChannel0,  newuv);
 				gl_FragColor = tex1;
-				// gl_FragColor = vec4(1.0-uv[0],0,tex1[2],1);
+	
+
 			}
 
 		</script>
@@ -145,41 +182,46 @@
                 _camera.position.x = 1.5; _camera.position.y = 2.0; _camera.position.z = 0;
                 var axes = new THREE.AxisHelper( 5000 );
                 _scene.add(axes);
+                var segment = 256.;
+				var planeGeometry = new THREE.PlaneBufferGeometry( 2, 2, segment, segment );
 
-				var planeGeometry = new THREE.PlaneBufferGeometry( 2, 2, 128, 128 );
-
-                var skyGeometry = new THREE.SphereGeometry(1,128,128);
+                var skyGeometry = new THREE.SphereGeometry(1,segment,segment);
                 var texture;
-                var pathToTexture = 'textures/1.jpg';
-                texture = THREE.ImageUtils.loadTexture(pathToTexture);
-            
-				_uniforms = {
-				    iGlobalTime:    { type: 'f', value: 0.1 },
-				    iChannel0:  { type: 't', value: THREE.ImageUtils.loadTexture( 'textures/uv.jpg') },
-				};
-				newMaterial = new THREE.ShaderMaterial( {
-					uniforms: _uniforms,
-					vertexShader: document.getElementById( 'vs' ).textContent,
-					fragmentShader: document.getElementById( 'fs' ).textContent,
-					side: THREE.DoubleSide 
-				} );
-                // var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
-                _skyBox = new THREE.Mesh( skyGeometry, newMaterial );
-                _skyBox.position.set(0,0,1);
-                _skyBox.scale.set(-1,1,1);
-                _scene.add( _skyBox );
+                var pathToTexture = 'textures/uv.jpg';
+				var loader = new THREE.TextureLoader();
+				loader.load(pathToTexture, function ( texture ) {
+					_uniforms = {
+					    iGlobalTime:    { type: 'f', value: 0.1 },
+					    iChannel0:  { type: 't', 
+					    	value: texture },
+					};
+					// texture.magFilter = THREE.NearestFilter;
+					newMaterial = new THREE.ShaderMaterial( {
+						uniforms: _uniforms,
+						vertexShader: document.getElementById( 'vs' ).textContent,
+						fragmentShader: document.getElementById( 'fs' ).textContent,
+						side: THREE.DoubleSide,
+						// wireframe: true
+					} );
+	                // var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
+	                _skyBox = new THREE.Mesh( skyGeometry, newMaterial );
+	                _skyBox.position.set(0,0,1);
+	                // _skyBox.scale.set(-1,1,1);
+	                _scene.add( _skyBox );
 
-                _plane = new THREE.Mesh( planeGeometry, newMaterial );
-                _plane.position.set(0,0,-1);
-                _plane.rotateX(-Math.PI/2);
-                _plane.rotateZ(Math.PI/2);
-                _scene.add( _plane );
+	                _plane = new THREE.Mesh( planeGeometry, newMaterial );
+	                _plane.position.set(0,0,-1);
+	                _plane.rotateX(-Math.PI/2);
+	                _plane.rotateZ(Math.PI/2);
+	                _scene.add( _plane );
 
-                _renderer.setSize( window.innerWidth, window.innerHeight );
+	                _renderer.setSize( window.innerWidth, window.innerHeight );
 
-                document.getElementById( 'container' ).innerHTML = "";
-                _container.appendChild( _renderer.domElement );
-                animate();
+	                document.getElementById( 'container' ).innerHTML = "";
+	                _container.appendChild( _renderer.domElement );
+	                animate();
+				});
+
 			}
 
 			function animate() {
