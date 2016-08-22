@@ -96,13 +96,15 @@
 				 float z;
 
 				vec2 uv = vUv;
+				uv.x = clamp(uv.x,0.001,.999);
 
 				// ---------
 			    // convert from uv to polar coords
 			    vec2 tempuv = uv;
+				// vec2 tempuv = uv * 0.9999 + 0.00005;
 				theta = (1.0-tempuv[1]) * PI;
-				//phi = PI * 2.0 * tempuv[0];
-				phi = PI * 2.0 * tempuv[0] *0.9999999;
+				phi = PI * 2.0 * tempuv[0];
+
 				// convert polar to cartesian. Theta is polar, phi is azimuth.
 				x = sin(theta)*cos(phi);
 				y = sin(theta)*sin(phi);
@@ -130,20 +132,12 @@
 				phi = atan2(y, x);
 				// phi = phi + 2.0 * PI * 1./32.;
 				// phi = phi *32./31.;
-				if (phi < 0.0) {
+				if (phi <= 0.0) {
 					phi = phi + PI*2.0;	
 				}
-				if (phi > (2.0 * PI)) {	// allow 2PI since we gen uv over [0,1]
+				if (phi >= (2.0 * PI)) {	// allow 2PI since we gen uv over [0,1]
 					phi = phi - 2.0 * PI;
 				}
-				// if (phi > 2.0 * PI * 31./32.)
-				// 	phi = 2.0 * PI;
-				// if (phi == (2.0 * PI)) {
-				// 	phi = 0.0;
-				// }
-				// phi = phi *  32./31.;
-				if (phi > .999 * PI*2.0)
-					phi = PI * 2.0;
 				theta = acos(z);
 
 				// now get uv in new chart.
@@ -152,8 +146,6 @@
 				vec2 newuv = vec2(newu, newv);
 			    vec4 tex1 = texture2D( iChannel0,  newuv);
 				gl_FragColor = tex1;
-	
-
 			}
 
 		</script>
@@ -177,17 +169,17 @@
 
                 _scene = new THREE.Scene();
                 _controls = new THREE.OrbitControls( _camera, _container.domElement );
-                _renderer =  new THREE.WebGLRenderer();
+                _renderer =  new THREE.WebGLRenderer({ antialias: true } );
 
-                _camera.position.x = 1.5; _camera.position.y = 2.0; _camera.position.z = 0;
+                _camera.position.x = 1.5; _camera.position.y = 0.0; _camera.position.z = 0;
                 var axes = new THREE.AxisHelper( 5000 );
                 _scene.add(axes);
-                var segment = 256.;
+                var segment = 32.;
 				var planeGeometry = new THREE.PlaneBufferGeometry( 2, 2, segment, segment );
 
                 var skyGeometry = new THREE.SphereGeometry(1,segment,segment);
                 var texture;
-                var pathToTexture = 'textures/uv.jpg';
+                var pathToTexture = 'textures/1.jpg';
 				var loader = new THREE.TextureLoader();
 				loader.load(pathToTexture, function ( texture ) {
 					_uniforms = {
@@ -195,7 +187,8 @@
 					    iChannel0:  { type: 't', 
 					    	value: texture },
 					};
-					// texture.magFilter = THREE.NearestFilter;
+					// texture.magFilter = THREE.LinearFilter;
+					texture.minFilter = THREE.LinearFilter;	// eliminates aliasing when tiling textures.
 					newMaterial = new THREE.ShaderMaterial( {
 						uniforms: _uniforms,
 						vertexShader: document.getElementById( 'vs' ).textContent,
@@ -205,15 +198,15 @@
 					} );
 	                // var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
 	                _skyBox = new THREE.Mesh( skyGeometry, newMaterial );
-	                _skyBox.position.set(0,0,1);
-	                // _skyBox.scale.set(-1,1,1);
+	                _skyBox.position.set(0,0,0);
+	                _skyBox.scale.set(-10,10,10);
 	                _scene.add( _skyBox );
 
 	                _plane = new THREE.Mesh( planeGeometry, newMaterial );
-	                _plane.position.set(0,0,-1);
+	                _plane.position.set(0,0,0);
 	                _plane.rotateX(-Math.PI/2);
 	                _plane.rotateZ(Math.PI/2);
-	                _scene.add( _plane );
+	                // _scene.add( _plane );
 
 	                _renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -229,7 +222,8 @@
 				_controls.update( clock.getDelta() );
 				_renderer.render( _scene, _camera );
                 _camera.lookAt(new THREE.Vector3(0,0,0));
-                //_skyBox.rotateY(0.002);
+                _skyBox.rotateY(0.002);
+                // _plane.rotateZ(0.002);
                 _uniforms.iGlobalTime.value = _uniforms.iGlobalTime.value  + .1;
 			}
 </script>
