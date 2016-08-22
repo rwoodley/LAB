@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-	<body>
-		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
-		<script src="r73/three.js"></script>
-        <script src="r73/OrbitControls.js"></script>
-		<script src="r73/Detector.js"></script>
-        <script src="utils.js"></script>
+	<head>
         <style>
 			body {
 				font-family: Monospace;
@@ -13,7 +8,22 @@
 				margin: 0px;
 				overflow: hidden;
 			}
+            .pselector { border: 2px solid; border-color: #00ff00; margin: 5px; padding: 5px; color: #00ff00; }
 		</style>
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+          ga('create', 'UA-41066114-1', 'rwoodley.org');
+          ga('send', 'pageview');
+        
+        </script>
+		<script src="r73/three.js"></script>
+        <script src="r73/OrbitControls.js"></script>
+		<script src="r73/Detector.js"></script>
+        <script src="utils.js"></script>
 		<script id="vs" type="x-shader/x-vertex">
 			varying vec2 vUv; 
 			void main()
@@ -26,12 +36,8 @@
 
 		<script id="fs" type="x-shader/x-fragment">
 			#define PI 3.1415926535897932384626433832795
-
-
 			uniform sampler2D iChannel0;
-			
 			varying vec2 vUv;  
-
 			#define cx_product(a, b) vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x)
 			#define cx_conjugate(a) vec2(a.x,-a.y)
 			#define cx_divide(a, b) vec2(((a.x*b.x+a.y*b.y)/(b.x*b.x+b.y*b.y)),((a.y*b.x-a.x*b.y)/(b.x*b.x+b.y*b.y)))
@@ -115,10 +121,10 @@
 				// convert riemann sphere to complex plane (X+Yi)
 				// http://math.stackexchange.com/questions/1219406/how-do-i-convert-a-complex-number-to-a-point-on-the-riemann-sphere
 				vec2 a = vec2(x/(1.0-z), y/(1.0-z));
-				// vec2 c = applyMobiusTransformation(a);
+				vec2 c = applyMobiusTransformation(a);
 				// vec2 c = cx_divide(1.+a,1.-a);
 				// c = cx_exp(c);
-				vec2 c = cx_product(a,a);
+				// vec2 c = cx_product(a,a);
 				// vec2 c = a;
 
 				// // // // now c back to sphere.
@@ -160,7 +166,6 @@
 			}
 
 			var clock = new THREE.Clock();
-			init();
 
 			function init() {
                 _container = document.getElementById( 'container' );
@@ -178,16 +183,47 @@
 				var planeGeometry = new THREE.PlaneBufferGeometry( 2, 2, segment, segment );
 
                 var skyGeometry = new THREE.SphereGeometry(1,segment,segment);
-                var texture;
-                var pathToTexture = 'textures/1.jpg';
-				var loader = new THREE.TextureLoader();
-				loader.load(pathToTexture, function ( texture ) {
-					_uniforms = {
-					    iGlobalTime:    { type: 'f', value: 0.1 },
-					    iChannel0:  { type: 't', 
-					    	value: texture },
-					};
-					// texture.magFilter = THREE.LinearFilter;
+
+				var newMaterial = new THREE.MeshNormalMaterial();
+                _skyBox = new THREE.Mesh( skyGeometry, newMaterial);
+                _skyBox.position.set(0,0,0);
+                _skyBox.scale.set(-10,10,10);
+                _scene.add( _skyBox );
+
+                _plane = new THREE.Mesh( planeGeometry, newMaterial );
+                _plane.position.set(0,0,0);
+                _plane.rotateX(-Math.PI/2);
+                _plane.rotateZ(Math.PI/2);
+                // _scene.add( _plane );
+
+                _renderer.setSize( window.innerWidth, window.innerHeight );
+
+                document.getElementById( 'container' ).innerHTML = "";
+                _container.appendChild( _renderer.domElement );
+				_uniforms = {
+				    iGlobalTime:    { type: 'f', value: 0.1 },
+				};
+                animate();
+                updateSkyDome(1);
+			}
+
+			function animate() {
+				requestAnimationFrame( animate );
+				_controls.update( clock.getDelta() );
+				_renderer.render( _scene, _camera );
+                _camera.lookAt(new THREE.Vector3(0,0,0));
+                // _skyBox.rotateY(0.002);
+                // _plane.rotateZ(0.002);
+                _uniforms.iGlobalTime.value = _uniforms.iGlobalTime.value  + .1;
+
+                _textElement = document.getElementById('text1');
+                _textElement.innerHTML = "<nobr>Camera: (" + Math.floor(_camera.position.x) + "," + Math.floor(_camera.position.y) + ","  + Math.floor(_camera.position.z) + ")</nobr>" ;
+
+			}
+            function updateSkyDome(pid) {
+                var pathToTexture = 'textures/' + pid + '.jpg';
+				(new THREE.TextureLoader()).load(pathToTexture, function ( texture ) {
+					_uniforms.iChannel0 =  { type: 't', value: texture }; 
 					texture.minFilter = THREE.LinearFilter;	// eliminates aliasing when tiling textures.
 					newMaterial = new THREE.ShaderMaterial( {
 						uniforms: _uniforms,
@@ -196,36 +232,34 @@
 						side: THREE.DoubleSide,
 						// wireframe: true
 					} );
-	                // var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
-	                _skyBox = new THREE.Mesh( skyGeometry, newMaterial );
-	                _skyBox.position.set(0,0,0);
-	                _skyBox.scale.set(-10,10,10);
-	                _scene.add( _skyBox );
 
-	                _plane = new THREE.Mesh( planeGeometry, newMaterial );
-	                _plane.position.set(0,0,0);
-	                _plane.rotateX(-Math.PI/2);
-	                _plane.rotateZ(Math.PI/2);
-	                // _scene.add( _plane );
+					_skyBox.material = newMaterial;
+					_plane.material = newMaterial; 
 
-	                _renderer.setSize( window.innerWidth, window.innerHeight );
-
-	                document.getElementById( 'container' ).innerHTML = "";
-	                _container.appendChild( _renderer.domElement );
-	                animate();
 				});
-
-			}
-
-			function animate() {
-				requestAnimationFrame( animate );
-				_controls.update( clock.getDelta() );
-				_renderer.render( _scene, _camera );
-                _camera.lookAt(new THREE.Vector3(0,0,0));
-                _skyBox.rotateY(0.002);
-                // _plane.rotateZ(0.002);
-                _uniforms.iGlobalTime.value = _uniforms.iGlobalTime.value  + .1;
-			}
+            }
 </script>
+	</head>
+	<body>
+		<div id="container"><br /><br /><br /><br /><br />Generating...</div>
+        <div style="position: fixed; top: 3%; width:95%; ">
+            <div style="float: left; ">
+                <!-- for pinterest -->
+                <img src='snap.png' width='1px' height='1px' />
+                <!-- end of pinterest hack -->
+                &nbsp;&nbsp;
+                <span onclick='updateSkyDome(1)' class='pselector'>1</span>
+                <span onclick='updateSkyDome(2)' class='pselector'>2</span>
+                <span onclick='updateSkyDome(3)' class='pselector'>3</span>
+                <span onclick='updateSkyDome(4)' class='pselector'>4</span>
+                <span onclick='updateSkyDome(5)' class='pselector'>5</span>
+            </div>
+            <div style="float: right; ">
+                 <span id='text1' style="display:inline-block;height:30px;width:100px;color:#00ff00;"></span>
+            </div>
+        </div>
+        <script>
+			init();
+        </script>
 	</body>
 </html>
