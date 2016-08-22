@@ -180,21 +180,22 @@
                 var axes = new THREE.AxisHelper( 5000 );
                 _scene.add(axes);
                 var segment = 32.;
-				var planeGeometry = new THREE.PlaneBufferGeometry( 2, 2, segment, segment );
+                var sphereRadius = 5;
+				var planeGeometry = new THREE.PlaneBufferGeometry( sphereRadius*2, sphereRadius*2, segment, segment );
 
-                var skyGeometry = new THREE.SphereGeometry(1,segment,segment);
+                var skyGeometry = new THREE.SphereGeometry(sphereRadius,segment,segment);
 
 				var newMaterial = new THREE.MeshNormalMaterial();
                 _skyBox = new THREE.Mesh( skyGeometry, newMaterial);
                 _skyBox.position.set(0,0,0);
-                _skyBox.scale.set(-10,10,10);
+                // _skyBox.scale.set(-10,10,10);
                 _scene.add( _skyBox );
 
                 _plane = new THREE.Mesh( planeGeometry, newMaterial );
                 _plane.position.set(0,0,0);
-                _plane.rotateX(-Math.PI/2);
-                _plane.rotateZ(Math.PI/2);
-                // _scene.add( _plane );
+                _plane.rotateY(Math.PI/2);
+                _scene.add( _plane );
+                _plane.visible = false;
 
                 _renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -238,6 +239,16 @@
 
 				});
             }
+            function toggleView() {
+            	if (_skyBox.visible) {
+            		_skyBox.visible = false;
+            		_plane.visible = true;
+            	}
+            	else {
+            		_skyBox.visible = true;
+            		_plane.visible = false;            		
+            	}
+            }
 </script>
 	</head>
 	<body>
@@ -255,7 +266,8 @@
                 <span onclick='updateSkyDome(5)' class='pselector'>5</span>
             </div>
             <div style="float: right; ">
-                 <span id='text1' style="display:inline-block;height:30px;width:100px;color:#00ff00;"></span>
+                 <div id='text1' style="display:inline-block;height:30px;width:100px;color:#00ff00;"></div>
+                <div onclick='toggleView()' class='pselector'>Toggle View</div>
             </div>
         </div>
         <script>
