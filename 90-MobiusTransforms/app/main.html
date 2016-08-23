@@ -82,7 +82,7 @@
 			uniform float iGlobalTime;
 
 			vec2 applyMobiusTransformation(in vec2 z) {
-				float fac = tan(iGlobalTime/10.);
+				float fac = 0.0 ; // tan(iGlobalTime/10.);
 				vec2 a = vec2(1.0, 0.0);
 				vec2 b = vec2(fac, fac);
 				vec2 top = cx_product(z,a)+b;
@@ -93,6 +93,17 @@
 				bottom.y = bottom.y + d.y;
 				return cx_divide(top,bottom);
 				// return bottom;
+			}
+			vec2 transformForFixedPoints(in vec2 z, in vec2 e1, in vec2 e2) {
+				vec2 top = z-e1;
+				vec2 bottom = z-e2;
+				return cx_divide(top,bottom);
+				return bottom;
+			}
+			vec2 applyRotation(in vec2 z, in float radians) {
+				vec2 exp = cx_exp(vec2(0.,radians));
+				vec2 ans = cx_product(z, exp);
+				return ans;
 			}
 			void main() {
 				 float theta;
@@ -121,7 +132,9 @@
 				// convert riemann sphere to complex plane (X+Yi)
 				// http://math.stackexchange.com/questions/1219406/how-do-i-convert-a-complex-number-to-a-point-on-the-riemann-sphere
 				vec2 a = vec2(x/(1.0-z), y/(1.0-z));
-				vec2 c = applyMobiusTransformation(a);
+				vec2 b = transformForFixedPoints(a, vec2(1.,0), vec2(-1.,0));
+				vec2 c = applyRotation(b,iGlobalTime/10.);
+				// vec2 c = applyMobiusTransformation(a);
 				// vec2 c = cx_divide(1.+a,1.-a);
 				// c = cx_exp(c);
 				// vec2 c = cx_product(a,a);
@@ -180,22 +193,22 @@
                 var axes = new THREE.AxisHelper( 5000 );
                 _scene.add(axes);
                 var segment = 32.;
-                var sphereRadius = 5;
+                var sphereRadius = 1;
 				var planeGeometry = new THREE.PlaneBufferGeometry( sphereRadius*2, sphereRadius*2, segment, segment );
 
                 var skyGeometry = new THREE.SphereGeometry(sphereRadius,segment,segment);
 
 				var newMaterial = new THREE.MeshNormalMaterial();
                 _skyBox = new THREE.Mesh( skyGeometry, newMaterial);
-                _skyBox.position.set(0,0,0);
+                _skyBox.position.set(0,0,-1);
                 // _skyBox.scale.set(-10,10,10);
                 _scene.add( _skyBox );
 
                 _plane = new THREE.Mesh( planeGeometry, newMaterial );
-                _plane.position.set(0,0,0);
+                _plane.position.set(0,0,1);
                 _plane.rotateY(Math.PI/2);
                 _scene.add( _plane );
-                _plane.visible = false;
+                _plane.visible = true;
 
                 _renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -205,7 +218,7 @@
 				    iGlobalTime:    { type: 'f', value: 0.1 },
 				};
                 animate();
-                updateSkyDome(1);
+                updateSkyDome('uv');
 			}
 
 			function animate() {
@@ -264,6 +277,9 @@
                 <span onclick='updateSkyDome(3)' class='pselector'>3</span>
                 <span onclick='updateSkyDome(4)' class='pselector'>4</span>
                 <span onclick='updateSkyDome(5)' class='pselector'>5</span>
+                <span onclick='updateSkyDome(6)' class='pselector'>6</span>
+                <span onclick='updateSkyDome(7)' class='pselector'>7</span>
+                <span onclick='updateSkyDome("uv")' class='pselector'>uv</span>
             </div>
             <div style="float: right; ">
                  <div id='text1' style="display:inline-block;height:30px;width:100px;color:#00ff00;"></div>
