@@ -79,17 +79,19 @@
 			    if (ipart > PI) ipart=ipart-(2.0*PI);
 			    return vec2(log(rpart),ipart);
 			}
-			// from: https://github.com/Syntopia/Fragmentarium/blob/master/Fragmentarium-Source/Examples/Include/Complex.frag
 			vec2 cx_exp(vec2 z) {
 				return vec2(exp(z.x) * cos(z.y), exp(z.x) * sin(z.y));
 			}
 
 
 			uniform float iGlobalTime;
+			uniform float zoomFactor;
 			uniform float e1x;
 			uniform float e1y;
 			uniform float e2x;
 			uniform float e2y;
+			uniform int iMode;		// 0=nothing,1=rotate,2=zoom
+			uniform bool showFixedPoints;
 			vec2 one = vec2(1.0, 0.0);
 			vec2 zero = vec2(0.0, 0.0);
 
@@ -103,9 +105,6 @@
 				return applyMobiusTransformation(z,d,-b,-c,a);
 			}
 			vec2 transformForFixedPoints(in vec2 z, in vec2 e1, in vec2 e2) {
-				// vec2 top = z-e1;
-				// vec2 bottom = z-e2;
-				// return cx_divide(top,bottom);
 				return applyMobiusTransformation(z,one,-e1,one,-e2);
 			}
 			vec2 inverseTransformForFixedPoints(in vec2 z, in vec2 e1, in vec2 e2) {
@@ -117,8 +116,6 @@
 				vec2 exp = vec2(cos(radians), sin(radians));
 				vec2 ans = cx_product(z, exp);
 				return ans;
-				// vec2 ans = cx_product(vec2(8.0,0),z);
-				// return ans;
 			}
 			vec2 zoom(in vec2 z, in float factor) {
 				vec2 ans = cx_product(vec2(factor,0),z);
@@ -146,43 +143,52 @@
 				y = sin(theta)*sin(phi);
 				z = cos(theta);
 
-				// convert riemann sphere to complex plane (X+Yi)
+				// x,y,z are on the unit sphere.
+				// if we pretend that sphere is a riemann sphere, then we
+				// can get the corresponding complex point, a.
 				// http://math.stackexchange.com/questions/1219406/how-do-i-convert-a-complex-number-to-a-point-on-the-riemann-sphere
+
 				vec2 a = vec2(x/(1.0-z), y/(1.0-z));
-				vec2 c;
+
+				vec2 result;
 				if (e1x == e2x && e1y == e2y) {
-					c = a;
+					result = a;	// if no fixed points, do nothing.
 				}
 				else {
 					vec2 e1 = vec2(e1x,e1y);
 					vec2 e2 = vec2(e2x,e2y);
-					// c = a;
-					// if (distance(a, e1) < .3) {
-					// 	gl_FragColor = vec4(1.,0.,0.,1.);
-					// 	return;
-					// }
-					// if (distance(a, e2) < .3) {
-					// 	gl_FragColor = vec4(0.,1.,0.,1.);
-					// 	return;
-					// }
-					vec2 b = transformForFixedPoints(a, e1, e2);
-					vec2 d = applyRotation(b,iGlobalTime/10.);
-					c = inverseTransformForFixedPoints(d, e1, e2);
-					// c = applyRotation(a,iGlobalTime/10.);
+					if (showFixedPoints) {
+						if (distance(a, e1) < .3) {
+							gl_FragColor = vec4(1.,0.,0.,1.);
+							return;
+						}
+						if (distance(a, e2) < .3) {
+							gl_FragColor = vec4(0.,1.,0.,1.);
+							return;
+						}						
+					}
 
-					// c = zoom(a,iGlobalTime*10.);
+					if (iMode == 0) {
+						result = a;
+					}
+					else {
+						vec2 b = transformForFixedPoints(a, e1, e2);
+						vec2 c;
+						if (iMode == 1) {	// rotate
+							c = applyRotation(b,iGlobalTime/10.);
+						}
+						if (iMode == 2) {
+							c = zoom(b, zoomFactor);
+						}
+						result = inverseTransformForFixedPoints(c, e1, e2);
+					}
 				}
-				// vec2 c = applyMobiusTransformation(a);
-				// vec2 c = cx_divide(1.+a,1.-a);
-				// c = cx_exp(c);
-				// vec2 c = cx_product(a,a);
-				// vec2 c = a;
 
 				// // // // now c back to sphere.
-				float denom = 1.0 + c.x*c.x + c.y *c.y;
-				x = 2.0 * c.x/denom;
-				y = 2.0 * c.y/denom;
-				z = (c.x*c.x + c.y*c.y - 1.0)/denom;
+				float denom = 1.0 + result.x*result.x + result.y *result.y;
+				x = 2.0 * result.x/denom;
+				y = 2.0 * result.y/denom;
+				z = (result.x*result.x + result.y*result.y - 1.0)/denom;
 
 				// convert to polar
 				// problem: the phi above is [0,2*PI]. this phi is [0,2*PI)
@@ -251,6 +257,9 @@
                 _container.appendChild( _renderer.domElement );
 				_uniforms = {
 				    iGlobalTime:    { type: 'f', value: 0.0 },
+				    iMode: { type: 'i', value: 0 },
+				    showFixedPoints: { type: 'i', value: 1 },
+				    zoomFactor: { type: 'f', value: 0.0 },
 				    e1x: { type: 'f', value: 0. },
 				    e1y: { type: 'f', value: 0. },
 				    e2x: { type: 'f', value: 0. },
@@ -267,7 +276,6 @@
                 _camera.lookAt(new THREE.Vector3(0,0,0));
                 // _skyBox.rotateY(0.002);
                 // _plane.rotateZ(0.002);
-                // _uniforms.iGlobalTime.value = _uniforms.iGlobalTime.value  + .1*_rotateDirection;
                 _uniforms.iGlobalTime.value = _uniforms.iGlobalTime.value  + .1*_rotateDirection;
 
                 updateVariousNumbersForCamera();
@@ -315,7 +323,15 @@
             }
             var _rotateDirection = 0;
             function rotate(direction) {
+            	_uniforms.iMode.value = 1;
             	_rotateDirection += direction;
+            }
+            var _currentZoom = 1;
+            function zoom(factor) {
+            	_uniforms.iMode.value = 2;
+            	_currentZoom *= factor;
+            	_uniforms.zoomFactor.value = _currentZoom;
+            	console.log(_currentZoom);
             }
             function antipode(inx,iny) {
             	// -(1/conj(x,y))
@@ -400,6 +416,9 @@
                 <div onclick='toggleView()' class='pselector'>Toggle View</div>
                 <div onclick='rotate(-1)' class='pselector'>Rotate Left</div>
                 <div onclick='rotate(1)' class='pselector'>Rotate Right</div>
+                <div onclick='zoom(.5)' class='pselector'>Zoom In</div>
+                <div onclick='zoom(2)' class='pselector'>Zoom Out</div>
+                <div onclick='zoom(-1)' class='pselector'>Zoom Negative</div>
                 <div onclick='setFixedPoints()' class='pselector'>Set Fixed Point</div>
                 <div onclick='flipCamera()' class='pselector'>Flip Camera</div>
             </div>
