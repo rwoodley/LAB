@@ -15,7 +15,30 @@
 				padding: 5px;
 				background-color: black;
 			}
-            .pselector { border: 2px solid; border-color: #00ff00; margin: 5px; padding: 5px; color: #00ff00; }
+            .divpselector { 
+            	border: 2px solid; 
+            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+            	background-color: rgba(88,88,255,.5);
+            	width: 40px;
+            	height: 40px;
+            	display: inline-block;
+            	vertical-align: middle;
+            }
+            .pselector { 
+            	border: 2px solid; 
+            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+            	background-color: rgba(88,88,255,.5);
+            	width: 40px;
+            	display: inline-block;
+            	vertical-align: middle;
+            }
+            .pselectorText > span {
+            	font-size: 14pt;
+			    vertical-align: top;
+            }
+            .mainDashboard {
+				/*position: relative;*/
+            }
 		</style>
         <script>
           (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -30,7 +53,9 @@
 		<script src="r73/three.js"></script>
         <script src="r73/OrbitControls.js"></script>
 		<script src="r73/Detector.js"></script>
-        <script src="utils.js"></script>
+ 		<script src="r73/stats.min.js"></script>
+		<script src="lib/jquery-3.1.0.min.js"></script>
+		<script src="utils.js"></script>
 		<script id="vs" type="x-shader/x-vertex">
 			varying vec2 vUv; 
 			void main()
@@ -57,13 +82,13 @@
 			// http://stackoverflow.com/questions/26070410/robust-atany-x-on-glsl-for-converting-xy-coordinate-to-angle
 			// swaps params when |x| <= |y|
 			float atan2(in float y, in float x) {
-				float res = atan(y,x);
-				return res;
-			    // // bool s = (abs(x) >= abs(y));
+				// float res = atan(y,x);
+				// return res;
+			    bool s = (abs(x) >= abs(y));
 			    // bool s = abs(y) > 1./32.;
-			    // // float res = mix(PI/2.0 - atan(x,y), atan(y,x), s);
+			    float res = mix(PI/2.0 - atan(x,y), atan(y,x), s);
 			    // float res = mix(0.0,atan(y,x), s);
-			    // return res;
+			    return res;
 			}
 			// https://github.com/julesb/glsl-util/blob/master/complexvisual.glsl
 			vec2 cx_sqrt(vec2 a) {
@@ -90,7 +115,7 @@
 			uniform float e1y;
 			uniform float e2x;
 			uniform float e2y;
-			uniform int iMode;		// 0=nothing,1=rotate,2=zoom
+			uniform int effectsOnOff;		// 0=nothing,1=rotate,2=zoom
 			uniform bool showFixedPoints;
 			vec2 one = vec2(1.0, 0.0);
 			vec2 zero = vec2(0.0, 0.0);
@@ -120,6 +145,34 @@
 			vec2 zoom(in vec2 z, in float factor) {
 				vec2 ans = cx_product(vec2(factor,0),z);
 				return ans;
+			}
+			vec2 weirdExpTransform(vec2 z) {
+				// vec2 n = one + z;
+				// vec2 d = one - z;
+				// vec2 f = cx_divide(n,d);
+				// vec2 res = -1. * cx_exp(-4.*f);
+				vec2 res = cx_exp(z);
+				return res;
+			}
+			vec2 anotherTransform(vec2 z) {
+				vec2 i = vec2(0., 1.);
+				vec2 n = z-i;
+				vec2 d = z+i;
+				vec2 f = cx_divide(n,d);
+				vec2 res = 1. * cx_exp(4.*f);
+				return res;
+				// vec2 i = vec2(1., 0.);
+				// vec2 n = 1.+z;
+				// vec2 d = 1.-z;
+				// vec2 f = cx_divide(n,d);
+				// return f;
+			}
+			vec3 complexToCartesian(vec2 c) {
+				float denom = 1.0 + c.x*c.x + c.y*c.y;
+				float x = 2.*c.x/denom;
+				float y = 2.*c.y/denom;
+				float z = (c.x*c.x + c.y*c.y - 1.0)/denom;
+				return vec3(x,y,z);
 			}
 			void main() {
 				 float theta;
@@ -158,29 +211,31 @@
 					vec2 e1 = vec2(e1x,e1y);
 					vec2 e2 = vec2(e2x,e2y);
 					if (showFixedPoints) {
-						if (distance(a, e1) < .3) {
+						vec3 e1InCartesian = complexToCartesian(e1);
+						vec3 e2InCartesian = complexToCartesian(e2);
+						vec3 aInCartesian = complexToCartesian(a);
+
+						if (distance(aInCartesian, e1InCartesian) < .05) {
 							gl_FragColor = vec4(1.,0.,0.,1.);
 							return;
 						}
-						if (distance(a, e2) < .3) {
+						if (distance(aInCartesian, e2InCartesian) < .05) {
 							gl_FragColor = vec4(0.,1.,0.,1.);
 							return;
 						}						
 					}
 
-					if (iMode == 0) {
+					if (effectsOnOff == 0) {
 						result = a;
 					}
 					else {
 						vec2 b = transformForFixedPoints(a, e1, e2);
 						vec2 c;
-						if (iMode == 1) {	// rotate
-							c = applyRotation(b,iGlobalTime/10.);
-						}
-						if (iMode == 2) {
-							c = zoom(b, zoomFactor);
-						}
+						vec2 b1 = applyRotation(b,iGlobalTime/10.);
+						c = zoom(b1, zoomFactor);
 						result = inverseTransformForFixedPoints(c, e1, e2);
+						// result = cx_product(result, result);
+						//result = anotherTransform(result);
 					}
 				}
 
@@ -193,8 +248,6 @@
 				// convert to polar
 				// problem: the phi above is [0,2*PI]. this phi is [0,2*PI)
 				phi = atan2(y, x);
-				// phi = phi + 2.0 * PI * 1./32.;
-				// phi = phi *32./31.;
 				if (phi <= 0.0) {
 					phi = phi + PI*2.0;	
 				}
@@ -214,8 +267,8 @@
 		</script>
 		<script>
 			var _container;
-			var _camera, _controls, _scene, _renderer, _uniforms;
-			var myMesh, _rotateSpeed = Math.PI/1024;
+			var _camera, _controls, _scene, _renderer, _uniforms, _stats, _axes;
+			var myMesh, _rotateSpeed = Math.PI/1024, _controlPanelVisible = true;
 
 			if ( ! Detector.webgl ) {
 				Detector.addGetWebGLMessage();
@@ -223,8 +276,22 @@
 			}
 
 			var clock = new THREE.Clock();
-
+			function toggleControlPanel() {
+		    	_controlPanelVisible = !_controlPanelVisible;
+		    	if (_controlPanelVisible) {
+					$('.controlPanel').hide();
+					_axes.visible = false;
+				}
+	    		else {
+					$('.controlPanel').show();
+					_axes.visible = true;
+				}
+			}
 			function init() {
+				document.body.onkeyup = function(e){
+				    if(e.keyCode == 32)
+				    	toggleControlPanel();
+				}
                 _container = document.getElementById( 'container' );
 
                 _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
@@ -234,9 +301,10 @@
                 _renderer =  new THREE.WebGLRenderer({ antialias: true } );
 
                 _camera.position.x = -3; _camera.position.y = 0.0; _camera.position.z = 0;
-                var axes = new THREE.AxisHelper( 5000 );
-                _scene.add(axes);
-                var segment = 32.;
+                _axes = new THREE.AxisHelper( 5000 );
+                _scene.add(_axes);
+				toggleControlPanel();
+                var segment = 256.;
                 var sphereRadius = 1;
 				var planeGeometry = new THREE.PlaneBufferGeometry( sphereRadius*2, sphereRadius*2, segment, segment );
 
@@ -257,14 +325,19 @@
                 _container.appendChild( _renderer.domElement );
 				_uniforms = {
 				    iGlobalTime:    { type: 'f', value: 0.0 },
-				    iMode: { type: 'i', value: 0 },
+				    effectsOnOff: { type: 'i', value: 0 },
 				    showFixedPoints: { type: 'i', value: 1 },
-				    zoomFactor: { type: 'f', value: 0.0 },
+				    zoomFactor: { type: 'f', value: 1.0 },
 				    e1x: { type: 'f', value: 0. },
 				    e1y: { type: 'f', value: 0. },
 				    e2x: { type: 'f', value: 0. },
 				    e2y: { type: 'f', value: 0. },
 				};
+				_stats = new Stats();
+				_stats.domElement.style.position = 'absolute';
+				_stats.domElement.style.bottom = '0px';
+				_stats.domElement.style.zIndex = 100;
+				document.body.appendChild( _stats.domElement );    
                 animate();
                 updateSkyDome('uv');
 			}
@@ -277,8 +350,9 @@
                 // _skyBox.rotateY(0.002);
                 // _plane.rotateZ(0.002);
                 _uniforms.iGlobalTime.value = _uniforms.iGlobalTime.value  + .1*_rotateDirection;
-
+                //console.log(_uniforms.iGlobalTime.value + "," + _uniforms.zoomFactor.value)
                 updateVariousNumbersForCamera();
+                _stats.update();
 			}
             function updateSkyDome(pid) {
                 var pathToTexture = 'textures/' + pid + '.jpg';
@@ -300,18 +374,25 @@
             }
             function toggleView() {
             	if (!_plane.visible) {
-            		sphereAndPlaneView();
+            		planeOnlyView();
             	}
             	else {
             		sphereOnlyView();
             	}
             }
             function sphereOnlyView() {
-	                _skyBox.geometry.radius = 10;
-	                _skyBox.position.set(0,0,0);
-            		_plane.visible = false;
-            		_plane.scale.set(10,10,10);
-            		_skyBox.scale.set(10,10,10);
+            	_skyBox.visible = true;
+                _skyBox.geometry.radius = 10;
+                _skyBox.position.set(0,0,0);
+        		_plane.visible = false;
+        		_plane.scale.set(10,10,10);
+        		_skyBox.scale.set(10,10,10);
+            }
+            function planeOnlyView() {
+            	_skyBox.visible = false;
+                _plane.position.set(0,0,0);
+        		_plane.visible = true;
+        		_plane.scale.set(1,1,1);
             }
             function sphereAndPlaneView() {
 	                _skyBox.geometry.radius = 1;
@@ -323,12 +404,23 @@
             }
             var _rotateDirection = 0;
             function rotate(direction) {
-            	_uniforms.iMode.value = 1;
-            	_rotateDirection += direction;
+				setFixedPointsIfUndefined();
+            	_uniforms.effectsOnOff.value = 1;
+            	if (direction == 0) {
+            		_rotateDirection = 0;
+            	}
+            	else {
+	            	_rotateDirection += direction;
+            	}
+            }
+            function rotationOff() {
+            		_rotateDirection = 0;
+	            	_uniforms.iGlobalTime.value = 0;
             }
             var _currentZoom = 1;
             function zoom(factor) {
-            	_uniforms.iMode.value = 2;
+				setFixedPointsIfUndefined();
+            	_uniforms.effectsOnOff.value = 1;
             	_currentZoom *= factor;
             	_uniforms.zoomFactor.value = _currentZoom;
             	console.log(_currentZoom);
@@ -343,59 +435,98 @@
             		y: y/denom
             	}
             }
-            function setFixedPoints() {
-            	var x = _fixedPointX;
-            	var y = _fixedPointY;
-            	_uniforms.e1x.value = x;
-            	_uniforms.e1y.value = y;
-            	var ant = antipode(x,y);
-            	_uniforms.e2x.value = ant.x;
-            	_uniforms.e2y.value = ant.y;
-            	// _uniforms.e2x.value = -x;
-            	// _uniforms.e2y.value = -y;
-            	console.log("P1 = " + x + "," + y);
-            	console.log("P2 = " + ant.x + "," + ant.y);
+            var _point1Defined = false;
+            var _point2Defined = false;
+            function setFixedPointsIfUndefined() {
+            	if (!_point1Defined && !_point2Defined) {
+            		setFixedPoint(1);
+            	}
+            }
+            function setFixedPoint(pointNumber) {
+            	_uniforms.effectsOnOff.value = 1;
+            	var x = _cameraLookAtComplexX;
+            	var y = _cameraLookAtComplexY;
+            	if (pointNumber == 1) {
+	            	_uniforms.e1x.value = x;
+	            	_uniforms.e1y.value = y;
+	            	_point1Defined = true;
+	            	if (!_point2Defined) {
+		            	var ant = antipode(x,y);
+		            	_uniforms.e2x.value = ant.x;
+		            	_uniforms.e2y.value = ant.y;	            		
+	            	}
+	            }
+	            else {
+	            	_uniforms.e2x.value = x;
+	            	_uniforms.e2y.value = y;	            	
+	            	_point2Defined = true;
+	            	if (!_point1Defined) {
+		            	var ant = antipode(x,y);
+		            	_uniforms.e1x.value = ant.x;
+		            	_uniforms.e1y.value = ant.y;	            		
+	            	}
+	            }
+            	console.log("P1 = " + _uniforms.e1x.value + "," + _uniforms.e1y.value);
+            	console.log("P2 = " + _uniforms.e2x.value+ "," + _uniforms.e2x.value);
             }
             var _unitVector;
             var _fixedPointX, _fixedPointY;
             function updateVariousNumbersForCamera() {
             	_unitVector = (new THREE.Vector3()).copy(_camera.position).normalize();
-                document.getElementById('unitVectorText').innerHTML = 
-                "<nobr>Unit Vec: (" + 
-                	_unitVector.x.toFixed(1) + "," + 
-                	_unitVector.z.toFixed(1) + "," + 
-                	_unitVector.y.toFixed(1) + ") len: " 
-					+ _unitVector.length().toFixed(1) + "</nobr>" ;   
-
 				// in three.js y is up. we want z to be up.
+				// flip the signs on x and z because we're inside the sphere. i think?
 				var x = -_unitVector.x;
-				var y = _unitVector.z;
-				var z = -_unitVector.y;
+				var y = _unitVector.z;	// assign z to y.
+				var z = -_unitVector.y;	// assign y to z.
 
             	// convert to point on complex plane
-            	_fixedPointX = - x / (1.0 - z);
-            	_fixedPointY = - y / (1.0 - z);
-                document.getElementById('complexPointText').innerHTML = "Looking at " + 
-                	_fixedPointX.toFixed(2) + " + " + 
-                	_fixedPointY.toFixed(2) + "i";
+            	_cameraLookAtComplexX = - x / (1.0 - z);
+            	_cameraLookAtComplexY = - y / (1.0 - z);
 
-                _textElement = document.getElementById('cameraText');
-                _textElement.innerHTML = "<nobr>Camera: (" + _camera.position.x.toFixed(1) 
-                	+ "," + _camera.position.y.toFixed(1) + ","  
-                	+ _camera.position.z.toFixed(1) + ") len: " 
-					+ _camera.position.length().toFixed(1) + "</nobr>" ;
+            	try {
+	                document.getElementById('unitVectorText').innerHTML = 
+	                "<nobr>Unit Vec: (" + 
+	                	_unitVector.x.toFixed(1) + "," + 
+	                	_unitVector.z.toFixed(1) + "," + 
+	                	_unitVector.y.toFixed(1) + ") len: " 
+						+ _unitVector.length().toFixed(1) + "</nobr>" ;   
+
+	                document.getElementById('complexPointText').innerHTML = "Looking at " + 
+	                	_cameraLookAtComplexX.toFixed(2) + " + " + 
+	                	_cameraLookAtComplexY.toFixed(2) + "i";
+
+	                _textElement = document.getElementById('cameraText');
+	                _textElement.innerHTML = "<nobr>Camera: (" + _camera.position.x.toFixed(1) 
+	                	+ "," + _camera.position.y.toFixed(1) + ","  
+	                	+ _camera.position.z.toFixed(1) + ") len: " 
+						+ _camera.position.length().toFixed(1) + "</nobr>" ;
+				}
+				catch (x) {}
             }
             function flipCamera() {
             	_camera.position.x = - _camera.position.x;
             	_camera.position.y = - _camera.position.y;
             	_camera.position.z = - _camera.position.z;
             }
+            function reset() {
+            	_currentZoom = 1.0;
+            	_uniforms.zoomFactor.value = _currentZoom;
+            	_rotateDirection = 0;
+            	_uniforms.iGlobalTime.value = 0;
+            	_point1Defined = false;
+            	_point2Defined = false;
+            	_uniforms.effectsOnOff = 0;
+            	_uniforms.e1x.value = _uniforms.e1y.value = _uniforms.e2x.value = _uniforms.e2y.value = 0;
+            }
+            function toggleShowHideFixedPoints() {
+            	_uniforms.showFixedPoints.value = _uniforms.showFixedPoints.value == 0 ? 1 : 0;
+            }
 </script>
 	</head>
 	<body>
 		<div id="container"><br /><br /><br /><br /><br />Generating...</div>
         <div style="position: fixed; top: 3%; width:95%; ">
-            <div style="float: left; ">
+            <div style="float: left; "  class="controlPanel">
                 <!-- for pinterest -->
                 <img src='snap.png' width='1px' height='1px' />
                 <!-- end of pinterest hack -->
@@ -405,26 +536,49 @@
                 <span onclick='updateSkyDome(3)' class='pselector'>3</span>
                 <span onclick='updateSkyDome(4)' class='pselector'>4</span>
                 <span onclick='updateSkyDome(5)' class='pselector'>5</span>
-                <span onclick='updateSkyDome(6)' class='pselector'>6</span>
-                <span onclick='updateSkyDome(7)' class='pselector'>7</span>
+                <span onclick='updateSkyDome("mich")' class='pselector'>mich</span>
+                <span onclick='updateSkyDome("HLIE1245")' class='pselector'>New</span>
+                <span onclick='updateSkyDome("c1")' class='pselector'>Chi</span>
+                <span onclick='updateSkyDome("louis")' class='pselector'>Boy</span>
                 <span onclick='updateSkyDome("uv")' class='pselector'>uv</span>
             </div>
-            <div style="float: right; ">
-                 <div id='cameraText' class="statusText"></div>
-                 <div id='unitVectorText' class="statusText"></div>
-                 <div id='complexPointText' class="statusText"></div>
-                <div onclick='toggleView()' class='pselector'>Toggle View</div>
-                <div onclick='rotate(-1)' class='pselector'>Rotate Left</div>
-                <div onclick='rotate(1)' class='pselector'>Rotate Right</div>
+            <div style="float: right; " class="controlPanel mainDashboard">
+                 <!-- <div id='cameraText' class="statusText"></div> -->
+                 <!-- <div id='unitVectorText' class="statusText"></div> -->
+                 <!-- <div id='complexPointText' class="statusText"></div> -->
+                <img src='icons/rotateLeft.png' onclick='rotate(-1)' title="Rotate Left" class='pselector'></img>
+                <img src='icons/rotateRight.png' onclick='rotate(1)'  title="Rotate Right" class='pselector'></img>
+                <img src='icons/pause.png' onclick='rotate(0)'  title="Stop Rotation" class='pselector'></img>
+                <img src='icons/stop.png' onclick='rotationOff()'  title="No Rotation" class='pselector'></img>
+<!--                 <div onclick='rotate(1)' class='pselector'>Rotate Right</div>
+                <div onclick='rotate(0)' class='pselector'>Stop Rotating</div>
+                <div onclick='rotationOff()' class='pselector'>No Rotation</div>
                 <div onclick='zoom(.5)' class='pselector'>Zoom In</div>
                 <div onclick='zoom(2)' class='pselector'>Zoom Out</div>
                 <div onclick='zoom(-1)' class='pselector'>Zoom Negative</div>
-                <div onclick='setFixedPoints()' class='pselector'>Set Fixed Point</div>
-                <div onclick='flipCamera()' class='pselector'>Flip Camera</div>
+ -->
+                <img src='icons/zoomIn.png' onclick='zoom(.5)'  title="Zoom In" class='pselector'></img>
+                <img src='icons/zoomOut.png' onclick='zoom(2)'  title="Zoom Out" class='pselector'></img>
+                <img src='icons/cancel.png' onclick='zoom(2)'  title="Zoom Out" class='pselector'></img>
+                <span onclick='setFixedPoint(1)' class='divpselector'>
+<nobr><img src='icons/epsilon.png' onclick='toggleShowHideFixedPoints()'  title="Set Fixed Point 1" width="30px;"></img><span class='pselectorText'><span >+</span></nobr>
+            </span>
+            	</span>
+                <div onclick='setFixedPoint(2)' class='divpselector' >
+<nobr><img src='icons/epsilon.png' onclick='toggleShowHideFixedPoints()'  title="Set Fixed Point 2" width="30px;"></img><span class='pselectorText'><span >-</span></nobr>
+            </span>
+            	</div>
+
+                <img src='icons/debug.png' onclick='toggleShowHideFixedPoints()'  title="Show Fixed Points" class='pselector'></img>
+                <img src='icons/toggle.png' onclick='toggleView()'  title="Toggle View" class='pselector'></img>
+
+                <img src='icons/flipCamera.png' onclick='flipCamera()'  title="Flip Camera" class='pselector'></img>
+
+                <img src='icons/reset.png' onclick='reset()'  title="Reset" class='pselector'></img>
             </div>
         </div>
         <script>
-			init();
+		init();
         </script>
 	</body>
 </html>
