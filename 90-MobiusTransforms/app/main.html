@@ -24,6 +24,14 @@
             	display: inline-block;
             	vertical-align: middle;
             }
+            .tselector { 
+            	border: 2px solid; 
+            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+            	background-color: rgba(88,255,88,.5);
+            	width: 40px;
+            	display: inline-block;
+            	vertical-align: middle;
+            }
             .pselector { 
             	border: 2px solid; 
             	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
@@ -338,10 +346,12 @@
 				_stats.domElement.style.bottom = '0px';
 				_stats.domElement.style.zIndex = 100;
 				document.body.appendChild( _stats.domElement );    
+                // updateSkyDome('uv');
+                playVideo();
                 animate();
-                updateSkyDome('uv');
 			}
 
+			var _video, _videoTexture;
 			function animate() {
 				requestAnimationFrame( animate );
 				_controls.update( clock.getDelta() );
@@ -353,6 +363,31 @@
                 //console.log(_uniforms.iGlobalTime.value + "," + _uniforms.zoomFactor.value)
                 updateVariousNumbersForCamera();
                 _stats.update();
+				if ( _video.readyState === _video.HAVE_ENOUGH_DATA ) {
+				  if (_videoTexture) _videoTexture.needsUpdate = true;
+				}
+			}
+			function playVideo(pid) {
+				_video  = document.getElementById('video');
+				_videoTexture = new THREE.Texture(_video);
+				_videoTexture.minFilter = THREE.LinearFilter;
+				_videoTexture.magFilter = THREE.LinearFilter;
+				_videoTexture.generateMipmaps = false;
+
+				_uniforms.iChannel0 =  { type: 't', value: _videoTexture }; 
+				_videoTexture.minFilter = THREE.LinearFilter;	// eliminates aliasing when tiling textures.
+				newMaterial = new THREE.ShaderMaterial( {
+					uniforms: _uniforms,
+					vertexShader: document.getElementById( 'vs' ).textContent,
+					fragmentShader: document.getElementById( 'fs' ).textContent,
+					side: THREE.DoubleSide
+				});
+				var videoMaterial = new THREE.MeshBasicMaterial({
+				    map: _videoTexture,
+				    overdraw: true
+				});
+				_skyBox.material = newMaterial;
+				_plane.material = newMaterial; 
 			}
             function updateSkyDome(pid) {
                 var pathToTexture = 'textures/' + pid + '.jpg';
@@ -524,23 +559,29 @@
 </script>
 	</head>
 	<body>
+		<video  id="video"
+		  style="display: none;
+		  position: absolute; left: 15px; top: 75px;"
+		  src="videos/R0010062_er.mp4"
+		  controls="true" autoplay="true">
+		</video>
 		<div id="container"><br /><br /><br /><br /><br />Generating...</div>
         <div style="position: fixed; top: 3%; width:95%; ">
-            <div style="float: left; "  class="controlPanel">
+            <div style="float: right; "  class="controlPanel ">
                 <!-- for pinterest -->
                 <img src='snap.png' width='1px' height='1px' />
                 <!-- end of pinterest hack -->
                 &nbsp;&nbsp;
-                <span onclick='updateSkyDome(1)' class='pselector'>1</span>
-                <span onclick='updateSkyDome(2)' class='pselector'>2</span>
-                <span onclick='updateSkyDome(3)' class='pselector'>3</span>
-                <span onclick='updateSkyDome(4)' class='pselector'>4</span>
-                <span onclick='updateSkyDome(5)' class='pselector'>5</span>
-                <span onclick='updateSkyDome("mich")' class='pselector'>mich</span>
-                <span onclick='updateSkyDome("HLIE1245")' class='pselector'>New</span>
-                <span onclick='updateSkyDome("c1")' class='pselector'>Chi</span>
-                <span onclick='updateSkyDome("louis")' class='pselector'>Boy</span>
-                <span onclick='updateSkyDome("uv")' class='pselector'>uv</span>
+                <span onclick='updateSkyDome(1)' class='tselector'>1</span>
+                <span onclick='updateSkyDome(2)' class='tselector'>2</span>
+                <span onclick='updateSkyDome(3)' class='tselector'>3</span>
+                <span onclick='updateSkyDome(4)' class='tselector'>4</span>
+                <span onclick='updateSkyDome(5)' class='tselector'>5</span>
+                <span onclick='updateSkyDome("mich")' class='tselector'>mich</span>
+                <span onclick='updateSkyDome("HLIE1245")' class='tselector'>New</span>
+                <span onclick='updateSkyDome("c1")' class='tselector'>Chi</span>
+                <span onclick='updateSkyDome("louis")' class='tselector'>Boy</span>
+                <span onclick='updateSkyDome("uv")' class='tselector'>uv</span>
             </div>
             <div style="float: right; " class="controlPanel mainDashboard">
                  <!-- <div id='cameraText' class="statusText"></div> -->
@@ -559,13 +600,13 @@
  -->
                 <img src='icons/zoomIn.png' onclick='zoom(.5)'  title="Zoom In" class='pselector'></img>
                 <img src='icons/zoomOut.png' onclick='zoom(2)'  title="Zoom Out" class='pselector'></img>
-                <img src='icons/cancel.png' onclick='zoom(2)'  title="Zoom Out" class='pselector'></img>
+                <img src='icons/cancel.png' onclick='zoom(1/_currentZoom)'  title="No Zoom" class='pselector'></img>
                 <span onclick='setFixedPoint(1)' class='divpselector'>
-<nobr><img src='icons/epsilon.png' onclick='toggleShowHideFixedPoints()'  title="Set Fixed Point 1" width="30px;"></img><span class='pselectorText'><span >+</span></nobr>
+<nobr><img src='icons/epsilon.png'  title="Set Fixed Point 1" width="30px;"></img><span class='pselectorText'><span >+</span></nobr>
             </span>
             	</span>
                 <div onclick='setFixedPoint(2)' class='divpselector' >
-<nobr><img src='icons/epsilon.png' onclick='toggleShowHideFixedPoints()'  title="Set Fixed Point 2" width="30px;"></img><span class='pselectorText'><span >-</span></nobr>
+<nobr><img src='icons/epsilon.png' o title="Set Fixed Point 2" width="30px;"></img><span class='pselectorText'><span >-</span></nobr>
             </span>
             	</div>
 
