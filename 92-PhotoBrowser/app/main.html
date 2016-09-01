@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+        <style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				margin: 0px;
+				overflow: hidden;
+			}
+			.statusText {
+				height:30px;
+				width:300px;
+				color: #00ff00;
+				padding: 5px;
+				background-color: black;
+			}
+            .divpselector { 
+            	border: 2px solid; 
+            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+            	background-color: rgba(88,88,255,.5);
+            	width: 40px;
+            	height: 40px;
+            	display: inline-block;
+            	vertical-align: middle;
+            }
+            .controlPanel {
+                position: fixed;
+                top: 0;
+                width: 95%;
+            }
+            .controlPanelInner {
+                width: 90%;
+                margin: 0 auto;             
+            }
+            .videoPanel {
+                position: fixed;
+                bottom: 0;
+                width: 95%;
+            }
+            .videoPanelInner {
+            	width: 30%;
+            	margin: 0 auto;            	
+            }
+            .vselector { 
+            	border: 2px solid; 
+            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+            	background-color: rgba(255,88,88,.5);
+            	width: 40px;
+            	height: 40px;
+            	display: inline-block;
+            	vertical-align: middle;
+            }
+            .tselector { 
+                font-size: 8pt;
+            	border: 2px solid; 
+            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+            	background-color: rgba(88,255,88,.5);
+            	width: 80px;
+            	display: inline-block;
+            	vertical-align: middle;
+            }
+            .pselector { 
+            	border: 2px solid; 
+            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+            	background-color: rgba(88,88,255,.5);
+            	width: 40px;
+            	display: inline-block;
+            	vertical-align: middle;
+            }
+		</style>
+        <script>
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        
+          ga('create', 'UA-41066114-1', 'rwoodley.org');
+          ga('send', 'pageview');
+        
+        </script>
+		<script src="r73/three.js"></script>
+        <script src="r73/OrbitControls.js"></script>
+		<script src="r73/Detector.js"></script>
+ 		<script src="r73/stats.min.js"></script>
+		<script src="lib/jquery-3.1.0.min.js"></script>
+        <script src="utils.js"></script>
+        <!-- generate files.js with this bash:
+            echo echo 'myTextures=["'`ls -1 *.jpg|tr '\n' ','|sed -e 's/,/","/g'|sed -e 's/.jpg//g'|sed -e 's/,\"$//'  `']' >files.js
+        -->
+        <script src="textures/files.js"></script>
+		<script>
+			var _container;
+			var _camera, _controls, _scene, _renderer, _uniforms, _axes;
+			var myMesh, _rotateSpeed = Math.PI/1024, _controlPanelVisible = true;
+
+			if ( ! Detector.webgl ) {
+				Detector.addGetWebGLMessage();
+				document.getElementById( 'container' ).innerHTML = "";
+			}
+
+			var clock = new THREE.Clock();
+			function toggleControlPanel() {
+		    	_controlPanelVisible = !_controlPanelVisible;
+		    	if (_controlPanelVisible) {
+					$('.controlPanel').hide();
+					$('.videoPanel').hide();
+					_axes.visible = false;
+				}
+	    		else {
+					$('.controlPanel').show();
+					$('.videoPanel').show();
+					_axes.visible = true;
+				}
+			}
+			function init() {
+                var textureListHTML = '';
+                for (var i = 0; i < myTextures.length; i++)
+                    textureListHTML += "<span onclick='updateSkyDome(\"111\")' class='tselector'>111</span>"
+                                    .replace(/111/g, myTextures[i]);
+                document.getElementById('textureList').innerHTML = textureListHTML;
+
+				document.body.onkeyup = function(e){
+				    if(e.keyCode == 32)
+				    	toggleControlPanel();
+				}
+                _container = document.getElementById( 'container' );
+
+                _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+                _scene = new THREE.Scene();
+                _controls = new THREE.OrbitControls( _camera, _container.domElement );
+                _renderer =  new THREE.WebGLRenderer({ antialias: true } );
+
+                _camera.position.x = -3; _camera.position.y = 0.0; _camera.position.z = 0;
+                _axes = new THREE.AxisHelper( 5000 );
+                _scene.add(_axes);
+				toggleControlPanel();
+                var segment = 256.;
+                var sphereRadius = 10;
+
+                var skyGeometry = new THREE.SphereGeometry(sphereRadius,segment,segment);
+				var newMaterial = new THREE.MeshNormalMaterial();
+                _skyBox = new THREE.Mesh( skyGeometry, newMaterial);
+                _scene.add( _skyBox );
+                _skyBox.position.set(0,0,0);
+
+                _renderer.setSize( window.innerWidth, window.innerHeight );
+
+                document.getElementById( 'container' ).innerHTML = "";
+                _container.appendChild( _renderer.domElement );
+                // playVideo();
+                animate();
+			}
+
+			var _video, _videoTexture;
+            var _videoDisplayed = false;
+			function animate() {
+				requestAnimationFrame( animate );
+				_controls.update( clock.getDelta() );
+				_renderer.render( _scene, _camera );
+                _camera.lookAt(new THREE.Vector3(0,0,0));
+                _skyBox.rotateY(0.002);
+                updateVariousNumbersForCamera();
+				if (_videoDisplayed &&  _video.readyState === _video.HAVE_ENOUGH_DATA ) {
+				  if (_videoTexture) _videoTexture.needsUpdate = true;
+				}
+			}
+            function updateSkyDome(pid) {
+	            _videoDisplayed = false;
+	            video_stop();
+                var pathToTexture = 'textures/' + pid + '.jpg';
+				(new THREE.TextureLoader()).load(pathToTexture, function ( texture ) {
+				    var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide });
+
+					_skyBox.material = skyMaterial;
+
+				});
+            }
+			function playVideo(pid) {
+                console.log('in video');
+				_video  = document.getElementById('video');
+				_videoTexture = new THREE.Texture(_video);
+				_videoTexture.minFilter = THREE.LinearFilter;
+				_videoTexture.magFilter = THREE.LinearFilter;
+				_videoTexture.generateMipmaps = false;
+		        _video.play();
+
+				_videoTexture.minFilter = THREE.LinearFilter;	// eliminates aliasing when tiling textures.
+				var videoMaterial = new THREE.MeshBasicMaterial({
+				    map: _videoTexture,
+				    overdraw: true,
+				    side: THREE.DoubleSide 
+				});
+				_skyBox.material = videoMaterial;
+				_videoDisplayed = true;
+			}
+            var _unitVector;
+            var _fixedPointX, _fixedPointY;
+            function updateVariousNumbersForCamera() {
+            	_unitVector = (new THREE.Vector3()).copy(_camera.position).normalize();
+				// in three.js y is up. we want z to be up.
+				// flip the signs on x and z because we're inside the sphere. i think?
+				var x = -_unitVector.x;
+				var y = _unitVector.z;	// assign z to y.
+				var z = -_unitVector.y;	// assign y to z.
+
+            	// convert to point on complex plane
+            	_cameraLookAtComplexX = - x / (1.0 - z);
+            	_cameraLookAtComplexY = - y / (1.0 - z);
+
+            	try {
+	                document.getElementById('unitVectorText').innerHTML = 
+	                "<nobr>Unit Vec: (" + 
+	                	_unitVector.x.toFixed(1) + "," + 
+	                	_unitVector.z.toFixed(1) + "," + 
+	                	_unitVector.y.toFixed(1) + ") len: " 
+						+ _unitVector.length().toFixed(1) + "</nobr>" ;   
+
+	                document.getElementById('complexPointText').innerHTML = "Looking at " + 
+	                	_cameraLookAtComplexX.toFixed(2) + " + " + 
+	                	_cameraLookAtComplexY.toFixed(2) + "i";
+
+	                _textElement = document.getElementById('cameraText');
+	                _textElement.innerHTML = "<nobr>Camera: (" + _camera.position.x.toFixed(1) 
+	                	+ "," + _camera.position.y.toFixed(1) + ","  
+	                	+ _camera.position.z.toFixed(1) + ") len: " 
+						+ _camera.position.length().toFixed(1) + "</nobr>" ;
+				}
+				catch (x) {}
+            }
+            function flipCamera() {
+            	_camera.position.x = - _camera.position.x;
+            	_camera.position.y = - _camera.position.y;
+            	_camera.position.z = - _camera.position.z;
+            }
+            $().ready(function() {
+                init();
+            });  // end of jquery ready function
+</script>
+<script type="text/javascript">
+
+    function video_play() {
+		var video = document.getElementById("video");
+		video.play();
+    }
+    function video_stop() {
+		var video = document.getElementById("video");
+		video.pause();    	
+    }
+    function video_restart() {
+        var video = document.getElementById("video");
+        video.currentTime = 0;
+		video.play();
+    }
+
+    function video_skip(value) {
+        var video = document.getElementById("video");
+        video.currentTime += value;
+    }      
+</script>
+</head>
+	<body>
+		<video  id="video"
+		  style="display: none;
+		  position: absolute; left: 15px; top: 75px;"
+		  src="videos/R0010062_er.mp4"
+		  controls="true" autoplay="true">
+		</video>
+		<div id="container"><br /><br /><br /><br /><br />Generating...</div>
+        <div style="position: fixed; top: 3%; width:95%; ">
+        	<div class="videoPanel">
+        		<div class="videoPanelInner">
+	                <img src='icons/rewind.png' onclick='video_skip(-10)'  title="Video Back" class='vselector'></img>
+	                <img src='icons/play.png' onclick='video_play()'  title="Video Play" class='vselector'></img>
+	                <img src='icons/stop.png' onclick='video_stop()'  title="Video Stop" class='vselector'></img>
+	                <img src='icons/ff.png' onclick='video_skip(10)'  title="Video FastForward" class='vselector'></img>
+	                <img src='icons/replay.png' onclick='video_restart()'  title="Video Restart" class='vselector'></img>
+                    <img src='icons/flipCamera.png' onclick='flipCamera()'  title="Flip Camera" class='pselector'></img>
+	        	</div>
+        	</div>
+            <div style="float: right; "  class="controlPanel ">
+                <div class="controlPanelInner">
+                    <div id="videoList" class="controlPanel ">
+                        <span onclick='playVideo()' class='pselector'>v1</span>
+                    </div>
+                    <div id="textureList"  class="controlPanelInner">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+        </script>
+	</body>
+</html>
