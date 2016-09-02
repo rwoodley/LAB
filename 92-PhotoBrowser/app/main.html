@@ -15,15 +15,6 @@
 				padding: 5px;
 				background-color: black;
 			}
-            .divpselector { 
-            	border: 2px solid; 
-            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
-            	background-color: rgba(88,88,255,.5);
-            	width: 40px;
-            	height: 40px;
-            	display: inline-block;
-            	vertical-align: middle;
-            }
             .controlPanel {
                 position: fixed;
                 top: 0;
@@ -39,34 +30,55 @@
                 width: 95%;
             }
             .videoPanelInner {
-            	width: 30%;
-            	margin: 0 auto;            	
+                width: 95%;
+                margin: 0 auto;             
             }
-            .vselector { 
-            	border: 2px solid; 
-            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
-            	background-color: rgba(255,88,88,.5);
-            	width: 40px;
-            	height: 40px;
-            	display: inline-block;
-            	vertical-align: middle;
+            .cameraPanel {
+                position: fixed;
+                bottom: 10%;
+                width: 95%;
+            }
+            .cameraPanelInner {
+                width: 95%;
+                margin: 0 auto;             
+            }
+            .cselector { 
+                border: 2px solid; 
+                border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+                background-color: rgba(88,88,255,.5);
+                width: 40px;
+                height: 40px;
+                display: inline-block;
+                vertical-align: middle;
+            }
+            .videoControlIcon { 
+                border: 2px solid; 
+                border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+                background-color: rgba(255,88,88,.5);
+                width: 40px;
+                height: 40px;
+                display: inline-block;
+                vertical-align: middle;
             }
             .tselector { 
                 font-size: 8pt;
-            	border: 2px solid; 
-            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
-            	background-color: rgba(88,255,88,.5);
-            	width: 80px;
-            	display: inline-block;
-            	vertical-align: middle;
+                border: 2px solid; 
+                border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+                background-color: rgba(88,255,88,.5);
+                width: 60px;
+                display: inline-block;
+                vertical-align: middle;
+                margin-left: 20px;
             }
-            .pselector { 
-            	border: 2px solid; 
-            	border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
-            	background-color: rgba(88,88,255,.5);
-            	width: 40px;
-            	display: inline-block;
-            	vertical-align: middle;
+            .vselector { 
+                font-size: 8pt;
+                border: 2px solid; 
+                border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
+                background-color: rgba(88,88,255,.5);
+                width: 60px;
+                display: inline-block;
+                vertical-align: middle;
+                margin-left: 20px;
             }
 		</style>
         <script>
@@ -86,9 +98,11 @@
 		<script src="lib/jquery-3.1.0.min.js"></script>
         <script src="utils.js"></script>
         <!-- generate files.js with this bash:
-            echo echo 'myTextures=["'`ls -1 *.jpg|tr '\n' ','|sed -e 's/,/","/g'|sed -e 's/.jpg//g'|sed -e 's/,\"$//'  `']' >files.js
+        echo 'myTextures=["'`ls -1tr *.jpg *.JPG|tr '\n' ','|sed -e 's/,/","/g'|sed -e 's/.jpg//g'|sed -e 's/.JPG//g'|sed -e 's/,\"$//'  `']' > files.js
+        echo 'myVideos=["'`ls -1tr *.mp4 |tr '\n' ','|sed -e 's/,/","/g'|sed -e 's/.mp4//g'|sed -e 's/.MP4//g'|sed -e 's/,\"$//'  `']' > videos.js
         -->
         <script src="textures/files.js"></script>
+        <script src="textures/videos.js"></script>
 		<script>
 			var _container;
 			var _camera, _controls, _scene, _renderer, _uniforms, _axes;
@@ -113,13 +127,24 @@
 					_axes.visible = true;
 				}
 			}
-			function init() {
+            function setupMediaIcons() {
                 var textureListHTML = '';
                 for (var i = 0; i < myTextures.length; i++)
-                    textureListHTML += "<span onclick='updateSkyDome(\"111\")' class='tselector'>111</span>"
+                    textureListHTML += "<span onclick='updateSkyDome(\"111\")' onmouseover='updateSkyDome(\"111\")' class='tselector'>111</span>"
                                     .replace(/111/g, myTextures[i]);
-                document.getElementById('textureList').innerHTML = textureListHTML;
+                // document.getElementById('textureList').innerHTML = textureListHTML;
 
+                var videoListHTML = '';
+                for (var i = 0; i < myVideos.length; i++)
+                    videoListHTML += "<span onclick='updateVideo(\"111\")' onmouseover='updateVideo(\"111\")' class='vselector'>111</span>"
+                                    .replace(/111/g, myVideos[i]);
+                // document.getElementById('videoList').innerHTML = videoListHTML;
+                document.getElementById('mediaList').innerHTML = textureListHTML + videoListHTML;
+
+            }
+			function init() {
+                setupMediaIcons();
+                initVideo();
 				document.body.onkeyup = function(e){
 				    if(e.keyCode == 32)
 				    	toggleControlPanel();
@@ -144,6 +169,7 @@
                 _skyBox = new THREE.Mesh( skyGeometry, newMaterial);
                 _scene.add( _skyBox );
                 _skyBox.position.set(0,0,0);
+                _skyBox.scale.set(1,1,-1);
 
                 _renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -153,14 +179,15 @@
                 animate();
 			}
 
-			var _video, _videoTexture;
+			var _video, _videoTexture, _videoSource;
             var _videoDisplayed = false;
+            var _rotateYAmount = 0;
 			function animate() {
 				requestAnimationFrame( animate );
 				_controls.update( clock.getDelta() );
 				_renderer.render( _scene, _camera );
                 _camera.lookAt(new THREE.Vector3(0,0,0));
-                _skyBox.rotateY(0.002);
+                _skyBox.rotateY(_rotateYAmount);
                 updateVariousNumbersForCamera();
 				if (_videoDisplayed &&  _video.readyState === _video.HAVE_ENOUGH_DATA ) {
 				  if (_videoTexture) _videoTexture.needsUpdate = true;
@@ -177,23 +204,33 @@
 
 				});
             }
-			function playVideo(pid) {
-                console.log('in video');
-				_video  = document.getElementById('video');
-				_videoTexture = new THREE.Texture(_video);
-				_videoTexture.minFilter = THREE.LinearFilter;
-				_videoTexture.magFilter = THREE.LinearFilter;
-				_videoTexture.generateMipmaps = false;
-		        _video.play();
+            function initVideo() {
+                _video  = document.getElementById('video');
+                _videoSource = document.createElement('source');
+                _video.appendChild(_videoSource);
+            }
+			function updateVideo(pid) {
+                console.log('in video: ' + pid);
+                var pathToTexture = 'textures/' + pid + '.mp4';
 
-				_videoTexture.minFilter = THREE.LinearFilter;	// eliminates aliasing when tiling textures.
-				var videoMaterial = new THREE.MeshBasicMaterial({
-				    map: _videoTexture,
-				    overdraw: true,
-				    side: THREE.DoubleSide 
-				});
-				_skyBox.material = videoMaterial;
-				_videoDisplayed = true;
+                _videoSource.setAttribute('src', pathToTexture);
+                _video.load();
+
+                _videoTexture = new THREE.Texture(_video);
+                _videoTexture.minFilter = THREE.LinearFilter;
+                _videoTexture.magFilter = THREE.LinearFilter;
+                _videoTexture.generateMipmaps = false;
+                _video.play();
+
+                _videoTexture.minFilter = THREE.LinearFilter;   // eliminates aliasing when tiling textures.
+                var videoMaterial = new THREE.MeshBasicMaterial({
+                    map: _videoTexture,
+                    overdraw: true,
+                    side: THREE.DoubleSide 
+                });
+                _skyBox.material = videoMaterial;
+                _videoDisplayed = true;
+
 			}
             var _unitVector;
             var _fixedPointX, _fixedPointY;
@@ -257,35 +294,51 @@
     function video_skip(value) {
         var video = document.getElementById("video");
         video.currentTime += value;
-    }      
+    }    
+    function cameraLeft() {
+        _rotateYAmount -= 0.002;
+    }  
+    function cameraRight() {
+        _rotateYAmount += 0.002;
+    }  
+    function cameraStop() {
+        _rotateYAmount = 0.;
+    }  
 </script>
 </head>
 	<body>
 		<video  id="video"
 		  style="display: none;
 		  position: absolute; left: 15px; top: 75px;"
-		  src="videos/R0010062_er.mp4"
 		  controls="true" autoplay="true">
 		</video>
 		<div id="container"><br /><br /><br /><br /><br />Generating...</div>
         <div style="position: fixed; top: 3%; width:95%; ">
-        	<div class="videoPanel">
-        		<div class="videoPanelInner">
-	                <img src='icons/rewind.png' onclick='video_skip(-10)'  title="Video Back" class='vselector'></img>
-	                <img src='icons/play.png' onclick='video_play()'  title="Video Play" class='vselector'></img>
-	                <img src='icons/stop.png' onclick='video_stop()'  title="Video Stop" class='vselector'></img>
-	                <img src='icons/ff.png' onclick='video_skip(10)'  title="Video FastForward" class='vselector'></img>
-	                <img src='icons/replay.png' onclick='video_restart()'  title="Video Restart" class='vselector'></img>
-                    <img src='icons/flipCamera.png' onclick='flipCamera()'  title="Flip Camera" class='pselector'></img>
-	        	</div>
-        	</div>
+            <div class="videoPanel">
+                <div class="videoPanelInner">
+                    <img src='icons/rewind.png' onclick='video_skip(-10)'  title="Video Back" class='videoControlIcon'></img>
+                    <img src='icons/play.png' onclick='video_play()'  title="Video Play" class='videoControlIcon'></img>
+                    <img src='icons/stop.png' onclick='video_stop()'  title="Video Stop" class='videoControlIcon'></img>
+                    <img src='icons/ff.png' onclick='video_skip(10)'  title="Video FastForward" class='videoControlIcon'></img>
+                    <img src='icons/replay.png' onclick='video_restart()'  title="Video Restart" class='videoControlIcon'></img>
+                </div>
+            </div>
+            <div class="cameraPanel">
+                <div class="cameraPanelInner">
+                    <img src='icons/left.png' onclick='cameraLeft()'  title="Camera Left" class='cselector'></img>
+                    <img src='icons/up.png' onclick='cameraUp()'  title="Camera Up" class='cselector'></img>
+                    <img src='icons/down.png' onclick='cameraDown()'  title="Camera Down" class='cselector'></img>
+                    <img src='icons/right.png' onclick='cameraRight()'  title="Camera Right" class='cselector'></img>
+                    <img src='icons/stop.png' onclick='cameraStop()'  title="Camera Stop" class='cselector'></img>
+                    <img src='icons/flipCamera.png' onclick='flipCamera()'  title="Flip Camera" class='cselector'></img>
+                </div>
+            </div>
             <div style="float: right; "  class="controlPanel ">
                 <div class="controlPanelInner">
-                    <div id="videoList" class="controlPanel ">
-                        <span onclick='playVideo()' class='pselector'>v1</span>
-                    </div>
+                    <div id="mediaList" class="controlPanel ">
+<!--                     <div id="videoList" class="controlPanel ">
                     <div id="textureList"  class="controlPanelInner">
-                    </div>
+ -->                    </div>
                 </div>
             </div>
         </div>
