@@ -1,4 +1,13 @@
 <!DOCTYPE html>
+<!--
+    todo:
+    show/hide is still flakey
+    put bash statements in a script.
+    simplify css and divs.
+    camera should always be at unit vector.
+    modularize so you can reuse.
+    load new stills and videos.
+    -->
 <html lang="en">
 	<head>
         <style>
@@ -119,12 +128,12 @@
 		    	if (_controlPanelVisible) {
 					$('.controlPanel').hide();
 					$('.videoPanel').hide();
-					_axes.visible = false;
+					_axes.visible = true;
 				}
 	    		else {
 					$('.controlPanel').show();
 					$('.videoPanel').show();
-					_axes.visible = true;
+					_axes.visible = false;
 				}
 			}
             function setupMediaIcons() {
@@ -157,9 +166,9 @@
                 _controls = new THREE.OrbitControls( _camera, _container.domElement );
                 _renderer =  new THREE.WebGLRenderer({ antialias: true } );
 
-                _camera.position.x = -3; _camera.position.y = 0.0; _camera.position.z = 0;
+                _camera.position.x = -1; _camera.position.y = 0.0; _camera.position.z = 0;
                 _axes = new THREE.AxisHelper( 5000 );
-                _scene.add(_axes);
+                // _scene.add(_axes);
 				toggleControlPanel();
                 var segment = 256.;
                 var sphereRadius = 10;
@@ -186,6 +195,9 @@
 				requestAnimationFrame( animate );
 				_controls.update( clock.getDelta() );
 				_renderer.render( _scene, _camera );
+                _unitVector = (new THREE.Vector3()).copy(_camera.position).normalize();
+                _camera.position.set(_unitVector.x, _unitVector.y, _unitVector.z);
+                console.log(_camera.position);
                 _camera.lookAt(new THREE.Vector3(0,0,0));
                 _skyBox.rotateY(_rotateYAmount);
                 updateVariousNumbersForCamera();
