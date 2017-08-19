@@ -3,19 +3,20 @@ var physics = function(planets) {
     this.G = 6.6742e-11; // universal gravitational constant
     this.planets = planets;
 
-    this.getRelativeVelocity = function(pa, pb) {
-        // set velocity of pa relative to pb
-        var radius = pa.position.sub(pb.position).x;
-        var v = Math.sqrt(Math.abs(_that.G * pb.mass/radius));
-        v *= Math.sign(radius);
-        console.log("v, radius = " + v + "," + radius);
-        return v;
-    }
+    // this.getRelativeVelocity = function(pa, pb) {
+    //     // set velocity of pa relative to pb
+    //     var radius = pa.position.sub(pb.position).x;
+    //     var v = Math.sqrt(Math.abs(_that.G * pb.mass/radius));
+    //     v *= Math.sign(radius);
+    //     console.log("v, radius = " + v + "," + radius);
+    //     return v;
+    // }
     this.updateVelocity = function(pa, pb, dt, lambda) {
 
         // pa rotates around pb
         // vel for pa is updated.
         // inputs: pa.position, pb.position, pa.velocity, pb.mass
+
       // don't compute self-gravitation
       if (pa != undefined && pb != undefined && pa != pb) {
         // this trig-free method does this:

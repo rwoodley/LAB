@@ -8,11 +8,14 @@ ToDo:
 
 Engines:
 --------
+put sun at origin
+fix camera flip at pole
+have wide angle view
 
 
 Guages:
 -------
-Have guages show forces acting on ship, as vectors.
+Lock camera to Planet
 
 Fun
 ---

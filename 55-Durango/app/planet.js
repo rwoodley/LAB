@@ -7,24 +7,30 @@
 // This wraps the physics engine. 
 var _planets = [];
 var _physics;
-function updatePlanetPhysics(frame, dt) {
+function updatePlanetPhysics(frame, indt) {
 //    var dt = 11.20;
+    var nSteps = 3;         // this smooths out big changes in acceleration to avoid
+                            // having objects shoot out into space.
+    var dt = indt/nSteps;
 
-    // First update velocities
-    for (var i = 0; i < _planets.length; i++) {
-        for (var j = 0; j < _planets.length; j++) {
-            if (i != j ) // && _planets[i].mass < _planets[j].mass*100)
-            {
-                if (i == 2 || j == 2)
-                    console.log('here');
-                _physics.updateVelocity(_planets[i], _planets[j], dt, 0);
+    for (var step = 0; step < nSteps; step++) {
+
+        // First update velocities
+        for (var i = 0; i < _planets.length; i++) {
+            for (var j = 0; j < _planets.length; j++) {
+                if (i != j ) // && _planets[i].mass < _planets[j].mass*100)
+                {
+                    // if (i == 2 || j == 2)
+                    //     console.log('here');
+                    _physics.updateVelocity(_planets[i], _planets[j], dt, 0);
+                }
             }
         }
-    }
-    // now update positions
-    for (var i = 0; i < _planets.length; i++) {
-        _physics.updatePosition(_planets[i], dt);   // update internal physics position
-        _planets[i].updateMeshPosition();           // update three.js position
+        // now update positions
+        for (var i = 0; i < _planets.length; i++) {
+            _physics.updatePosition(_planets[i], dt);   // update internal physics position
+            _planets[i].updateMeshPosition();           // update three.js position
+        }
     }
 }
 function calcDistance(name1, name2, objectCache) {
@@ -65,6 +71,7 @@ function addPlanets(scene, objectCache) {
     var charonPlanet = new Planet({
         'name': 'charon',
         'mass': 2*1.52e21,
+        // 'mass': 2*1.52e21,
         'radius': 1000 * 1000,
         'startPosition': new Cart3(19640 * 1000, 0, 0),
         'startVelocity': new Cart3(0, 0, 300),

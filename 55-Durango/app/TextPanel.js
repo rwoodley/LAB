@@ -10,20 +10,32 @@ var TextPanel = function(locator, containerDiv, objectCache) {
     }
     this.render = function(){
         var str = '';
-        str += 'Ship: ($1,$2,$3)<br/>'
+        str += 'Ship P: ($1,$2,$3)<br/>'
             .replace('$1', _that._oCache.ship._camera.position.x.toFixed(0))
             .replace('$2', _that._oCache.ship._camera.position.y.toFixed(0))
             .replace('$3', _that._oCache.ship._camera.position.z.toFixed(0))
+            ;
+        //             _that._objectCache.shipPlanet.velocity.z = 0;
+
+        str += 'Ship V: ($1,$2,$3)<br/>'
+            .replace('$1', _that._oCache.shipPlanet.velocity.x.toFixed(0))
+            .replace('$2', _that._oCache.shipPlanet.velocity.y.toFixed(0))
+            .replace('$3', _that._oCache.shipPlanet.velocity.z.toFixed(0))
             ;
         //str += 'Mesh: ($1,$2,$3)<br/>'
         //    .replace('$1', (_that._oCache.ship._mesh.position.x - _that._oCache.ship._camera.position.x).toFixed(0))
         //    .replace('$2', (_that._oCache.ship._mesh.position.y - _that._oCache.ship._camera.position.y).toFixed(0))
         //    .replace('$3', (_that._oCache.ship._mesh.position.z - _that._oCache.ship._camera.position.z).toFixed(0))
         //    ;
-        str += 'Pluto: ($1,$2,$3)<br/>'
+        str += 'Pluto P: ($1,$2,$3)<br/>'
             .replace('$1', _that._oCache.plutoMesh.position.x.toFixed(0))
             .replace('$2', _that._oCache.plutoMesh.position.y.toFixed(0))
             .replace('$3', _that._oCache.plutoMesh.position.z.toFixed(0))
+            ;
+        str += 'Pluto V: ($1,$2,$3)<br/>'
+            .replace('$1', _that._oCache.plutoPlanet.velocity.x.toFixed(0))
+            .replace('$2', _that._oCache.plutoPlanet.velocity.y.toFixed(0))
+            .replace('$3', _that._oCache.plutoPlanet.velocity.z.toFixed(0))
             ;
         str += 'Charon: ($1,$2,$3)<br/>'
             .replace('$1', _that._oCache.charonMesh.position.x.toFixed(0))

@@ -2,6 +2,9 @@
 // it has a forward facing camera. So the camera === the ship. so we only need a camera to contain
 // the orientation and position info of the ship. just need 1 object.
 // the navigator changes orientation and position of the ship/camera.
+// So... this ship is really the camera. the shipPlanet is what the physic engine knows about.
+// There is a ship mesh which is a sphere and is invisible, but the physics engine uses it to update position info.
+// In the render() routine, the camera position is kept in sync with the mesh position.
 var Ship = function(locator, aspectRatio, objectCache) {
     var _that = this;
     this._listeners = {};
@@ -36,7 +39,7 @@ var Ship = function(locator, aspectRatio, objectCache) {
         _that._listeners['Orientation'](_that.Orientation);
     };
     this.updateOrientation = function(e) {
-        var incr = (_that._objectCache.dt/11) * Math.PI/2048;
+        var incr = (_that._objectCache.dt/88) * Math.PI/2048;
         console.log("posx = " + _that._camera.position.x);
         console.log(e.ctrlKey + " " + e.keyCode);
         if (e.keyCode==38) {    // up arrow
@@ -76,6 +79,11 @@ var Ship = function(locator, aspectRatio, objectCache) {
         }
         if (e.keyCode==88 && e.ctrlKey == true) {
             _that._objectCache.shipPlanet.velocity.x -= 10;
+        }
+        if (e.keyCode==48 && e.ctrlKey == true) {       // key code  for 0
+            _that._objectCache.shipPlanet.velocity.x = 0;
+            _that._objectCache.shipPlanet.velocity.y = 0;
+            _that._objectCache.shipPlanet.velocity.z = 0;
         }
 
         _that.sendUpdates();

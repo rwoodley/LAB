@@ -1,9 +1,10 @@
 // the main camera always looks forward.
 // 
-var MainScene = function(containingDiv, canvas, camera, objectCache) {
+var MainScene = function(containingDiv, canvas, camera, objectCache, cameraPanel) {
     var _that = this;
     this._containingDiv = containingDiv;
     _that._camera = camera;
+    _that._cameraPanel = cameraPanel;
     
     _that._clock = new THREE.Clock();
     //_that._controls = new THREE.OrbitControls( _that._camera, _that._containingDiv );
@@ -58,10 +59,12 @@ var MainScene = function(containingDiv, canvas, camera, objectCache) {
                 );
             objectCache.ship.sendUpdates();     // update guage.
         //}
-        objectCache.ship._camera.lookAt(objectCache.charonMesh.position);
+        _that._cameraPanel.lookAtTarget();
+        // objectCache.ship._camera.lookAt(objectCache.plutoMesh.position);
         objectCache.ship._camera.rotateX(objectCache.ship._yVelocity);
         objectCache.ship._camera.rotateY(objectCache.ship._xVelocity);
         _that._renderer.render( _that._scene, _that._camera );
+                _stats.update();
     }
 }
 

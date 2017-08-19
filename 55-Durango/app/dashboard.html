@@ -22,7 +22,9 @@
                 border-spacing: 0px;
                 margin: 0px;
                 color: orange;
-                font-size: 14pt;
+                font-size: 10pt;
+                font-family: courier;
+                text-align: left;
             }
             #mainPanel {
                 border-spacing: 0px;
@@ -31,19 +33,33 @@
                 width: 100%;
                 height: 100%;
             }
-                img {
-                    pointer-events: none;       /* prevent ipad from show 'save image'pop-up */
-                       -webkit-user-select:none;
-                }
+            .cameraPanelImage {
+                width: 80px;
+            }
+            #cameraPanel {
+                padding: 10px;
+                position: fixed; 
+                bottom: 20px; 
+                left: 20px;
+                background: black;
+                height: 90px;
+                width: 350px;
+            }
+            /* img {
+                pointer-events: none;       /* prevent ipad from show 'save image'pop-up */
+                    -webkit-user-select:none;
+            } */
     </style>
     <script src="lib/jquery-1.11.2.min.js"></script>
     <script src="lib/chroma.min.js"></script>
     <script src="r71/three.min.js"></script>
     <script src="r71/OrbitControls.js"></script>
     <script src="r71/Detector.js"></script>
+    <script src="r71/stats.min.js"></script>
     <script src="math.js"></script>
     <script src="utils.js"></script>
     <script src="TextPanel.js"></script>
+    <script src="cameraPanel.js"></script>
     <script src="MainScene.js"></script>
     <script src="guages.js"></script>
     <script src="Locator.js"></script>
@@ -58,7 +74,8 @@
         AUk = 149597871/AUDivisor;
         //AUm = AUk/1.6;
 
-        var _guage, _mainScene, _textPanel;
+        var _stats;
+        var _guage, _mainScene, _textPanel, _cameraPanel;
         $(document).ready(function() {
             var img = new Image();
             img.src = 'textures/eso_dark.jpg';
@@ -67,7 +84,12 @@
             img.onload = function() {
                 WireUp();
             }
+            _stats = new Stats();
+            document.getElementById('statsDivInner').appendChild( _stats.domElement );    
         });
+        function changeCameraLookat(lookatObject) {
+            _cameraPanel.clickHandler(lookatObject);
+        }
         function WireUp() {
             var locator = new Locator();
 
@@ -78,15 +100,15 @@
             locator.ship = ship;
             locator.dt = 112.0;
             _textPanel = new TextPanel(locator, document.getElementById('leftPanel'), locator);
-            
+            _cameraPanel = new CameraPanel(locator);
             _mainScene = new MainScene(
                 document.getElementById('mainPanel'),
                 document.getElementById('mainCanvas'),
                 ship.getCamera(),
-                locator
+                locator,
+                _cameraPanel
             );
             _guage = new CameraGuage(document.getElementById('cameraGuage'), locator);
-            
             $(document).keydown(function(e){
                 ship.updateOrientation(e);  // for now. later make it a service.
             });
@@ -111,6 +133,13 @@
                     </div>
                    <div id="cameraGuage" class="gauges" style="position: fixed; top: 20px; left: 20px;  " >
                      </div>
+                   <div id="cameraPanel" class="gauges"  >
+                        <img id="cameraPluto" src="img/plutoSphere.png" class="cameraPanelImage" onclick="changeCameraLookat('pluto')" />
+                        <img src="img/charonSphere.png" class="cameraPanelImage"  onclick="changeCameraLookat('charon')" />
+                        <img src="img/sun.jpg" class="cameraPanelImage"  onclick="changeCameraLookat('sun')" />
+                        <img src="img/joystick.svg" class="cameraPanelImage"  onclick="changeCameraLookat('joystick')" />
+                     </div>
         </script>
+                    <span id="statsDivInner"/ >
 	</body>
 </html>
