@@ -5,6 +5,31 @@
 // Distance: m
 // the physics engine updates the position and velocity of the objects
 // This wraps the physics engine. 
+var _planetConstants = {
+    'directionalLight': [0,0,0],
+    'charon': {
+        'name': 'charon',
+        'mass': 2*1.52e21,
+        'radius': 1000 * 1000,
+        'startPosition': [19640 * 1000, 0, 0],
+        'startVelocity': [0, 0, 300]
+    },
+    'pluto': {
+         'name': 'pluto',
+        'mass': 2*1.27e22,
+        'radius': 1137 * 1000,
+        'startPosition': [0, 0, 0],
+        'startVelocity': [0, 0, -37]       
+    },
+    'ship': {
+         'name': 'ship',
+        'mass': 1*1e9,
+        'radius': 11 * 1000,
+        'startPosition': [19640*1000, 5000*1000,  0],      // orbit charon view
+        'startVelocity': [0, 0, 85],
+       
+    }
+}
 var _planets = [];
 var _physics;
 function updatePlanetPhysics(frame, indt) {
@@ -68,36 +93,15 @@ function addPlanets(scene, objectCache) {
     planetLighting(charonMesh, scene);
     objectCache.charonMesh = charonMesh;
     
-    var charonPlanet = new Planet({
-        'name': 'charon',
-        'mass': 2*1.52e21,
-        // 'mass': 2*1.52e21,
-        'radius': 1000 * 1000,
-        'startPosition': new Cart3(19640 * 1000, 0, 0),
-        'startVelocity': new Cart3(0, 0, 300),
-        'mesh': charonMesh
-    });
+    var charonPlanet = new Planet(_planetConstants['charon'], charonMesh);
     objectCache.charonPlanet = charonPlanet;
     _planets.push(charonPlanet);
-    var plutoPlanet = new Planet({
-        'name': 'pluto',
-        'mass': 2*1.27e22,
-        'radius': 1137 * 1000,
-        'startPosition': new Cart3(0, 0, 0),
-        'startVelocity': new Cart3(0, 0, -37),
-        'mesh': plutoMesh
-    });
+    var plutoPlanet = new Planet(_planetConstants['pluto'], plutoMesh);
     objectCache.plutoPlanet = plutoPlanet;
     _planets.push(plutoPlanet);
-    var shipPlanet = new Planet({
-        'name': 'ship',
-        'mass': 1*1e9,
-        'radius': 11 * 1000,
-        'startPosition': new Cart3(19640*1000, 5000*1000,  0),      // orbit charon view
-        //'startPosition': new Cart3(0, 4000*10000,  0),             // view from above
-        'startVelocity': new Cart3(0, 0, 85),
-        'mesh': objectCache.ship._mesh
-    });
+    var shipPlanet = new Planet(_planetConstants['ship'],
+        objectCache.ship._mesh
+    );
     _planets.push(shipPlanet);
     objectCache.shipPlanet = shipPlanet;
     _physics = new physics(_planets);
@@ -108,15 +112,23 @@ function addPlanets(scene, objectCache) {
 //    v = _physics.getRelativeVelocity(_planets[2], _planets[0]);
 //    //_planets[2].velocity = new Cart3(0,0,-v);
 }
-var Planet = function(obj) {
+var Planet = function(config, mesh) {
     var self = this;
     // in real space
-    self.name = obj.name;
-    self.mass = obj.mass;
-    self.radius = obj.radius;
-    self.position = obj.startPosition;  // a Cart3
-    self.velocity = obj.startVelocity;   // a Cart3
-    self.mesh = obj.mesh;
+    self.name = config.name;
+    self.mass = config.mass;
+    self.radius = config.radius;
+    self.position = new Cart3(
+        config.startPosition[0],
+        config.startPosition[1],
+        config.startPosition[2]
+    ); 
+    self.velocity = new Cart3(
+        config.startVelocity[0],
+        config.startVelocity[1],
+        config.startVelocity[2]
+    );
+    self.mesh = mesh;
     self.updateMeshPosition = function() {
         // The origin of physics space is not be the origin of three.js space!
         // _physicsOriginInThreeJSSpace handles this.

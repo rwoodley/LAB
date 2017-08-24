@@ -1,9 +1,12 @@
 /**
-	expects 
-		mediaList div id
-		video with id 'video'
-		videoPanel
-		controlPanel
+puts a set of flat divs over your page for managing media.
+and sets up the globe.
+
+User might want to:
+- draw on different/multiple scenes
+- pre-process, post-process textures on each frame
+- add their own icons
+
 **/ 
 function mediaUtils(scene, camera, stills, videos, 
 	   mediaListContainerId, cameraControlsContainerId, videoControlsContainerId) {
@@ -35,6 +38,7 @@ function mediaUtils(scene, camera, stills, videos,
 	    that.setupMediaIcons();
 	    that.setupCameraControlIcons();
 	    that.setupVideoControlIcons();
+        that.toggleVideoControls();
 	}
 
     this.setupMediaIcons = function() {
@@ -60,12 +64,12 @@ function mediaUtils(scene, camera, stills, videos,
     }
     this.setupCameraControlIcons = function() {
     	var container = document.getElementById(that.cameraControlsContainerId);
-    	appendSingleCameraIcon(container, 'cselector', 'left', 'Camera Left', that.cameraLeft);
-    	appendSingleCameraIcon(container, 'cselector', 'up', 'Camera Up', that.cameraUp);
-    	appendSingleCameraIcon(container, 'cselector', 'down', 'Camera Down', that.cameraDown);
-    	appendSingleCameraIcon(container, 'cselector', 'right', 'Camera Right', that.cameraRight);
-    	appendSingleCameraIcon(container, 'cselector', 'stop', 'Camera Stop', that.cameraStop);
-    	appendSingleCameraIcon(container, 'cselector', 'flipCamera', 'Flip Camera', that.flipCamera);
+    	appendSingleCameraIcon(container, 'cameraControlIcon', 'left', 'Camera Left', that.cameraLeft);
+    	appendSingleCameraIcon(container, 'cameraControlIcon', 'up', 'Camera Up', that.cameraUp);
+    	appendSingleCameraIcon(container, 'cameraControlIcon', 'down', 'Camera Down', that.cameraDown);
+    	appendSingleCameraIcon(container, 'cameraControlIcon', 'right', 'Camera Right', that.cameraRight);
+    	appendSingleCameraIcon(container, 'cameraControlIcon', 'stop', 'Camera Stop', that.cameraStop);
+    	appendSingleCameraIcon(container, 'cameraControlIcon', 'flipCamera', 'Flip Camera', that.flipCamera);
     }
     function appendSingleCameraIcon(containerEl, style, png, title, callback) {
     	var el;
@@ -78,15 +82,24 @@ function mediaUtils(scene, camera, stills, videos,
 	this.toggleControlPanel = function() {
     	that.controlPanelVisible = !that.controlPanelVisible;
     	if (that.controlPanelVisible) {
-			$('.controlPanel').hide();
-			$('.videoPanel').hide();
+			$('#' + that.mediaListContainerId).hide();
+			$('#' + that.videoControlsContainerId).hide();
+			$('#' + that.cameraControlsContainerId).hide();
 		}
 		else {
-			$('.controlPanel').show();
-			$('.videoPanel').show();
+			$('#' + that.mediaListContainerId).show();
+			$('#' + that.videoControlsContainerId).show();
+			$('#' + that.cameraControlsContainerId).show();
 		}
 	}
-
+	this.toggleVideoControls = function() {
+		if (that.videoDisplayed)
+			$('#' + that.videoControlsContainerId).show();
+		else {
+			$('#' + that.videoControlsContainerId).hide();
+			that.video_stop();
+		}
+	}
 	this.animate = function() {
 		var unitVector = (new THREE.Vector3()).copy(that.camera.position).normalize();
         that.camera.position.set(unitVector.x, unitVector.y, unitVector.z);
@@ -99,6 +112,7 @@ function mediaUtils(scene, camera, stills, videos,
     this.updateSkyDome = function(event) {
     	var pid = event.target.id.replace('textureSelector_','');
         that.videoDisplayed = false;
+        that.toggleVideoControls();
         that.video.pause();
         var pathToTexture = 'textures/' + pid + '.jpg';
 		(new THREE.TextureLoader()).load(pathToTexture, function ( texture ) {
@@ -145,6 +159,7 @@ function mediaUtils(scene, camera, stills, videos,
         });
         that.skyBox.material = videoMaterial;
         that.videoDisplayed = true;
+        that.toggleVideoControls();
 	}
     this.video_play = function() {
 		that.video.play();

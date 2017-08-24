@@ -1,0 +1,29 @@
+// following three.js conventions, the ship always looks now the Z axis
+// it has a forward facing camera. So the camera === the ship. so we only need a camera to contain
+// the orientation and position info of the ship. just need 1 object.
+
+// the ship has velocity around its Y or X axis or both. X is horizontal axis, Y is vertical axis.
+// positive rotation around X means pushing the up arrow.
+// the ship always faces in the -z direction.
+// The x and y velocity are angular velocities and do not affect the ships position until forward thrust is applied.
+
+Up Arrow: Increase velocity on Y vector (green)
+Down Arrow: Decrease velocity on Y vector
+
+Left Arrow: Increase velocity on X vector (red)
+Right Arrow: Decrease velocity on X vector
+
+x - 
+ctrl-x
+
+y - 
+ctrl-y
+
+z - 
+ctrl-z
+
+Axes:
+x - red
+y - green
+z - blue
+-z - cyan. The camera looks down the cyan (-z) axis.

@@ -1,12 +1,4 @@
 <!DOCTYPE html>
-<!--
-    todo:
-    show/hide is still flakey
-    put bash statements in a script.
-    simplify css and divs.
-    modularize so you can reuse.
-    load new stills and videos.
-    -->
 <html lang="en">
 	<head>
         <style>
@@ -16,19 +8,12 @@
 				margin: 0px;
 				overflow: hidden;
 			}
-			.statusText {
-				height:30px;
-				width:300px;
-				color: #00ff00;
-				padding: 5px;
-				background-color: black;
-			}
-            .controlPanel {
+            .availableMediaPanel {
                 position: fixed;
                 top: 0;
                 width: 95%;
             }
-            .controlPanelInner {
+            .availableMediaPanelInner {
                 width: 90%;
                 margin: 0 auto;             
             }
@@ -50,55 +35,8 @@
                 width: 95%;
                 margin: 0 auto;             
             }
-            .cselector { 
-                border: 2px solid; 
-                border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
-                background-color: rgba(88,88,255,.5);
-                width: 40px;
-                height: 40px;
-                display: inline-block;
-                vertical-align: middle;
-            }
-            .videoControlIcon { 
-                border: 2px solid; 
-                border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
-                background-color: rgba(255,88,88,.5);
-                width: 40px;
-                height: 40px;
-                display: inline-block;
-                vertical-align: middle;
-            }
-            .tselector { 
-                font-size: 8pt;
-                border: 2px solid; 
-                border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
-                background-color: rgba(88,255,88,.5);
-                width: 60px;
-                display: inline-block;
-                vertical-align: middle;
-                margin-left: 20px;
-            }
-            .vselector { 
-                font-size: 8pt;
-                border: 2px solid; 
-                border-color: #6495ED; margin: 5px; padding: 5px; color: #000000; 
-                background-color: rgba(88,88,255,.5);
-                width: 60px;
-                display: inline-block;
-                vertical-align: middle;
-                margin-left: 20px;
-            }
 		</style>
-        <script>
-          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-        
-          ga('create', 'UA-41066114-1', 'rwoodley.org');
-          ga('send', 'pageview');
-        
-        </script>
+        <link rel="stylesheet" type="text/css" href="mediaUtils.css">
 		<script src="r73/three.js"></script>
         <script src="r73/OrbitControls.js"></script>
 		<script src="r73/Detector.js"></script>
@@ -106,10 +44,6 @@
 		<script src="lib/jquery-3.1.0.min.js"></script>
         <script src="mediaUtils.js"></script>
         <script src="utils.js"></script>
-        <!-- generate files.js with this bash:
-        echo 'myTextures=["'`ls -1tr *.jpg *.JPG|tr '\n' ','|sed -e 's/,/","/g'|sed -e 's/.jpg//g'|sed -e 's/.JPG//g'|sed -e 's/,\"$//'  `']' > files.js
-        echo 'myVideos=["'`ls -1tr *.mp4 |tr '\n' ','|sed -e 's/,/","/g'|sed -e 's/.mp4//g'|sed -e 's/.MP4//g'|sed -e 's/,\"$//'  `']' > videos.js
-        -->
         <script src="textures/files.js"></script>
         <script src="textures/videos.js"></script>
         <script id="vs" type="x-shader/x-vertex">
@@ -149,7 +83,13 @@
                 _scene = new THREE.Scene();
                 _controls = new THREE.OrbitControls( _camera, _container.domElement );
                 _renderer =  new THREE.WebGLRenderer({ antialias: true } );
-                _mediaUtils = new mediaUtils(_scene, _camera, myTextures, myVideos, "mediaListContainer", "cameraControlsContainer",
+                _mediaUtils = new mediaUtils(
+                    _scene, 
+                    _camera, 
+                    myTextures, 
+                    myVideos, 
+                    "mediaListContainer", 
+                    "cameraControlsContainer",
                     "videoControlsContainerId");
 
                 _camera.position.x = -1; _camera.position.y = 0.0; _camera.position.z = 0;
@@ -192,9 +132,9 @@
                     </div>
                 </div>
             </div>
-            <div style="float: right; "  class="controlPanel ">
-                <div class="controlPanelInner">
-                    <div id="mediaListContainer" class="controlPanel ">
+            <div style="float: right; "  class="availableMediaPanel ">
+                <div class="availableMediaPanelInner">
+                    <div id="mediaListContainer" >
                     </div>
                 </div>
             </div>

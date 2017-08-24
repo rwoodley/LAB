@@ -210,6 +210,10 @@
 				// http://math.stackexchange.com/questions/1219406/how-do-i-convert-a-complex-number-to-a-point-on-the-riemann-sphere
 
 				vec2 a = vec2(x/(1.0-z), y/(1.0-z));
+                if (a.x > 0.0 && a.y > 0.0) {
+                    gl_FragColor = vec4(1.,1.,0.,.1);
+                    return;
+                }
 
 				vec2 result;
 				if (e1x == e2x && e1y == e2y) {
@@ -504,8 +508,6 @@
             	console.log("P1 = " + _uniforms.e1x.value + "," + _uniforms.e1y.value);
             	console.log("P2 = " + _uniforms.e2x.value+ "," + _uniforms.e2x.value);
             }
-            var _unitVector;
-            var _fixedPointX, _fixedPointY;
             function updateVariousNumbersForCamera() {
             	_unitVector = (new THREE.Vector3()).copy(_camera.position).normalize();
 				// in three.js y is up. we want z to be up.
@@ -584,9 +586,9 @@
                 <span onclick='updateSkyDome("uv")' class='tselector'>uv</span>
             </div>
             <div style="float: right; " class="controlPanel mainDashboard">
-                 <!-- <div id='cameraText' class="statusText"></div> -->
-                 <!-- <div id='unitVectorText' class="statusText"></div> -->
-                 <!-- <div id='complexPointText' class="statusText"></div> -->
+                 <div id='cameraText' class="statusText"></div>
+                 <div id='unitVectorText' class="statusText"></div>
+                 <div id='complexPointText' class="statusText"></div>
                 <img src='icons/rotateLeft.png' onclick='rotate(-1)' title="Rotate Left" class='pselector'></img>
                 <img src='icons/rotateRight.png' onclick='rotate(1)'  title="Rotate Right" class='pselector'></img>
                 <img src='icons/pause.png' onclick='rotate(0)'  title="Stop Rotation" class='pselector'></img>

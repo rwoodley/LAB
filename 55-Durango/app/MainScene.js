@@ -1,5 +1,37 @@
 // the main camera always looks forward.
-// 
+var _shipMesh;
+function doSkyBox(textureName, radius, aSide, material) {
+    var skyGeometry = new THREE.SphereGeometry(radius,50,50);
+    var texture;
+    texture = THREE.ImageUtils.loadTexture(textureName);
+    var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: aSide });
+    var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
+    skyBox.position.set(0,0,0);
+    skyBox.rotation.x = Math.PI/4;
+    return skyBox;
+}
+function doSkyBoxWithShaderMaterial(textureName, radius, aSide) {
+    var skyGeometry = new THREE.SphereGeometry(radius,50,50);
+    var texture;
+    texture = THREE.ImageUtils.loadTexture(textureName);
+    var skyMaterial =
+                new THREE.ShaderMaterial( {
+                    uniforms: {
+                        iChannel0:  { type: 't', value: texture }
+                    },
+                    vertexShader: SHADERCODE.maskShader_vs(),
+                    fragmentShader: SHADERCODE.maskShader_fs(),
+                    side: aSide,
+                    transparent: true,
+                } );
+    var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
+    skyBox.position.set(0,0,0);
+    skyBox.rotation.x = Math.PI/4;
+    _shipMesh = skyBox;     // this may have to go in the objectCache at some point.
+    skyGeometry.applyMatrix(new THREE.Matrix4().makeRotationY(Math.PI/2));
+    skyGeometry.applyMatrix(new THREE.Matrix4().makeRotationX(-.1*Math.PI/2));
+    return skyBox;
+}
 var MainScene = function(containingDiv, canvas, camera, objectCache, cameraPanel) {
     var _that = this;
     this._containingDiv = containingDiv;
@@ -33,14 +65,11 @@ var MainScene = function(containingDiv, canvas, camera, objectCache, cameraPanel
     
     var deepSpace = 100 * AUk;
     console.log('deep space = ' + deepSpace);
-    var skyGeometry = new THREE.SphereGeometry(deepSpace,50,50);
-    var texture;
-    texture = THREE.ImageUtils.loadTexture('textures/eso_dark.jpg');
-    var skyMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.BackSide });
-    var skyBox = new THREE.Mesh( skyGeometry, skyMaterial );
-    skyBox.position.set(0,0,0);
-    skyBox.rotation.x = Math.PI/4;
-    _that._scene.add( skyBox );
+
+    _that._scene.add( doSkyBox('textures/eso_dark.jpg', deepSpace, THREE.BackSide) );
+
+    _that._scene.add( doSkyBoxWithShaderMaterial('textures/bridge.png', 20, THREE.DoubleSide) );
+
     var axisHelper = new THREE.AxisHelper( 500000 );
     _that._scene.add( axisHelper );
 
@@ -63,8 +92,13 @@ var MainScene = function(containingDiv, canvas, camera, objectCache, cameraPanel
         // objectCache.ship._camera.lookAt(objectCache.plutoMesh.position);
         objectCache.ship._camera.rotateX(objectCache.ship._yVelocity);
         objectCache.ship._camera.rotateY(objectCache.ship._xVelocity);
+        var o = objectCache.ship._camera.rotation;
+        _shipMesh.rotation.set(o.x, o.y, o.z);
+        var o = objectCache.ship._camera.position;
+        _shipMesh.position.set(o.x, o.y, o.z);
+
         _that._renderer.render( _that._scene, _that._camera );
-                _stats.update();
+        _stats.update();
     }
 }
 
