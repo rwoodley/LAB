@@ -52,7 +52,7 @@
     </style>
     <script src="lib/jquery-1.11.2.min.js"></script>
     <script src="lib/chroma.min.js"></script>
-    <script src="r71/three.min.js"></script>
+    <script src="r71/three.js"></script>
     <script src="r71/OrbitControls.js"></script>
     <script src="r71/Detector.js"></script>
     <script src="r71/stats.min.js"></script>
@@ -93,10 +93,7 @@
         }
         function WireUp() {
             var locator = new Locator();
-
-            //var shipCameraAspectRatio = document.getElementById('mainCanvas').offsetWidth/document.getElementById('mainCanvas').offsetHeight;
-            var shipCameraAspectRatio = window.innerWidth/window.innerHeight;
-            var ship = new Ship(locator, shipCameraAspectRatio, locator);
+            var ship = new Ship(locator, locator);
             locator.addService('Ship', ship);
             locator.ship = ship;
             locator.dt = 112.0;
@@ -104,8 +101,6 @@
             _cameraPanel = new CameraPanel(locator);
             _mainScene = new MainScene(
                 document.getElementById('mainPanel'),
-                document.getElementById('mainCanvas'),
-                ship.getCamera(),
                 locator,
                 _cameraPanel
             );
@@ -127,20 +122,18 @@
     </script>
 	</head>
 	<body>
-                    <div id="mainPanel" style="position: fixed; top: 0px; left: 0px;  ">
-                            <canvas id="mainCanvas" />
-                    </div>
-                     <div id="leftPanel"  class="gauges" style="position: fixed; top: 420px; left: 20px;  " >
-                    </div>
-                   <div id="cameraGuage" class="gauges" style="position: fixed; top: 20px; left: 20px;  " >
-                     </div>
-                   <div id="cameraPanel" class="gauges"  >
-                        <img id="cameraPluto" src="img/plutoSphere.png" class="cameraPanelImage" onclick="changeCameraLookat('pluto')" />
-                        <img src="img/charonSphere.png" class="cameraPanelImage"  onclick="changeCameraLookat('charon')" />
-                        <img src="img/sun.jpg" class="cameraPanelImage"  onclick="changeCameraLookat('sun')" />
-                        <img src="img/joystick.svg" class="cameraPanelImage"  onclick="changeCameraLookat('joystick')" />
-                     </div>
-        </script>
-                    <span id="statsDivInner"/ >
+            <div id="mainPanel" style="position: fixed; top: 0px; left: 0px;  ">
+            </div>
+                <div id="leftPanel"  class="gauges" style="position: fixed; top: 420px; left: 20px;  " >
+            </div>
+            <div id="cameraGuage" class="gauges" style="position: fixed; top: 20px; left: 20px;  " >
+            </div>
+            <div id="cameraPanel" class="gauges"  >
+                <img id="cameraPluto" src="img/plutoSphere.png" class="cameraPanelImage" onclick="changeCameraLookat('pluto')" />
+                <img src="img/charonSphere.png" class="cameraPanelImage"  onclick="changeCameraLookat('charon')" />
+                <img src="img/sun.jpg" class="cameraPanelImage"  onclick="changeCameraLookat('sun')" />
+                <img src="img/joystick.svg" class="cameraPanelImage"  onclick="changeCameraLookat('joystick')" />
+            </div>
+            <span id="statsDivInner"/ >
 	</body>
 </html>

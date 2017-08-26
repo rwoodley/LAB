@@ -1,3 +1,4 @@
+// NOT USED!
 var cameraNavigator = function(camera,ship) {
     this._camera = camera;
     this._ship = ship;

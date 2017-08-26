@@ -5,12 +5,12 @@
 // So... this ship is really the camera. the shipPlanet is what the physic engine knows about.
 // There is a ship mesh which is a sphere and is invisible, but the physics engine uses it to update position info.
 // In the render() routine, the camera position is kept in sync with the mesh position.
-var Ship = function(locator, aspectRatio, objectCache) {
+var Ship = function(locator, objectCache) {
     var _that = this;
     this._listeners = {};
     //this._locator.getService('ManualNavigator').addListener('KeyCode', this.updateOrientation);
     // FOV is vertical FOV, see: http://stackoverflow.com/a/26665260
-    _that._camera = new THREE.PerspectiveCamera( 75, aspectRatio, .1, 20000000 );
+    _that._camera = new THREE.PerspectiveCamera( 75, 1.0, .1, 20000000 );
     _that._objectCache = objectCache;
 
     // the ship has velocity around its Y or X axis or both. X is horizontal axis, Y is vertical axis.
@@ -26,7 +26,7 @@ var Ship = function(locator, aspectRatio, objectCache) {
     _that._mesh = shipMesh;
     
     _that._camera.position.set(0,100000,0);
-    _that._camera.lookAt(new THREE.Vector3(0,0,0));
+    // _that._camera.lookAt(new THREE.Vector3(0,0,0));
     this.getCamera = function() { return _that._camera; }
     this.Orientation = {
         'Position': _that._camera.position,
