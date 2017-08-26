@@ -27,16 +27,6 @@ var TextPanel = function(locator, containerDiv, objectCache) {
         //    .replace('$2', (_that._oCache.ship._mesh.position.y - _that._oCache.ship._camera.position.y).toFixed(0))
         //    .replace('$3', (_that._oCache.ship._mesh.position.z - _that._oCache.ship._camera.position.z).toFixed(0))
         //    ;
-        str += 'Camera: ($1,$2,$3)<br/>'
-        .replace('$1', _that._oCache.controlPanelCamera.position.x.toFixed(4))
-        .replace('$2', _that._oCache.controlPanelCamera.position.y.toFixed(4))
-        .replace('$3', _that._oCache.controlPanelCamera.position.z.toFixed(4))
-        ;
-        str += 'Camera: ($1,$2,$3)<br/>'
-        .replace('$1', _that._oCache.controlPanelCamera.rotation.x.toFixed(4))
-        .replace('$2', _that._oCache.controlPanelCamera.rotation.y.toFixed(4))
-        .replace('$3', _that._oCache.controlPanelCamera.rotation.z.toFixed(4))
-        ;
         str += 'Pluto P: ($1,$2,$3)<br/>'
             .replace('$1', _that._oCache.plutoMesh.position.x.toFixed(0))
             .replace('$2', _that._oCache.plutoMesh.position.y.toFixed(0))

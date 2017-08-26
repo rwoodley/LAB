@@ -49,7 +49,7 @@ var MainScene = function(containingDiv, objectCache, cameraPanel) {
     var _that = this;
     this._containingDiv = containingDiv;
     var aspectRatio = window.innerWidth/window.innerHeight;
-    _that._headCamera = new THREE.PerspectiveCamera( 75, aspectRatio, .1, 20000000 );
+    _that._headCamera = new THREE.PerspectiveCamera( 45, aspectRatio, .1, 20000000 );
     objectCache.ship._camera.add(_that._headCamera);
     _that._cameraForOrbitControl = new THREE.PerspectiveCamera( 75, aspectRatio, .1, 20000000 );
     _that._cameraForOrbitControl.position.set(0,0,1);
@@ -73,7 +73,12 @@ var MainScene = function(containingDiv, objectCache, cameraPanel) {
     _that._containingDiv.appendChild( _that._renderer.domElement );
     _that._controls = new THREE.OrbitControls( _that._cameraForOrbitControl, _that._containingDiv.domElement );
     _that._controls.keys = {};    // this disable arrow keys which are now used for moving the texture.
-    _that._headCamera.lookAt(new THREE.Vector3(0,0,0));
+    // _that._controls.enableDamping = true;
+    // _that._controls.dampingFactor = 0.07;
+    _that._controls.rotateSpeed = 0.1;
+    _that._controls.minAzimuthAngle = -Math.PI/2;
+    _that._controls.maxAzimuthAngle = Math.PI/2;
+    // _that._headCamera.lookAt(new THREE.Vector3(0,0,0));
         
     var deepSpace = 100 * AUk;
     console.log('deep space = ' + deepSpace);
@@ -110,8 +115,8 @@ var MainScene = function(containingDiv, objectCache, cameraPanel) {
 
         // update head camera.
         _that._controls.update( _that._clock.getDelta() ); 
-        var cp =  _that._cameraForOrbitControl.position.normalize();
         _that._headCamera.rotation.copy(_that._cameraForOrbitControl.rotation);
+
         _that._renderer.render( _that._scene, _that._headCamera);
         _stats.update();
     }
