@@ -9,14 +9,15 @@ function doSkyBox(textureName, radius, aSide, material) {
     skyBox.rotation.x = Math.PI/4;
     return skyBox;
 }
-function doSkyBoxWithShaderMaterial(textureName, radius, aSide) {
+function doSkyBoxWithShaderMaterial(textureName, radius, aSide, objectCache) {
     var skyGeometry = new THREE.SphereGeometry(radius,50,50);
     var texture;
     texture = THREE.ImageUtils.loadTexture(textureName);
     var skyMaterial =
                 new THREE.ShaderMaterial( {
                     uniforms: {
-                        iChannel0:  { type: 't', value: texture }
+                        iChannel0: { type: 't', value: texture },
+                        iChannelZ: { type: 't', value: objectCache.getService('Guage').getRTTexture() }
                     },
                     vertexShader: SHADERCODE.maskShader_vs(),
                     fragmentShader: SHADERCODE.maskShader_fs(),
@@ -63,7 +64,7 @@ var MainScene = function(containingDiv, objectCache, cameraPanel) {
 
     _that._renderer =  new THREE.WebGLRenderer({ antialias: true});
     _that._renderer.sortObjects = false;
-    _that._renderer.setClearColor( 0x0000ff );
+    _that._renderer.setClearColor( 0x000000 );
 	_that._renderer.shadowMapEnabled = true;
 	_that._renderer.shadowMapCullFace = THREE.CullFaceBack;
 
@@ -84,12 +85,21 @@ var MainScene = function(containingDiv, objectCache, cameraPanel) {
     console.log('deep space = ' + deepSpace);
 
     _that._scene.add( doSkyBox('textures/eso_dark.jpg', deepSpace, THREE.BackSide) );
-    _that._scene.add( doSkyBoxWithShaderMaterial('textures/bridge.png', 20, THREE.DoubleSide) );
-
+    // _that._scene.add( doSkyBoxWithShaderMaterial('textures/cockpit_orange.jpg', 20, THREE.DoubleSide, objectCache) );
+    // _that._scene.add( doSkyBoxWithShaderMaterial('textures/bridge.png', 20, THREE.DoubleSide, objectCache) );
+    _that._scene.add( doSkyBoxWithShaderMaterial('textures/Vattalus2048.png', 20, THREE.DoubleSide, objectCache) );
+    
     var axisHelper = new THREE.AxisHelper( 500000 );
-    _that._scene.add( axisHelper );
+    // _that._scene.add( axisHelper );
 
     addPlanets(_that._scene, objectCache);
+
+    var boxMaterial = new THREE.MeshBasicMaterial({map:objectCache.getService('Guage').getRTTexture()});
+    // var boxMaterial = new THREE.MeshNormalMaterial({side: THREE.DoubleSide});
+    var rr = 1;
+    var boxGeometry2 = new THREE.BoxGeometry( rr,rr,rr );
+    _that._mainBoxObject = new THREE.Mesh(boxGeometry2,boxMaterial);
+    // _that._scene.add(_that._mainBoxObject);
 
     _that._frame = 0;
     this.render = function() {
@@ -112,6 +122,8 @@ var MainScene = function(containingDiv, objectCache, cameraPanel) {
         _shipMesh.rotation.set(o1.x, o1.y, o1.z);
         var o = objectCache.ship._camera.position;
         _shipMesh.position.set(o.x, o.y, o.z);
+
+        _that._mainBoxObject.position.set(o.x,o.y,o.z-10);
 
         // update head camera.
         _that._controls.update( _that._clock.getDelta() ); 

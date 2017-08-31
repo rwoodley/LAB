@@ -99,12 +99,14 @@
             locator.dt = 112.0;
             _textPanel = new TextPanel(locator, document.getElementById('leftPanel'), locator);
             _cameraPanel = new CameraPanel(locator);
+            _guage = new CameraGuage(document.getElementById('cameraGuage'), locator);
+            locator.addService('Guage', _guage);
+            // _guage.debug();
             _mainScene = new MainScene(
                 document.getElementById('mainPanel'),
                 locator,
                 _cameraPanel
             );
-            _guage = new CameraGuage(document.getElementById('cameraGuage'), locator);
             $(document).keydown(function(e){
                 ship.updateOrientation(e);  // for now. later make it a service.
             });
@@ -115,8 +117,8 @@
             render();
         }
         function render() {
+            _guage.render(_mainScene._renderer);
             _mainScene.render();
-            _guage.render();
             _textPanel.render();
         }
     </script>
