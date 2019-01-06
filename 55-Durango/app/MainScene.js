@@ -76,9 +76,11 @@ var MainScene = function(containingDiv, objectCache, cameraPanel) {
     _that._controls.keys = {};    // this disable arrow keys which are now used for moving the texture.
     // _that._controls.enableDamping = true;
     // _that._controls.dampingFactor = 0.07;
+
     _that._controls.rotateSpeed = 0.1;
     _that._controls.minAzimuthAngle = -Math.PI/2;
     _that._controls.maxAzimuthAngle = Math.PI/2;
+
     // _that._headCamera.lookAt(new THREE.Vector3(0,0,0));
         
     var deepSpace = 100 * AUk;
