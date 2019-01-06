@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - terrain</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #61443e;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+
+				background-color: #bfd1e5;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+			}
+ 
+			a {
+
+				color: #a06851;
+			}
+
+		</style>
+	</head>
+	<body>
+		<video id='video1' controls='true' autoplay='true' src='videos/laura.mp4' muted
+			style="display: none;"
+		></video>
+
+		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+		<script src="r73/three.js"></script>
+
+        <script src="r73/OrbitControls.js"></script>
+
+		<script src="r73/ImprovedNoise.js"></script>
+		<script src="r73/Detector.js"></script>
+
+		<script id="vs" type="x-shader/x-vertex">
+			varying vec2 vUv; 
+			void main()
+			{
+				 vUv = uv;
+			    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0 );
+			    gl_Position = projectionMatrix * mvPosition;
+			}
+		</script>
+
+		<script id="fs" type="x-shader/x-fragment">
+			uniform float iGlobalTime;
+			uniform vec2 iResolution;
+			uniform sampler2D video1;
+			uniform sampler2D iChannel0;
+			uniform sampler2D iChannel1;
+			uniform sampler2D iChannel3;
+			
+			float PI = 3.14159;
+			varying vec2 vUv;  
+			float mix(float x, float y, bool a) {
+				return a ? y : x;
+			}
+			float atan2(in float y, in float x) {
+				bool s = (abs(x) >= abs(y));
+				float res = mix(PI/2.0 - atan(x,y), atan(y,x), s);
+				return res;
+			}
+			float clampTheta(float t1) {
+				if (t1 < 0.0) t1 = t1 + PI*2.;
+				if (t1 > PI*2.) t1 = mod(t1, PI*2.);
+				return t1;
+			}
+			bool testTheta(float t, float t1, float t2) {
+				if (t1 < t2)
+					return  t > t1 && t < t2;
+				else {
+					return  t > t1 || t < t2;
+				}
+			}
+			void main() {
+				float r1 = .2;
+				float r2 = .4;
+
+				float frameArc = 2. * PI * 1./12.;
+				float frameSpeed = 50.0;
+				float tt = float(int(iGlobalTime/frameSpeed));
+
+				float t1 = tt * frameArc;
+				t1 = clampTheta(t1);
+				float t2 = (tt + 1.) * frameArc;
+				t2 = clampTheta(t2);
+
+				// convert vUv to polar.
+				float xx = vUv.x - .5;
+				float yy = vUv.y - .5;
+				float r = sqrt(xx*xx + yy*yy);
+				float t = atan2(yy, xx);
+				t = clampTheta(t);
+				if (r > r1 && r < r2 && testTheta(t,t1,t2)) {
+					float y = (r - r1)/(r2-r1);
+					float x = .25 +  .5*(t - t1)/frameArc;
+					gl_FragColor = texture2D(video1, vec2(x,y));
+				}
+				else 
+					gl_FragColor = vec4(.0,0.5,.5,1.);
+
+			}
+
+		</script>
+
+		<script>
+
+			if ( ! Detector.webgl ) {
+				Detector.addGetWebGLMessage();
+				document.getElementById( 'container' ).innerHTML = "";
+			}
+
+			var _container;
+			var _camera, _controls, _scene, _renderer, _uniforms;
+			var mesh, texture;
+
+			var worldWidth = 512, worldDepth = 512,
+			worldHalfWidth = worldWidth / 2, worldHalfDepth = worldDepth / 2;
+
+			var clock = new THREE.Clock();
+			init();
+			animate();
+
+			function init() {
+                _container = document.getElementById( 'container' );
+
+                _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+                _scene = new THREE.Scene();
+                _controls = new THREE.OrbitControls( _camera, _container.domElement );
+                _renderer =  new THREE.WebGLRenderer();
+
+                _camera.position.x = 0; _camera.position.y = 0.; _camera.position.z = 1.2;
+                var axes = new THREE.AxisHelper( 5000 );
+                //_scene.add(axes);
+				
+ 				var geometry = new THREE.PlaneGeometry(1, 1,1,1);
+
+				var video = document.getElementById('video1');
+				var vtexture = new THREE.VideoTexture(video);
+
+				_uniforms = {
+				    iGlobalTime:    { type: 'f', value: 0.1 },
+					video1: {type: 't', value: vtexture },
+				    iChannel0:  { type: 't', value: THREE.ImageUtils.loadTexture( 'textures/trisk.png') },
+				    iChannel1:  { type: 't', value: THREE.ImageUtils.loadTexture( 'textures/R.png') },
+				    iChannel3:  { type: 't', value: THREE.ImageUtils.loadTexture( 'textures/cat.png') },
+				};
+				newMaterial = new THREE.ShaderMaterial( {
+					uniforms: _uniforms,
+					vertexShader: document.getElementById( 'vs' ).textContent,
+					fragmentShader: document.getElementById( 'fs' ).textContent,
+					side: THREE.DoubleSide,
+					transparent: true
+				} );
+				var ambientLight = new THREE.AmbientLight(0xaaaaff);
+				_scene.add(ambientLight);
+
+
+                var material = new THREE.MeshNormalMaterial();
+                var mesh = new THREE.Mesh(geometry, newMaterial);
+ 				// mesh.rotation.y = 1;
+                _scene.add(mesh);
+                doFloor();
+                                                        
+                _renderer.setClearColor( 0x444444 );
+                _renderer.setSize( window.innerWidth, window.innerHeight );
+
+                document.getElementById( 'container' ).innerHTML = "";
+                _container.appendChild( _renderer.domElement );
+
+                window.addEventListener( 'resize', onWindowResize, false );
+			}
+			function onWindowResize() {
+
+				_camera.aspect = window.innerWidth / window.innerHeight;
+				_camera.updateProjectionMatrix();
+				_renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+			}
+			var _tick = 0;
+			function render() {
+
+				_controls.update( clock.getDelta() );
+				_renderer.render( _scene, _camera );
+                _camera.lookAt(new THREE.Vector3(0,0,0));
+                // rotateCameraY(.02);
+				var delta=clock.getDelta();
+				_uniforms.iGlobalTime.value = _tick++;
+				// var frameSpeed = 50;
+				// var tt = frameSpeed * parseInt(_uniforms.iGlobalTime.value/frameSpeed);
+				// console.log(tt);
+			}
+            var _radians = 0;
+            function rotateCameraY(radians) {
+                var x = _camera.position.x;	var y = _camera.position.y;	var z = _camera.position.z;
+                var signx = x > 0 ? 1 : -1;
+            
+                // get current radians from z and x coords.
+                _radians = x == 0 ? Math.PI/2 : Math.atan(z/x);
+                if (signx == -1) _radians += Math.PI;
+            
+                _radians += radians;
+                if (_radians > Math.PI*2) _radians = _radians%(Math.PI*2);
+                while (_radians < 0) _radians += Math.PI*2;
+            
+                //console.log( _radians);
+            
+                var radius = Math.sqrt(x*x + z*z);
+                _camera.position.x = radius * Math.cos(_radians);
+                _camera.position.z = radius * Math.sin(_radians);
+                //__camera.position.y = 4;
+            }
+			function doFloor() {
+				//var floorMaterial = new THREE.MeshLambertMaterial( { color: _floorColor, side:THREE.DoubleSide } );
+				var floorMaterial = new THREE.MeshPhongMaterial( { color: 0x0066ff, side:THREE.DoubleSide } );
+				var floorGeometry = new THREE.PlaneGeometry(250, 250,50,50);
+				var _floor = new THREE.Mesh(floorGeometry, floorMaterial);
+				_floor.rotation.x = Math.PI / 2;
+				_floor.position.y = -50;
+				_floor.receiveShadow = true;
+				_scene.add(_floor);
+				return _floor;
+			}
+</script>
+	</body>
+</html>
