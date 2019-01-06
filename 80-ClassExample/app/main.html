@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+	<body>
+		<div id="container"><br /><br /><br /><br /><br />Generating world...</div>
+		<script src="r69/three.js"></script>
+        <script src="r69/OrbitControls.js"></script>
+		<script src="r69/Detector.js"></script>
+        <script src="utils.js"></script>
+        <style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+		<script>
+			var _container;
+			var _camera, _controls, _scene, _renderer;
+			var myMesh, _rotateSpeed = Math.PI/1024;
+
+			if ( ! Detector.webgl ) {
+				Detector.addGetWebGLMessage();
+				document.getElementById( 'container' ).innerHTML = "";
+			}
+
+			var clock = new THREE.Clock();
+			init();
+
+			function init() {
+                _container = document.getElementById( 'container' );
+
+                _camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 20000 );
+
+                _scene = new THREE.Scene();
+                _controls = new THREE.OrbitControls( _camera, _container.domElement );
+                _renderer =  new THREE.WebGLRenderer();
+
+                _camera.position.x = 0; _camera.position.y = 0; _camera.position.z = -30;
+                var axes = new THREE.AxisHelper( 5000 );
+                _scene.add(axes);
+
+                _scene.add(new THREE.AmbientLight(0x999999));
+             
+                var material = 
+                    new THREE.MeshPhongMaterial({ 
+                    color: 0x333333,
+                    shininess: 40,
+                    ambient: 0xffd700,
+                    emissive: 0x111111,
+                    specular: 0xeeeeee,
+                    side: THREE.DoubleSide 
+                    });
+
+				
+                //var myGeometry =  new THREE.SphereGeometry( 5, 32, 16 ); // radius, segmentsWidth, segmentsHeight
+                var myGeometry = new THREE.BoxGeometry( 1, 1, 1 );
+
+                _scene.add( _camera );
+                var myMaterial = new THREE.MeshNormalMaterial();
+                myMesh = new THREE.Mesh( myGeometry, myMaterial );
+                myMesh.position.set(0,0,0);
+                myMesh.rotateY(2.0);
+                myMesh.rotateZ(2.0);
+                _scene.add(myMesh);
+                
+				var ambientLight = new THREE.AmbientLight(0x44aacc);
+				_scene.add(ambientLight);
+
+                _renderer.setSize( window.innerWidth, window.innerHeight );
+
+                document.getElementById( 'container' ).innerHTML = "";
+                _container.appendChild( _renderer.domElement );
+                animate();
+			}
+
+			function animate() {
+				requestAnimationFrame( animate );
+				_controls.update( clock.getDelta() );
+				_renderer.render( _scene, _camera );
+                _camera.lookAt(new THREE.Vector3(0,0,0));
+                //myMesh.rotateY(2.0);
+			}
+</script>
+	</body>
+</html>
